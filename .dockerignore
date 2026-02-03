@@ -1,0 +1,7 @@
+# Не копировать в образ при docker build (репозиторий монтируется при run)
+.venv-wllvm/
+**/build*/
+**/.libs/
+results/
+.git/
+*.bc
