@@ -1,0 +1,3 @@
+# Prevent copy in docker image
+**/build*/
+.git/
