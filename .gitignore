@@ -1,3 +1,11 @@
-results/
-**/build*/
-**/.libs/
+**/build/
+
+# Module build timestamps
+.seqra-*
+
+# IDE
+.idea
+
+# AI
+.cursor
+.sisyphus
