@@ -7,10 +7,12 @@ import org.jooq.meta.jaxb.Jdbc
 import org.jooq.meta.jaxb.Target
 import org.seqra.common.JunitDependencies
 import org.seqra.common.KotlinDependency
+import org.jetbrains.kotlin.konan.properties.loadProperties
 
 plugins {
     id("kotlin-conventions")
     kotlinSerialization()
+    `maven-publish`
 }
 
 buildscript {
@@ -127,4 +129,18 @@ fun generateSqlScheme(
                     )
             )
     )
+}
+
+val rootProperties = layout.projectDirectory.file("../gradle.properties").asFile.absolutePath.let { loadProperties(it) }
+
+group = "org.seqra"
+version = rootProperties.getProperty("seqraIrVersion")
+
+publishing {
+    publications {
+        create<MavenPublication>("ir-core") {
+            from(components["java"])
+            tasks.findByName("kotlinSourcesJar")?.let { artifact(it) }
+        }
+    }
 }
