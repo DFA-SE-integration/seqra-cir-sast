@@ -1,8 +1,10 @@
 import org.seqra.common.JunitDependencies
+import org.jetbrains.kotlin.konan.properties.loadProperties
 
 plugins {
     id("kotlin-conventions")
     `java-test-fixtures`
+    `maven-publish`
 }
 
 dependencies {
@@ -23,4 +25,18 @@ dependencies {
     testFixturesApi(Libs.xodusEnvironment)
     testFixturesApi(Libs.lmdb_java)
     testFixturesApi(Libs.rocks_db)
+}
+
+val rootProperties = layout.projectDirectory.file("../gradle.properties").asFile.absolutePath.let { loadProperties(it) }
+
+group = "org.seqra"
+version = rootProperties.getProperty("seqraIrVersion")
+
+publishing {
+    publications {
+        create<MavenPublication>("ir-storage") {
+            from(components["java"])
+            tasks.findByName("kotlinSourcesJar")?.let { artifact(it) }
+        }
+    }
 }
