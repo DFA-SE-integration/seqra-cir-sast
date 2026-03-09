@@ -1,11 +1,16 @@
+import org.jetbrains.kotlin.konan.properties.loadProperties
+
 plugins {
     `kotlin-dsl`
     `maven-publish`
 }
 
-val kotlinVersion = "2.1.0"
+val kotlinVersion = "2.0.21"
+
+val rootProperties = layout.projectDirectory.file("gradle.properties").asFile.absolutePath.let { loadProperties(it) }
 
 group = "org.seqra"
+version = rootProperties.getProperty("seqraBuildVersion")
 
 repositories {
     mavenCentral()
@@ -16,20 +21,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
 }
 
-val seqraOrg = properties.getOrDefault("seqraOrg", "seqra")
-
 publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/$seqraOrg/seqra-common-build")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
-    }
-
     publications {
         create<MavenPublication>("maven") {
             from(components["java"])
