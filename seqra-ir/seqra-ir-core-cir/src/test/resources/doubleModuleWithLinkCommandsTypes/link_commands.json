@@ -1,0 +1,17 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/ld",
+      "-r",
+      "mainModule.o",
+      "helperModule.o"
+    ],
+    "file": "",
+    "files": [
+      "src/test/resources/doubleModuleWithLinkCommandsTypes/mainModule.o",
+      "src/test/resources/doubleModuleWithLinkCommandsTypes/helperModule.o"
+    ],
+    "directory": "src/test/resources/doubleModuleWithLinkCommandsTypes",
+    "output": "src/test/resources/doubleModuleWithLinkCommandsTypes/app.o"
+  }
+]
