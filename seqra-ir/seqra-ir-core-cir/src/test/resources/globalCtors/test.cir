@@ -1,0 +1,48 @@
+!s32i = !cir.int<s, 32>
+!u64i = !cir.int<u, 64>
+!void = !cir.void
+#fn_attr = #cir<extra({inline = #cir.inline<no>, optnone = #cir.optnone})>
+module @"/Users/sergey/Documents/sar/test.cpp" attributes {cir.global_ctors = [#cir.global_ctor<"__cxx_global_var_init", 65536>], cir.lang = #cir.lang<cxx>, cir.sob = #cir.signed_overflow_behavior<undefined>, cir.triple = "arm64-apple-macosx15.0.0", dlti.dl_spec = #dlti.dl_spec<f128 = dense<128> : vector<2xi64>, i128 = dense<128> : vector<2xi64>, i64 = dense<64> : vector<2xi64>, !llvm.ptr = dense<64> : vector<4xi64>, i1 = dense<8> : vector<2xi64>, i32 = dense<32> : vector<2xi64>, i8 = dense<8> : vector<2xi64>, i16 = dense<16> : vector<2xi64>, !llvm.ptr<271> = dense<32> : vector<4xi64>, !llvm.ptr<272> = dense<64> : vector<4xi64>, f64 = dense<64> : vector<2xi64>, f16 = dense<16> : vector<2xi64>, !llvm.ptr<270> = dense<32> : vector<4xi64>, "dlti.stack_alignment" = 128 : i64, "dlti.endianness" = "little">, llvm.data_layout = "e-m:o-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-n32:64-S128-Fn32"} {
+  cir.func private @_Z6mallocm(!u64i) -> !cir.ptr<!void> loc(#loc13)
+  cir.global external @x = #cir.ptr<null> : !cir.ptr<!s32i> {alignment = 8 : i64, ast = #cir.var.decl.ast} loc(#loc14)
+  cir.func internal private @__cxx_global_var_init() {
+    %0 = cir.get_global @x : !cir.ptr<!cir.ptr<!s32i>> loc(#loc14)
+    %1 = cir.const #cir.int<4> : !s32i loc(#loc5)
+    %2 = cir.cast(integral, %1 : !s32i), !u64i loc(#loc5)
+    %3 = cir.call @_Z6mallocm(%2) : (!u64i) -> !cir.ptr<!void> loc(#loc6)
+    %4 = cir.cast(bitcast, %3 : !cir.ptr<!void>), !cir.ptr<!s32i> loc(#loc15)
+    cir.store %4, %0 : !cir.ptr<!s32i>, !cir.ptr<!cir.ptr<!s32i>> loc(#loc7)
+    cir.return loc(#loc14)
+  } loc(#loc14)
+  cir.func @main() -> !s32i extra(#fn_attr) {
+    %0 = cir.alloca !s32i, !cir.ptr<!s32i>, ["__retval"] {alignment = 4 : i64} loc(#loc9)
+    %1 = cir.const #cir.int<10> : !s32i loc(#loc10)
+    %2 = cir.get_global @x : !cir.ptr<!cir.ptr<!s32i>> loc(#loc14)
+    %3 = cir.load deref %2 : !cir.ptr<!cir.ptr<!s32i>>, !cir.ptr<!s32i> loc(#loc11)
+    cir.store %1, %3 : !s32i, !cir.ptr<!s32i> loc(#loc17)
+    %4 = cir.load %0 : !cir.ptr<!s32i>, !s32i loc(#loc9)
+    cir.return %4 : !s32i loc(#loc9)
+  } loc(#loc16)
+  cir.func private @_GLOBAL__sub_I_test.cpp() {
+    cir.call @__cxx_global_var_init() : () -> () loc(#loc14)
+    cir.return loc(#loc)
+  } loc(#loc)
+} loc(#loc)
+#loc = loc("/Users/sergey/Documents/sar/test.cpp":0:0)
+#loc1 = loc("test.cpp":1:1)
+#loc2 = loc("test.cpp":1:34)
+#loc3 = loc("test.cpp":2:1)
+#loc4 = loc("test.cpp":2:25)
+#loc5 = loc("test.cpp":2:24)
+#loc6 = loc("test.cpp":2:17)
+#loc7 = loc("test.cpp":2:6)
+#loc8 = loc("test.cpp":4:1)
+#loc9 = loc("test.cpp":4:23)
+#loc10 = loc("test.cpp":4:19)
+#loc11 = loc("test.cpp":4:15)
+#loc12 = loc("test.cpp":4:14)
+#loc13 = loc(fused[#loc1, #loc2])
+#loc14 = loc(fused[#loc3, #loc4])
+#loc15 = loc(fused[#loc6, #loc4])
+#loc16 = loc(fused[#loc8, #loc9])
+#loc17 = loc(fused[#loc12, #loc10])
