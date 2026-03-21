@@ -1,0 +1,9 @@
+[
+  {
+    "arguments": [],
+    "directory": "src/test/resources/juliet/",
+    "file": "some_source.c",
+    "output": "src/test/resources/juliet/some_object.cir",
+    "object": "some_object.o"
+  }
+]

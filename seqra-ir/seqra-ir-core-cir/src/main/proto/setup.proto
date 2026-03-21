@@ -1,0 +1,49 @@
+// clang-format off
+syntax = "proto3";
+
+package protocir;
+option java_package = "org.seqra.ir.impl.grpc";
+
+message MLIRModuleID { string id = 1; }
+
+message CIRGlobalID {
+  MLIRModuleID module_id = 1;
+  string id = 2;
+}
+
+message CIRFunctionID {
+  MLIRModuleID module_id = 1;
+  string id = 2;
+}
+
+message MLIRBlockID { uint64 id = 1; }
+
+message MLIRTypeID {
+  MLIRModuleID module_id = 1;
+  string id = 2;
+}
+
+message MLIROpID { uint64 id = 1; }
+
+message MLIRValue {
+  MLIRTypeID type = 1;
+  oneof value {
+    MLIROpResult op_result = 2;
+    MLIRBlockArgument block_argument = 3;
+  }
+}
+
+message MLIROpResult {
+  MLIROpID owner = 1;
+  uint64 result_number = 2;
+}
+
+message MLIRBlockArgument {
+  MLIRBlockID owner = 1;
+  uint64 arg_number = 2;
+}
+
+message MLIRValueList { repeated MLIRValue list = 1; }
+
+message MLIRTypeIDList { repeated MLIRTypeID list = 1; }
+// clang-format on

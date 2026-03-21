@@ -1,0 +1,16 @@
+[
+  {
+    "arguments": [],
+    "directory": "src/test/resources/juliet/support",
+    "file": "io.c",
+    "output": "src/test/resources/juliet/support/io.cir",
+    "object": "io.o"
+  },
+  {
+    "arguments": [],
+    "directory": "src/test/resources/juliet/support",
+    "file": "std_thread.c",
+    "output": "src/test/resources/juliet/support/std_thread.cir",
+    "object": "std_thread.o"
+  }
+]
