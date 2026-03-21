@@ -1,0 +1,16 @@
+[
+  {
+    "arguments": [],
+    "directory": "src/test/resources/doubleModuleWithLinkCommands",
+    "file": "helperModule.c",
+    "output": "src/test/resources/doubleModuleWithLinkCommands/helperModule.cir",
+    "object": "helperModule.o"
+  },
+  {
+    "arguments": [],
+    "directory": "src/test/resources/doubleModuleWithLinkCommands",
+    "file": "mainModule.c",
+    "output": "src/test/resources/doubleModuleWithLinkCommands/mainModule.cir",
+    "object": "mainModule.o"
+  }
+]
