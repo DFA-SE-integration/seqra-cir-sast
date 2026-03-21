@@ -6,13 +6,17 @@ import SeqraIrDependency.seqra_ir_api_storage
 import SeqraIrDependency.seqra_ir_core
 import SeqraIrDependency.seqra_ir_storage
 import SeqraIrDependency.seqra_ir_approximations
+import org.jetbrains.kotlin.konan.properties.loadProperties
+
+val rootProperties = layout.projectDirectory.file("../gradle.properties").asFile.absolutePath.let { loadProperties(it) }
+val jvmDataflowVersion = rootProperties.getProperty("seqraBuildVersion")
 
 plugins {
     id("kotlin-conventions")
 }
 
 dependencies {
-    implementation("org.seqra.seqra-dataflow-core:seqra-jvm-dataflow")
+    implementation("org.seqra.seqra-dataflow-core:seqra-jvm-dataflow:${jvmDataflowVersion}")
     implementation(seqraRulesJvm)
     implementation(seqraUtilJvm)
 
