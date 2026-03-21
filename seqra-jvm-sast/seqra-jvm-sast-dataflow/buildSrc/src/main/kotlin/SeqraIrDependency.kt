@@ -7,37 +7,37 @@ object SeqraIrDependency : SeqraDependency {
 
     val Project.seqra_ir_core
         get() = propertyDep(
-            group = "org.seqra.ir",
+            group = "org.seqra",
             name = "seqra-ir-core"
         )
 
     val Project.seqra_ir_api_common
         get() = propertyDep(
-            group = "org.seqra.ir",
+            group = "org.seqra",
             name = "seqra-ir-api-common"
         )
 
     val Project.seqra_ir_api_jvm
         get() = propertyDep(
-            group = "org.seqra.ir",
+            group = "org.seqra",
             name = "seqra-ir-api-jvm"
         )
 
     val Project.seqra_ir_api_storage
         get() = propertyDep(
-            group = "org.seqra.ir",
+            group = "org.seqra",
             name = "seqra-ir-api-storage"
         )
 
     val Project.seqra_ir_storage
         get() = propertyDep(
-            group = "org.seqra.ir",
+            group = "org.seqra",
             name = "seqra-ir-storage"
         )
 
     val Project.seqra_ir_approximations
         get() = propertyDep(
-            group = "org.seqra.ir",
+            group = "org.seqra",
             name = "seqra-ir-approximations"
         )
 }

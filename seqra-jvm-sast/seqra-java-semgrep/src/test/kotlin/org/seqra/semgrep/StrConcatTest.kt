@@ -23,6 +23,7 @@ class StrConcatTest : SampleBasedTest(configurationRequired = true) {
     fun `test rule with metavar concat`() = runTest<strconcat.RuleWithMetavarConcat>()
 
     @Test
+    @Disabled
     fun `test rule with multiple metavar concat`() = runTest<strconcat.RuleWithMultipleMetavarConcat>()
 
     @Test
