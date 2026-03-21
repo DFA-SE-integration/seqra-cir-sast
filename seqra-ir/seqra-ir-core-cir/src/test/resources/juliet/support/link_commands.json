@@ -1,0 +1,12 @@
+[
+  {
+    "arguments": [],
+    "directory": "src/test/resources/juliet/support",
+    "file": "",
+    "files": [
+      "src/test/resources/juliet/support/io.o",
+      "src/test/resources/juliet/support/std_thread.o"
+    ],
+    "output": "src/test/resources/juliet/support/support.a"
+  }
+]
