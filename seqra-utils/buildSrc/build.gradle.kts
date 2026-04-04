@@ -4,7 +4,7 @@ plugins {
     `kotlin-dsl`
 }
 
-val kotlinVersion = "2.1.0"
+val kotlinVersion = "2.0.21"
 
 val rootProperties = layout.projectDirectory.file("../gradle.properties").asFile.absolutePath.let { loadProperties(it) }
 
