@@ -29,6 +29,7 @@ help:
 	@echo ""
 	@echo "Clean:"
 	@echo "  make clean-dfa-core	- remove seqra modules build artifacts"
+	@echo "  make clean-maven-local	- remove all org.seqra* from ~/.m2 and reset build stamps"
 
 # docker
 .PHONY: docker-image docker-shell docker-run
@@ -86,7 +87,7 @@ seqra-cir-sast: .seqra-dfa-core
 
 .PHONY: seqra-cir-sast
 seqra-cir-sast: .seqra-cir-sast
-.seqra-cir-sast: .seqra-common-build .seqra-ir .seqra-project-model .seqra-configuration-rules .seqra-config .seqra-utils .seqra-sast-test-util .seqra-dfa-core
+.seqra-cir-sast:
 	cd seqra-cir-sast && GRADLE_OPTS="-Xmx4g -Dkotlin.daemon.jvm.options=-Xmx3g" ./gradlew --no-daemon --max-workers=1 -Dkotlin.compiler.execution.strategy=in-process clean build && \
 	cd "$(ROOT)" && touch $@
 
@@ -95,7 +96,11 @@ seqra-cir-sast-test: .seqra-cir-sast
 	cd seqra-cir-sast && GRADLE_OPTS="-Xmx4g -Dkotlin.daemon.jvm.options=-Xmx3g" ./gradlew --no-daemon --max-workers=1 -Dkotlin.compiler.execution.strategy=in-process test
 
 # clean
-.PHONY: clean-dfa-core-deps clean-dfa-core clean-all
+.PHONY: clean-dfa-core-deps clean-dfa-core clean-all clean-maven-local
+clean-maven-local:
+	rm -rf "$(HOME)/.m2/repository/org/seqra"
+	rm -f "$(ROOT)"/.seqra-*
+
 clean-dfa-core-deps:
 	cd "$(SEQRA_CMN_BLD_DIR)" && ./gradlew clean
 	cd "$(SEQRA_IR_DIR)" && ./gradlew clean
