@@ -8,7 +8,7 @@ import org.seqra.ir.impl.CIRProjectImpl
 import org.seqra.ir.impl.CIRSettings
 import org.seqra.ir.impl.CIRXodusKvErsSettings
 import org.seqra.ir.impl.features.CIRLoadStoreFeature
-import org.seqra.ir.impl.jacodb
+import org.seqra.ir.impl.cirDatabase
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -19,11 +19,11 @@ class StorageTestWithLinkCommands {
         persistenceImpl(CIRXodusKvErsSettings)
     }
 
-    private var db: CIRDatabase = jacodb(settings)
+    private var db: CIRDatabase = cirDatabase(settings)
 
     @BeforeEach
     fun setUpDatabase() {
-        db = jacodb(settings)
+        db = cirDatabase(settings)
     }
 
     // @Test
@@ -31,7 +31,7 @@ class StorageTestWithLinkCommands {
         val projectDirectoryFile = File("src/test/resources/doubleModuleWithLinkCommands")
         val project = CIRProjectImpl(projectDirectoryFile)
 
-        val db = jacodb(settings)
+        val db = cirDatabase(settings)
         db.loadFiles(projectDirectoryFile)
 
         val cp = db.classpath(
@@ -75,7 +75,7 @@ class StorageTestWithLinkCommands {
         val projectDirectoryPath = "src/test/resources/doubleModuleWithLinkCommandsTypes"
         val project = CIRProjectImpl(File(projectDirectoryPath))
 
-        val db = jacodb(settings)
+        val db = cirDatabase(settings)
         db.loadFiles(File(projectDirectoryPath))
 
         val cp = db.classpath(target = project.targets.first())
@@ -120,7 +120,7 @@ class StorageTestWithLinkCommands {
         val projectDirectoryPath = "src/test/resources/doubleModuleWithLinkCommandsTypes"
         val project = CIRProjectImpl(File(projectDirectoryPath))
 
-        val db = jacodb(settings)
+        val db = cirDatabase(settings)
         db.loadFiles(File(projectDirectoryPath))
 
         val target = TargetID(

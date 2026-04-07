@@ -6,7 +6,7 @@ import org.seqra.ir.api.cir.cfg.MLIRModuleID
 import org.seqra.ir.impl.CIRProjectImpl
 import org.seqra.ir.impl.CIRSettings
 import org.seqra.ir.impl.CIRXodusKvErsSettings
-import org.seqra.ir.impl.jacodb
+import org.seqra.ir.impl.cirDatabase
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -19,7 +19,7 @@ class DatabaseTest {
 
     @BeforeEach
     fun setup() {
-        db = jacodb(CIRSettings().persistenceImpl(CIRXodusKvErsSettings))
+        db = cirDatabase(CIRSettings().persistenceImpl(CIRXodusKvErsSettings))
     }
 
     // @Test

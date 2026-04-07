@@ -1,6 +1,6 @@
 import org.seqra.ir.impl.CIRSettings
 import org.seqra.ir.impl.CIRXodusKvErsSettings
-import org.seqra.ir.impl.jacodb
+import org.seqra.ir.impl.cirDatabase
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.test.assertEquals
@@ -12,7 +12,7 @@ class ModuleTest {
 
     // @Test
     fun loadGlobalCtors() {
-        val db = jacodb(settings)
+        val db = cirDatabase(settings)
 
         val sourceFile = File("src/test/resources/globalCtors/test.protocir")
         db.loadFiles(sourceFile)

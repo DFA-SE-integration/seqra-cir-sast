@@ -5,7 +5,7 @@ import org.seqra.ir.api.cir.cfg.MLIRModuleID
 import org.seqra.ir.impl.CIRProjectImpl
 import org.seqra.ir.impl.CIRSettings
 import org.seqra.ir.impl.CIRXodusKvErsSettings
-import org.seqra.ir.impl.jacodb
+import org.seqra.ir.impl.cirDatabase
 import org.seqra.ir.impl.sources.findCompileCommands
 import org.seqra.ir.impl.sources.findLinkCommands
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -18,11 +18,11 @@ class JulietTest {
         persistenceImpl(CIRXodusKvErsSettings)
     }
 
-    private var db: CIRDatabase = jacodb(settings)
+    private var db: CIRDatabase = cirDatabase(settings)
 
     @BeforeEach
     fun setUpDatabase() {
-        db = jacodb(settings)
+        db = cirDatabase(settings)
     }
 
     // @Test

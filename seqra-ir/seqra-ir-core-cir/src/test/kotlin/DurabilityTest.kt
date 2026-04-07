@@ -3,7 +3,7 @@ import org.seqra.ir.api.cir.cfg.CIRFunctionID
 import org.seqra.ir.api.cir.cfg.MLIRModuleID
 import org.seqra.ir.impl.CIRSettings
 import org.seqra.ir.impl.CIRXodusKvErsSettings
-import org.seqra.ir.impl.jacodb
+import org.seqra.ir.impl.cirDatabase
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -14,18 +14,18 @@ class DurabilityTest {
         persistenceImpl(CIRXodusKvErsSettings)
     }
 
-    private var db: CIRDatabase = jacodb(settings)
+    private var db: CIRDatabase = cirDatabase(settings)
 
     @BeforeEach
     fun setUpDatabase() {
-        db = jacodb(settings)
+        db = cirDatabase(settings)
     }
 
     // @Test
     fun failedParsingTest() {
         val testFile = File("src/test/resources/failingParsingTest/helperModule.cir")
 
-        val db = jacodb(settings)
+        val db = cirDatabase(settings)
         db.loadFiles(testFile)
 
         val cp = db.classpath(listOf(testFile))

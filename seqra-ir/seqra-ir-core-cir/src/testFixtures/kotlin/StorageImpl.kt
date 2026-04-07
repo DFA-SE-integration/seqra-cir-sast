@@ -3,7 +3,7 @@ import org.seqra.ir.api.cir.CIRDatabase
 import org.seqra.ir.api.cir.CIRFeature
 import org.seqra.ir.api.cir.CIRPersistenceImplSettings
 import org.seqra.ir.impl.CIRXodusKvErsSettings
-import org.seqra.ir.impl.jacodb
+import org.seqra.ir.impl.cirDatabase
 import java.nio.file.Files
 
 class WithRestoredDB(vararg features: CIRFeature<*, *>) {
@@ -11,7 +11,7 @@ class WithRestoredDB(vararg features: CIRFeature<*, *>) {
         Files.createTempDirectory("jcdb-").toFile().absolutePath
     }
 
-    private var currDb = jacodb {
+    private var currDb = cirDatabase {
         persistent(
             location = location, implSettings = implSettings
         )
@@ -30,7 +30,7 @@ class WithRestoredDB(vararg features: CIRFeature<*, *>) {
     private fun newDB(before: () -> Unit = {}): CIRDatabase {
         before()
         return runBlocking {
-            jacodb {
+            cirDatabase {
                 persistent(location = location, implSettings = implSettings)
                 installFeatures(*features.toTypedArray())
             }

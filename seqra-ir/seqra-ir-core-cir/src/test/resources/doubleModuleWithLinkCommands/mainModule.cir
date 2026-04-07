@@ -1,7 +1,7 @@
 !s32i = !cir.int<s, 32>
 !void = !cir.void
 #fn_attr = #cir<extra({inline = #cir.inline<no>, nothrow = #cir.nothrow, optnone = #cir.optnone})>
-module @"/Users/sergey/Documents/jacodb/jacodb-core-cir/src/test/resources/doubleModuleWithLinkCommands/mainModule.c" attributes {cir.lang = #cir.lang<c>, cir.sob = #cir.signed_overflow_behavior<undefined>, cir.triple = "arm64-apple-macosx15.0.0", dlti.dl_spec = #dlti.dl_spec<!llvm.ptr<272> = dense<64> : vector<4xi64>, !llvm.ptr<271> = dense<32> : vector<4xi64>, i64 = dense<64> : vector<2xi64>, i128 = dense<128> : vector<2xi64>, !llvm.ptr = dense<64> : vector<4xi64>, i8 = dense<8> : vector<2xi64>, i1 = dense<8> : vector<2xi64>, i32 = dense<32> : vector<2xi64>, i16 = dense<16> : vector<2xi64>, f64 = dense<64> : vector<2xi64>, f16 = dense<16> : vector<2xi64>, !llvm.ptr<270> = dense<32> : vector<4xi64>, f128 = dense<128> : vector<2xi64>, "dlti.stack_alignment" = 128 : i64, "dlti.endianness" = "little">, llvm.data_layout = "e-m:o-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-n32:64-S128-Fn32"} {
+module @"/Users/z.dmitriy/seqra-cir/seqra-ir/seqra-ir-core-cir/src/test/resources/doubleModuleWithLinkCommands/mainModule.c" attributes {cir.lang = #cir.lang<c>, cir.sob = #cir.signed_overflow_behavior<undefined>, cir.triple = "arm64-apple-macosx15.0.0", dlti.dl_spec = #dlti.dl_spec<!llvm.ptr<272> = dense<64> : vector<4xi64>, !llvm.ptr<271> = dense<32> : vector<4xi64>, i64 = dense<64> : vector<2xi64>, i128 = dense<128> : vector<2xi64>, !llvm.ptr = dense<64> : vector<4xi64>, i8 = dense<8> : vector<2xi64>, i1 = dense<8> : vector<2xi64>, i32 = dense<32> : vector<2xi64>, i16 = dense<16> : vector<2xi64>, f64 = dense<64> : vector<2xi64>, f16 = dense<16> : vector<2xi64>, !llvm.ptr<270> = dense<32> : vector<4xi64>, f128 = dense<128> : vector<2xi64>, "dlti.stack_alignment" = 128 : i64, "dlti.endianness" = "little">, llvm.data_layout = "e-m:o-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-n32:64-S128-Fn32"} {
   cir.func no_proto private @source(...) -> !cir.ptr<!void> loc(#loc12)
   cir.func private @sink(!cir.ptr<!void>) loc(#loc13)
   cir.func no_proto @main() -> !s32i extra(#fn_attr) {
@@ -17,7 +17,7 @@ module @"/Users/sergey/Documents/jacodb/jacodb-core-cir/src/test/resources/doubl
     cir.return %6 : !s32i loc(#loc6)
   } loc(#loc14)
 } loc(#loc)
-#loc = loc("/Users/sergey/Documents/jacodb/jacodb-core-cir/src/test/resources/doubleModuleWithLinkCommands/mainModule.c":0:0)
+#loc = loc("/Users/z.dmitriy/seqra-cir/seqra-ir/seqra-ir-core-cir/src/test/resources/doubleModuleWithLinkCommands/mainModule.c":0:0)
 #loc1 = loc("mainModule.c":1:1)
 #loc2 = loc("mainModule.c":1:14)
 #loc3 = loc("mainModule.c":2:1)
