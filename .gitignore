@@ -2,6 +2,10 @@ results/
 **/build/
 **/.libs/
 seqra-internals
+cir-tac
+
+# LLM
+.sisyphus
 
 # Module build timestamps
 .seqra-*
