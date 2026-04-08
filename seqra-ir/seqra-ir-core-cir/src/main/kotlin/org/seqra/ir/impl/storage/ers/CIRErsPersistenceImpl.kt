@@ -228,9 +228,18 @@ class CIRErsPersistenceImpl(private var ers: EntityRelationshipStorage, private 
 
     override fun findFunctionBytecode(classpath: CIRClasspath, functionID: CIRFunctionID): ByteArray? {
         return read { txn ->
-            val function = txn.find(PersistenceEntity.ENTITY_FUNCTION, PersistenceEntity.Function.NAME, functionID.id)
-                .filter { it["ownerId"] in classpath.registeredLocationIds && it.get<FunctionKind>(PersistenceEntity.Function.DEF_OR_DECL) == FunctionKind.DEFINITION }
-                .firstOrNull()
+            val functions = txn.find(
+                PersistenceEntity.ENTITY_FUNCTION,
+                PersistenceEntity.Function.CONSOLIDATED_NAME,
+                functionID.asConsolidatedID()
+            ).filter {
+                it["ownerId"] in classpath.registeredLocationIds &&
+                    it.get<FunctionKind>(PersistenceEntity.Function.DEF_OR_DECL) == FunctionKind.DEFINITION
+            }.toList()
+            if (functions.size >= 2) {
+                throw RuntimeException("Database contains 2 definitions of ${functionID.id} in the single module ${functionID.moduleID}")
+            }
+            val function = functions.firstOrNull()
             function?.getRawBlob(PersistenceEntity.Function.BYTECODE)
         }
     }
@@ -261,6 +270,32 @@ class CIRErsPersistenceImpl(private var ers: EntityRelationshipStorage, private 
                 val moduleName = it.get<String>(PersistenceEntity.Function.MODULE)!!
                 CIRFunctionID(MLIRModuleID(moduleName), functionName)
             }.toList()
+        }
+    }
+
+    override fun findAllDefinedFunctionIds(classpath: CIRClasspath): List<CIRFunctionID> {
+        return read { txn ->
+            classpath.registeredLocationIds.flatMap { locationId ->
+                txn.find(PersistenceEntity.ENTITY_FUNCTION, "ownerId", locationId)
+                    .filter { it.get<FunctionKind>(PersistenceEntity.Function.DEF_OR_DECL) == FunctionKind.DEFINITION }
+                    .map { entity ->
+                        val name = entity.get<String>(PersistenceEntity.Function.NAME)!!
+                        val module = entity.get<String>(PersistenceEntity.Function.MODULE)!!
+                        CIRFunctionID(MLIRModuleID(module), name)
+                    }
+            }
+        }
+    }
+
+    override fun findFunctionsBySymbolName(classpath: CIRClasspath, symbolName: String): List<CIRFunctionSource> {
+        return read { txn ->
+            txn.find(PersistenceEntity.ENTITY_FUNCTION, PersistenceEntity.Function.NAME, symbolName)
+                .filter { it["ownerId"] in classpath.registeredLocationIds }
+                .map { entity ->
+                    val moduleName = entity.get<String>(PersistenceEntity.Function.MODULE)!!
+                    val functionID = CIRFunctionID(MLIRModuleID(moduleName), symbolName)
+                    entity.toFunctionSource(classpath, functionID, sourceLoader)
+                }.toList()
         }
     }
 
@@ -350,4 +385,3 @@ object PersistenceEntity {
         const val BYTECODE = "bytecode"
     }
 }
-

@@ -30,6 +30,7 @@ class CIRClasspathImpl(
     override val registeredLocationIds: Set<Long> = registeredLocations.map { it.id }.toSet()
 
     private val featuresChain = CIRFeaturesChain(features + CIRClasspathFeatureImpl())
+    private val functionsBySymbolNameCache = mutableMapOf<String, CIRFunction?>()
 
     init {
         assert(registeredLocationIds.isNotEmpty())
@@ -43,6 +44,44 @@ class CIRClasspathImpl(
         featuresChain.run<CIRClasspathExtFeature, CIRResolvedFunctionResult> {
             it.tryFindFunction(functionID)
         }?.function
+
+    override fun findFunctionBySymbolName(symbolName: String): CIRFunction? {
+        synchronized(functionsBySymbolNameCache) {
+            if (functionsBySymbolNameCache.containsKey(symbolName)) {
+                return functionsBySymbolNameCache[symbolName]
+            }
+
+            val resolvedFunction = resolveFunctionBySymbolName(symbolName)
+            functionsBySymbolNameCache[symbolName] = resolvedFunction
+            return resolvedFunction
+        }
+    }
+
+    private fun resolveFunctionBySymbolName(symbolName: String): CIRFunction? {
+        val sourcesByFunctionId = db.persistence.findFunctionsBySymbolName(this, symbolName)
+            .groupBy { it.functionID }
+        if (sourcesByFunctionId.isEmpty()) {
+            return null
+        }
+
+        val preferredSources = sourcesByFunctionId.mapValues { (_, variants) ->
+            variants.firstOrNull { it.bytecodeNode != null } ?: variants.first()
+        }
+        val definitionSources = preferredSources.values.filter { it.bytecodeNode != null }
+
+        val resolvedFunctionId = when {
+            definitionSources.size == 1 -> definitionSources.single().functionID
+            definitionSources.isEmpty() && preferredSources.size == 1 -> preferredSources.values.single().functionID
+            else -> {
+                logger.warn {
+                    "Ambiguous function resolution for symbol '$symbolName': ${preferredSources.values.map { it.functionID }}"
+                }
+                null
+            }
+        } ?: return null
+
+        return findFunctionOrNull(resolvedFunctionId)
+    }
 
     override fun findTypeOrNull(typeID: MLIRTypeID) = featuresChain.run<CIRClasspathExtFeature, CIRResolvedTypeResult> {
         it.tryFindType(typeID)

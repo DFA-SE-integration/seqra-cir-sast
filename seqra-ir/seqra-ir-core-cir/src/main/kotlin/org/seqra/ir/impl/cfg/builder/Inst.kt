@@ -275,6 +275,7 @@ fun buildCIRCallOpInst(inst: Op.CIRCallOp, id: MLIROpID, location: CIRInstLocati
         buildCIRCallingConv(inst.callingConv),
         buildCIRExtraFuncAttributesAttr(inst.extraAttrs),
         if (inst.hasResult()) buildMLIRTypeID(inst.result) else null,
+        if (inst.hasCallee()) CIRCalleeRef(inst.callee.rootReference.value, location.method.classpath) else null,
 )
 
 fun buildCIRCatchParamOpInst(inst: Op.CIRCatchParamOp, id: MLIROpID, location: CIRInstLocation) =
@@ -551,6 +552,7 @@ fun buildCIRTryCallOpInst(inst: Op.CIRTryCallOp, id: MLIROpID, location: CIRInst
         buildMLIRBlockID(inst.cont),
         buildMLIRBlockID(inst.landingPad),
         if (inst.hasResult()) buildMLIRTypeID(inst.result) else null,
+        if (inst.hasCallee()) CIRCalleeRef(inst.callee.rootReference.value, location.method.classpath) else null,
 )
 
 fun buildCIRUnreachableOpInst(inst: Op.CIRUnreachableOp, id: MLIROpID, location: CIRInstLocation) =
