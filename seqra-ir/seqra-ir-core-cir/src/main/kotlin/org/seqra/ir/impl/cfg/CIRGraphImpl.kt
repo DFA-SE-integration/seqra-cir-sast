@@ -12,7 +12,7 @@ class CIRGraphImpl(
     override val exits: List<CIRInst> by lazy { instructions.filterIsInstance<CIRTerminatingInst>() }
 
     override val instructions: List<CIRInst>
-        get() = function.blocks.blocks.flatMap { it.instructions }
+        get() = function.allInstructions
 
     private val predecessorMap: Map<CIRInst, Set<CIRInst>>
     private val successorMap: Map<CIRInst, Set<CIRInst>>
@@ -60,6 +60,38 @@ class CIRGraphImpl(
 
                             successorsPreparingMap[current]!!.add(destInst)
                             predecessorsPreparingMap[destInst]!!.add(current)
+                        }
+
+                        is CIRTryCallOpInst -> {
+                            val contInst = blockIdMap[current.cont]!!.instructions.first()
+                            val landingPadInst = blockIdMap[current.landingPad]!!.instructions.first()
+
+                            successorsPreparingMap.putIfAbsent(current, mutableSetOf())
+                            successorsPreparingMap[current]!!.add(contInst)
+                            successorsPreparingMap[current]!!.add(landingPadInst)
+
+                            predecessorsPreparingMap.putIfAbsent(contInst, mutableSetOf())
+                            predecessorsPreparingMap[contInst]!!.add(current)
+
+                            predecessorsPreparingMap.putIfAbsent(landingPadInst, mutableSetOf())
+                            predecessorsPreparingMap[landingPadInst]!!.add(current)
+                        }
+
+                        is CIRSwitchFlatOpInst -> {
+                            successorsPreparingMap.putIfAbsent(current, mutableSetOf())
+
+                            val destinations = buildList {
+                                add(current.defaultDestination)
+                                addAll(current.caseDestinations)
+                            }
+
+                            destinations.forEach { destination ->
+                                val destInst = blockIdMap[destination]!!.instructions.first()
+                                successorsPreparingMap[current]!!.add(destInst)
+
+                                predecessorsPreparingMap.putIfAbsent(destInst, mutableSetOf())
+                                predecessorsPreparingMap[destInst]!!.add(current)
+                            }
                         }
                     }
                 }

@@ -28,11 +28,23 @@ class CIRFunctionImpl(
         get() = typeResolver.parameterTypes().mapIndexed { idx, typeId -> CIRParameterImpl(typeId, idx, this) }
 
     // Graphs
-    override fun flowGraph() =
+    private val cachedFlowGraph by lazy {
         featuresChain.run<CIRFunctionExtFeature, CIRFunctionExtFeature.CIRFlowGraphResult> { it.flowGraph(this) }!!.flowGraph
+    }
 
-    override val blocks: CIRBlockList
-        get() = featuresChain.run<CIRFunctionExtFeature, CIRFunctionExtFeature.CIRBlockListResult> { it.blockList(this) }!!.blockList
+    override fun flowGraph() = cachedFlowGraph
+
+    override val blocks: CIRBlockList by lazy {
+        featuresChain.run<CIRFunctionExtFeature, CIRFunctionExtFeature.CIRBlockListResult> { it.blockList(this) }!!.blockList
+    }
+
+    override val allInstructions: List<CIRInst> by lazy {
+        val flattenedInstructions = ArrayList<CIRInst>(blocks.blocks.sumOf { it.instructions.size })
+        blocks.blocks.forEach { block ->
+            flattenedInstructions.addAll(block.instructions.instructions)
+        }
+        flattenedInstructions
+    }
 
     // Utils
     override fun <T> withIRNode(body: (ByteArray?) -> T): T {
