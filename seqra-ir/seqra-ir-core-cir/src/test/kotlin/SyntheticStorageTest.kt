@@ -1,4 +1,5 @@
 import org.seqra.ir.api.cir.CIRDatabase
+import org.seqra.ir.api.cir.cfg.CIRCallOpInst
 import org.seqra.ir.api.cir.cfg.CIRFunctionID
 import org.seqra.ir.api.cir.cfg.MLIRModuleID
 import org.seqra.ir.impl.CIRSettings
@@ -10,6 +11,8 @@ import samples.doubleModuleHelperFile
 import samples.doubleModuleMainFile
 import samples.singleModuleFile
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 
 class SyntheticStorageTest {
     private val settings = CIRSettings().apply {
@@ -69,5 +72,49 @@ class SyntheticStorageTest {
         for (param in sinkFunction.parameters) {
             println(param)
         }
+    }
+
+    @Test
+    fun functionCachesFlattenedInstructionsAndFlowGraph() {
+        db.loadFiles(listOf(doubleModuleMainFile, doubleModuleHelperFile))
+
+        val cp = db.classpath(listOf(doubleModuleMainFile, doubleModuleHelperFile))
+        val mainFunction = cp.findFunctionOrNull(CIRFunctionID(MLIRModuleID("mainModule"), "main"))!!
+
+        assertSame(mainFunction.blocks, mainFunction.blocks)
+        assertSame(mainFunction.allInstructions, mainFunction.allInstructions)
+        assertSame(mainFunction.flowGraph(), mainFunction.flowGraph())
+
+        val flattenedFromBlocks = mainFunction.blocks.blocks.flatMap { it.instructions.instructions }
+        assertEquals(flattenedFromBlocks.size, mainFunction.allInstructions.size)
+        mainFunction.allInstructions.forEachIndexed { index, instruction ->
+            assertEquals(index, instruction.location.index)
+            assertSame(flattenedFromBlocks[index], instruction)
+        }
+    }
+
+    @Test
+    fun symbolLookupPrefersConcreteDefinitionsAndResolvesCallSites() {
+        db.loadFiles(listOf(doubleModuleMainFile, doubleModuleHelperFile))
+
+        val cp = db.classpath(listOf(doubleModuleMainFile, doubleModuleHelperFile))
+        val sourceFunction = assertNotNull(cp.findFunctionBySymbolName("source"))
+        val sinkFunction = assertNotNull(cp.findFunctionBySymbolName("sink"))
+
+        assertEquals("helperModule", sourceFunction.id.moduleID.id)
+        assertEquals("helperModule", sinkFunction.id.moduleID.id)
+
+        val mainFunction = cp.findFunctionOrNull(CIRFunctionID(MLIRModuleID("mainModule"), "main"))!!
+        val resolvedCallees = mainFunction.allInstructions
+            .filterIsInstance<CIRCallOpInst>()
+            .mapNotNull { it.calleeRef?.function?.id }
+
+        assertEquals(
+            listOf(
+                CIRFunctionID(MLIRModuleID("helperModule"), "source"),
+                CIRFunctionID(MLIRModuleID("helperModule"), "sink"),
+            ),
+            resolvedCallees,
+        )
     }
 }
