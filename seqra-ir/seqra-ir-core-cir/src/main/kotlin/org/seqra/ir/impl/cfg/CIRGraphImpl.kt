@@ -12,7 +12,7 @@ class CIRGraphImpl(
     override val exits: List<CIRInst> by lazy { instructions.filterIsInstance<CIRTerminatingInst>() }
 
     override val instructions: List<CIRInst>
-        get() = function.blocks.blocks.flatMap { it.instructions }
+        get() = function.allInstructions
 
     private val predecessorMap: Map<CIRInst, Set<CIRInst>>
     private val successorMap: Map<CIRInst, Set<CIRInst>>
