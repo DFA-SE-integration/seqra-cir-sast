@@ -8,6 +8,9 @@ object SeqraUtilDependency : SeqraDependency {
     val Project.seqraUtilJvm: String
         get() = propertyDep(group = "org.seqra.utils", name = "seqra-jvm-util")
 
+    val Project.seqraUtilCir: String
+        get() = propertyDep(group = "org.seqra.utils", name = "seqra-cir-util")
+
     val Project.seqraUtilCli: String
             get() = propertyDep(group = "org.seqra.utils", name = "cli-util")
 
