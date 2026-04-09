@@ -29,6 +29,7 @@ interface CIRFunction : CommonMethod {
     //
     val id: CIRFunctionID
     val blocks: CIRBlockList
+    val allInstructions: List<CIRInst>
     val info: CIRFuncOp
     val classpath: CIRClasspath
 
