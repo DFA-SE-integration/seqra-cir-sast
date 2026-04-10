@@ -12,7 +12,7 @@ interface LanguageManager {
     fun isEmpty(method: CommonMethod): Boolean
     fun getCallExpr(inst: CommonInst): CommonCallExpr?
     fun producesExceptionalControlFlow(inst: CommonInst): Boolean
-    fun getCalleeMethod(callExpr: CommonCallExpr): CommonMethod
+    fun getCalleeMethod(callExpr: CommonCallExpr): List<CommonMethod>
 
     val methodContextSerializer: MethodContextSerializer
 }
