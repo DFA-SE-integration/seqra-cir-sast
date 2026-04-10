@@ -46,9 +46,9 @@ open class JIRLanguageManager(val cp: JIRClasspath) : LanguageManager {
         return inst is JIRThrowInst
     }
 
-    override fun getCalleeMethod(callExpr: CommonCallExpr): JIRMethod {
+    override fun getCalleeMethod(callExpr: CommonCallExpr): List<JIRMethod> {
         jIRDowncast<JIRCallExpr>(callExpr)
-        return callExpr.method.method
+        return listOf(callExpr.method.method)
     }
 
     override val methodContextSerializer = JIRMethodContextSerializer(cp)
