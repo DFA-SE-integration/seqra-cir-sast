@@ -21,6 +21,7 @@ interface CIRClasspath : Closeable, CommonProject {
 
     // Getters for functions
     fun findFunctionOrNull(functionID: CIRFunctionID): CIRFunction?
+    fun findFunctionBySymbolName(symbolName: String): CIRFunction?
 
     // Getters for types
     fun findTypeOrNull(typeID: MLIRTypeID): MLIRType?
