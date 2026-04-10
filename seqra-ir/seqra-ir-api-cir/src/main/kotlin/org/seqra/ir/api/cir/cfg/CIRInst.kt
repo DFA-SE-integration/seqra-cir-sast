@@ -156,7 +156,12 @@ data class CIRCallOpInst(
     val extraAttrs: CIRExtraFuncAttributesAttr,
 
     val result: MLIRTypeID?,
-) : CIRInst
+
+    val calleeRef: CIRCalleeRef?,
+) : CIRInst, CommonCallExpr {
+    override val typeName: String get() = result?.typeName ?: "void"
+    override val args: List<CommonValue> get() = arg_ops
+}
 
 data class CIRCatchParamOpInst(
     override val location: CIRInstLocation,
@@ -477,7 +482,12 @@ data class CIRTryCallOpInst(
     val landingPad: MLIRBlockID,
 
     val result: MLIRTypeID?,
-) : CIRInst
+
+    val calleeRef: CIRCalleeRef?,
+) : CIRInst, CommonCallExpr {
+    override val typeName: String get() = result?.typeName ?: "void"
+    override val args: List<CommonValue> get() = arg_ops
+}
 
 data class CIRUnreachableOpInst(
     override val location: CIRInstLocation,
