@@ -29,6 +29,7 @@ interface CIRDatabasePersistence : Closeable {
     fun findFunctionBytecode(classpath: CIRClasspath, functionID: CIRFunctionID): ByteArray?
 
     fun findFunctionsByType(classpath: CIRClasspath, typeID: MLIRTypeID): List<CIRFunctionID>
+    fun findFunctionSourcesBySymbolName(classpath: CIRClasspath, symbolName: String): List<CIRFunctionSource>
 
     // Globals
     fun findGlobalSources(classpath: CIRClasspath, globalID: CIRGlobalID): List<CIRGlobalSource>

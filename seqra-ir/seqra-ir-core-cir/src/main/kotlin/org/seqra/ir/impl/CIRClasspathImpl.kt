@@ -30,6 +30,7 @@ class CIRClasspathImpl(
     override val registeredLocationIds: Set<Long> = registeredLocations.map { it.id }.toSet()
 
     private val featuresChain = CIRFeaturesChain(features + CIRClasspathFeatureImpl())
+    private val functionsBySymbolNameCache = mutableMapOf<String, CIRFunction?>()
 
     init {
         assert(registeredLocationIds.isNotEmpty())
@@ -43,6 +44,18 @@ class CIRClasspathImpl(
         featuresChain.run<CIRClasspathExtFeature, CIRResolvedFunctionResult> {
             it.tryFindFunction(functionID)
         }?.function
+
+    override fun findFunctionBySymbolName(symbolName: String): CIRFunction? {
+        if (functionsBySymbolNameCache.containsKey(symbolName)) {
+            return functionsBySymbolNameCache[symbolName]
+        }
+
+        val sources = db.persistence.findFunctionSourcesBySymbolName(this, symbolName)
+        val resolvedSource = selectDefinitionSource(symbolName, sources) ?: return null
+        val resolvedFunction = newFunction(resolvedSource)
+        functionsBySymbolNameCache[symbolName] = resolvedFunction
+        return resolvedFunction
+    }
 
     override fun findTypeOrNull(typeID: MLIRTypeID) = featuresChain.run<CIRClasspathExtFeature, CIRResolvedTypeResult> {
         it.tryFindType(typeID)
@@ -103,6 +116,40 @@ class CIRClasspathImpl(
 
         override fun event(result: Any): CIRFeatureEvent {
             return CIRFeatureEventImpl(this, result)
+        }
+    }
+
+    private fun selectDefinitionSource(
+        symbolName: String,
+        sources: List<CIRFunctionSource>,
+    ): CIRFunctionSource? {
+        if (sources.isEmpty()) {
+            return null
+        }
+
+        val definitionSources = selectPreferredSources(sources)
+            .filter { it.bytecodeNode != null }
+
+        return when {
+            definitionSources.size == 1 -> definitionSources.single()
+            definitionSources.size > 1 -> {
+                logAmbiguousFunctionResolution(symbolName, definitionSources)
+                null
+            }
+
+            else -> null
+        }
+    }
+
+    private fun selectPreferredSources(sources: List<CIRFunctionSource>): Collection<CIRFunctionSource> {
+        return sources.groupBy { it.functionID }
+            .mapValues { (_, variants) -> variants.firstOrNull { it.bytecodeNode != null } ?: variants.first() }
+            .values
+    }
+
+    private fun logAmbiguousFunctionResolution(symbolName: String, sources: Collection<CIRFunctionSource>) {
+        logger.warn {
+            "Ambiguous function resolution for symbol '$symbolName': ${sources.map { it.functionID }}"
         }
     }
 }
