@@ -264,6 +264,22 @@ class CIRErsPersistenceImpl(private var ers: EntityRelationshipStorage, private 
         }
     }
 
+    override fun findFunctionSourcesBySymbolName(classpath: CIRClasspath, symbolName: String): List<CIRFunctionSource> {
+        return read { txn ->
+            txn.find(PersistenceEntity.ENTITY_FUNCTION, PersistenceEntity.Function.NAME, symbolName)
+                .filter {
+                    it["ownerId"] in classpath.registeredLocationIds &&
+                        it.get<FunctionKind>(PersistenceEntity.Function.DEF_OR_DECL) == FunctionKind.DEFINITION
+                }
+                .map { entity ->
+                    val moduleName = entity.get<String>(PersistenceEntity.Function.MODULE)!!
+                    val functionID = CIRFunctionID(MLIRModuleID(moduleName), symbolName)
+                    entity.toFunctionSource(classpath, functionID, sourceLoader)
+                }
+                .toList()
+        }
+    }
+
 
     override fun close() {
         try {
@@ -350,4 +366,3 @@ object PersistenceEntity {
         const val BYTECODE = "bytecode"
     }
 }
-
