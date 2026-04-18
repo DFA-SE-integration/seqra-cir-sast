@@ -12,6 +12,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class CIRDatabaseImpl(private val settings: CIRSettings, private val sourceLoader: CIRSourceLoader) : CIRDatabase {
     override val persistence: CIRDatabasePersistence
+    override val features: List<CIRFeature<*, *>> get() = featuresRegistry.features
+
+    internal val featuresRegistry = CIRFeaturesRegistry(settings.features).also { it.bind(this) }
+
     private val isClosed = AtomicBoolean()
     private val locationsRegistry: LocationsRegistry
     private val projectRegistry: PersistentProjectRegistry
@@ -72,7 +76,6 @@ class CIRDatabaseImpl(private val settings: CIRSettings, private val sourceLoade
         val persistenceId = settings.persistenceId!!
         val persistenceSPI = CIRDatabasePersistenceSPI.getProvider(persistenceId)
         persistence = persistenceSPI.newPersistence(settings, sourceLoader)
-//        featuresRegistry = FeaturesRegistry(settings.features).apply { bind(this) }
         locationsRegistry = persistenceSPI.newLocationsRegistry(this)
         projectRegistry = PersistentProjectRegistry(this)
     }
@@ -105,12 +108,18 @@ class CIRDatabaseImpl(private val settings: CIRSettings, private val sourceLoade
     }
 
     private fun List<RegisteredLocation>.process(createIndexes: Boolean): List<RegisteredLocation> {
-        map { location ->
+        featuresRegistry.broadcast(
+            CIRInternalSignal.BeforeIndexing(settings.persistenceSettings.persistenceClearOnStart ?: false)
+        )
+        forEach { location ->
             val sources = arrayListOf<CIRModuleSource>()
             location.cirLocation?.modules?.forEach { (_, content) ->
                 sources.add(CIRModuleSourceImpl(sourceLoader.loadModuleFromBytes(content), location))
             }
             persistence.persist(location, sources)
+            if (sources.isNotEmpty()) {
+                featuresRegistry.index(location, sources)
+            }
         }
         if (createIndexes) {
             persistence.createIndexes()
@@ -119,8 +128,21 @@ class CIRDatabaseImpl(private val settings: CIRSettings, private val sourceLoade
         return this
     }
 
+    internal fun broadcastAfterIndexing() {
+        featuresRegistry.broadcast(CIRInternalSignal.AfterIndexing)
+    }
+
+    internal fun broadcastLocationRemoved(location: RegisteredLocation) {
+        featuresRegistry.broadcast(CIRInternalSignal.LocationRemoved(location))
+    }
+
+    internal fun broadcastClosed() {
+        featuresRegistry.broadcast(CIRInternalSignal.Closed)
+    }
+
     override fun close() {
         isClosed.set(true)
+        broadcastClosed()
         persistence.close()
     }
 }
