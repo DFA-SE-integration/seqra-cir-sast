@@ -137,7 +137,7 @@ class PersistentLocationsRegistry(private val jcdb: CIRDatabaseImpl) : Locations
                 entity?.set(BytecodeLocationEntity.STATE, LocationState.PROCESSED.ordinal)
             }
         }
-//        jcdb.featuresRegistry.broadcast(JcInternalSignal.AfterIndexing)
+        jcdb.broadcastAfterIndexing()
     }
 
     override fun newSnapshot(classpathSetLocations: List<RegisteredLocation>): LocationsRegistrySnapshot {
@@ -147,9 +147,7 @@ class PersistentLocationsRegistry(private val jcdb: CIRDatabaseImpl) : Locations
     }
 
     private fun deprecate(txn: Transaction, locations: List<RegisteredLocation>) {
-//        locations.forEach {
-//            jcdb.featuresRegistry.broadcast(JcInternalSignal.LocationRemoved(it))
-//        }
+        locations.forEach { jcdb.broadcastLocationRemoved(it) }
         val locationIds = locations.map { it.id }.toSet()
         txn.all(BytecodeLocationEntity.BYTECODE_LOCATION_ENTITY_TYPE).filter { it.id.instanceId in locationIds }
             .forEach { it.delete() }
@@ -187,7 +185,6 @@ class PersistentLocationsRegistry(private val jcdb: CIRDatabaseImpl) : Locations
     }
 
     override fun close() {
-//        jcdb.featuresRegistry.broadcast(JcInternalSignal.Closed)
         runtimeLocations = emptyList()
     }
 }
