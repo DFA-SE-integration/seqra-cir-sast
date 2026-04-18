@@ -55,7 +55,7 @@ class RPCModuleBuilder(private val moduleId: String) {
     }
 
     private fun String.toModuleID(): Setup.MLIRModuleID {
-        return Setup.MLIRModuleID.newBuilder().setId(this@String).build()
+        return Setup.MLIRModuleID.newBuilder().setId(this).build()
     }
 }
 
