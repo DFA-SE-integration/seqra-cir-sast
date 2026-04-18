@@ -11,6 +11,12 @@ object SeqraIrDependency : SeqraDependency {
             name = "seqra-ir-core"
         )
 
+    val Project.seqra_ir_core_cir
+        get() = propertyDep(
+            group = "org.seqra",
+            name = "seqra-ir-core-cir"
+        )
+
     val Project.seqra_ir_api_common
         get() = propertyDep(
             group = "org.seqra",
@@ -21,6 +27,12 @@ object SeqraIrDependency : SeqraDependency {
         get() = propertyDep(
             group = "org.seqra",
             name = "seqra-ir-api-jvm"
+        )
+
+    val Project.seqra_ir_api_cir
+        get() = propertyDep(
+            group = "org.seqra",
+            name = "seqra-ir-api-cir"
         )
 
     val Project.seqra_ir_api_storage
