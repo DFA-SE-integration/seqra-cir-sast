@@ -3,6 +3,7 @@ package org.seqra.ir.api.cir.cfg
 import org.seqra.ir.api.cir.CIRClasspath
 import org.seqra.ir.api.common.CommonMethod
 import org.seqra.ir.api.common.CommonMethodParameter
+import org.seqra.ir.api.common.cfg.BytecodeGraph
 import org.seqra.ir.api.common.cfg.CommonInst
 import org.seqra.ir.api.common.cfg.ControlFlowGraph
 
@@ -41,7 +42,7 @@ interface CIRFunction : CommonMethod {
     override val parameters: List<CIRFunctionParameter>
     override val returnType: MLIRTypeID
 
-    override fun flowGraph(): ControlFlowGraph<CIRInst>
+    override fun flowGraph(): BytecodeGraph<CIRInst>
 }
 
 data class CIRFuncOp(
