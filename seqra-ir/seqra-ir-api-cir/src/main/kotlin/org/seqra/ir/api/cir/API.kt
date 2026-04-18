@@ -48,6 +48,11 @@ interface CIRDatabasePersistence : Closeable {
 interface CIRDatabase : Closeable {
     val persistence: CIRDatabasePersistence
 
+    /** Features installed via [CIRSettings.installFeatures] (indexing + query). */
+    val features: List<CIRFeature<*, *>>
+
+    fun isInstalled(feature: CIRFeature<*, *>): Boolean = features.contains(feature)
+
     fun refresh()
 
     // Load the project consisting of the given files
