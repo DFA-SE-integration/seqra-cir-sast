@@ -10,7 +10,7 @@ import org.seqra.dataflow.ap.ifds.trace.MethodSequentPrecondition.PreconditionFa
 import org.seqra.dataflow.ap.ifds.trace.MethodSequentPrecondition.SequentPrecondition
 import org.seqra.dataflow.ap.ifds.trace.MethodSequentPrecondition.SequentPreconditionFacts
 import org.seqra.dataflow.ap.ifds.trace.TaintRulePrecondition
-import org.seqra.dataflow.configuration.jvm.ConstantTrue
+import org.seqra.dataflow.configuration.core.ConstantTrue
 import org.seqra.dataflow.jvm.ap.ifds.MethodFlowFunctionUtils
 import org.seqra.dataflow.jvm.ap.ifds.MethodFlowFunctionUtils.accessPathBase
 import org.seqra.dataflow.jvm.ap.ifds.analysis.JIRMethodAnalysisContext

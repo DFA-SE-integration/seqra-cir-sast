@@ -4,7 +4,7 @@ import org.seqra.ir.api.common.CommonMethod
 import org.seqra.ir.api.common.cfg.CommonInst
 import org.seqra.ir.api.jvm.JIRField
 import org.seqra.ir.api.jvm.JIRMethod
-import org.seqra.dataflow.configuration.jvm.TaintConfigurationItem
+import org.seqra.dataflow.configuration.core.TaintConfigurationItem
 import org.seqra.dataflow.jvm.ap.ifds.taint.TaintRulesProvider
 import org.seqra.jvm.sast.dataflow.rules.TaintConfiguration
 

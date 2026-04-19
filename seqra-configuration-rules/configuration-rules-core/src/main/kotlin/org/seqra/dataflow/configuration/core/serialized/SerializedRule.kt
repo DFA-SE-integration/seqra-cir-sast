@@ -1,4 +1,4 @@
-package org.seqra.dataflow.configuration.jvm.serialized
+package org.seqra.dataflow.configuration.core.serialized
 
 import kotlinx.serialization.Serializable
 import org.seqra.dataflow.configuration.CommonTaintConfigurationSinkMeta

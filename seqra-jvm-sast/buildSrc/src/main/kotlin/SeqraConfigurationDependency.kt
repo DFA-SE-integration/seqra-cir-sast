@@ -6,5 +6,5 @@ object SeqraConfigurationDependency : SeqraDependency {
     override val versionProperty: String = "seqraConfigVersion"
 
     val Project.seqraRulesJvm: String
-        get() = propertyDep(group = "org.seqra.configuration", name = "configuration-rules-jvm")
+        get() = propertyDep(group = "org.seqra.configuration", name = "configuration-rules-core")
 }

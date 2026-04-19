@@ -1,4 +1,4 @@
-package org.seqra.dataflow.configuration.jvm
+package org.seqra.dataflow.configuration.core
 
 import org.seqra.dataflow.configuration.CommonTaintAction
 import org.seqra.dataflow.configuration.CommonTaintAssignAction

@@ -16,7 +16,7 @@ import org.seqra.dataflow.ap.ifds.analysis.MethodCallFlowFunction.CallToStartZFa
 import org.seqra.dataflow.ap.ifds.analysis.MethodCallFlowFunction.CallToStartZeroFact
 import org.seqra.dataflow.ap.ifds.analysis.MethodCallFlowFunction.SideEffectRequirement
 import org.seqra.dataflow.ap.ifds.analysis.MethodCallFlowFunction.Unchanged
-import org.seqra.dataflow.configuration.jvm.TaintMethodSource
+import org.seqra.dataflow.configuration.core.TaintMethodSource
 import org.seqra.dataflow.jvm.ap.ifds.CallPositionToJIRValueResolver
 import org.seqra.dataflow.jvm.ap.ifds.JIRFactAwareConditionEvaluator
 import org.seqra.dataflow.jvm.ap.ifds.JIRMarkAwareConditionRewriter

@@ -14,10 +14,10 @@ import org.seqra.dataflow.ap.ifds.trace.MethodCallPrecondition.PassRuleCondition
 import org.seqra.dataflow.ap.ifds.trace.MethodCallPrecondition.PreconditionFactsForInitialFact
 import org.seqra.dataflow.ap.ifds.trace.TaintRulePrecondition
 import org.seqra.dataflow.ap.ifds.trace.TaintRulePrecondition.PassRuleCondition
-import org.seqra.dataflow.configuration.jvm.ContainsMark
-import org.seqra.dataflow.configuration.jvm.CopyAllMarks
-import org.seqra.dataflow.configuration.jvm.CopyMark
-import org.seqra.dataflow.configuration.jvm.TaintMark
+import org.seqra.dataflow.configuration.core.ContainsMark
+import org.seqra.dataflow.configuration.core.CopyAllMarks
+import org.seqra.dataflow.configuration.core.CopyMark
+import org.seqra.dataflow.configuration.core.TaintMark
 import org.seqra.dataflow.jvm.ap.ifds.CallPositionToJIRValueResolver
 import org.seqra.dataflow.jvm.ap.ifds.JIRMarkAwareConditionExpr
 import org.seqra.dataflow.jvm.ap.ifds.JIRMarkAwareConditionRewriter

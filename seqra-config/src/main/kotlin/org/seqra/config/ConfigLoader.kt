@@ -1,8 +1,8 @@
 package org.seqra.config
 
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedRule
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedTaintConfig
-import org.seqra.dataflow.configuration.jvm.serialized.loadSerializedTaintConfig
+import org.seqra.dataflow.configuration.core.serialized.SerializedRule
+import org.seqra.dataflow.configuration.core.serialized.SerializedTaintConfig
+import org.seqra.dataflow.configuration.core.serialized.loadSerializedTaintConfig
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Files
