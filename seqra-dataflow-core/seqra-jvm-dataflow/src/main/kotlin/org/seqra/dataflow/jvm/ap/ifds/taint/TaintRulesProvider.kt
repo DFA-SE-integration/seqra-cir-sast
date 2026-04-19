@@ -4,14 +4,14 @@ import org.seqra.ir.api.common.CommonMethod
 import org.seqra.ir.api.common.cfg.CommonInst
 import org.seqra.ir.api.jvm.JIRField
 import org.seqra.dataflow.configuration.CommonTaintRulesProvider
-import org.seqra.dataflow.configuration.jvm.TaintCleaner
-import org.seqra.dataflow.configuration.jvm.TaintEntryPointSource
-import org.seqra.dataflow.configuration.jvm.TaintMethodEntrySink
-import org.seqra.dataflow.configuration.jvm.TaintMethodExitSink
-import org.seqra.dataflow.configuration.jvm.TaintMethodSink
-import org.seqra.dataflow.configuration.jvm.TaintMethodSource
-import org.seqra.dataflow.configuration.jvm.TaintPassThrough
-import org.seqra.dataflow.configuration.jvm.TaintStaticFieldSource
+import org.seqra.dataflow.configuration.core.TaintCleaner
+import org.seqra.dataflow.configuration.core.TaintEntryPointSource
+import org.seqra.dataflow.configuration.core.TaintMethodEntrySink
+import org.seqra.dataflow.configuration.core.TaintMethodExitSink
+import org.seqra.dataflow.configuration.core.TaintMethodSink
+import org.seqra.dataflow.configuration.core.TaintMethodSource
+import org.seqra.dataflow.configuration.core.TaintPassThrough
+import org.seqra.dataflow.configuration.core.TaintStaticFieldSource
 
 interface TaintRulesProvider : CommonTaintRulesProvider {
     fun entryPointRulesForMethod(method: CommonMethod): Iterable<TaintEntryPointSource>

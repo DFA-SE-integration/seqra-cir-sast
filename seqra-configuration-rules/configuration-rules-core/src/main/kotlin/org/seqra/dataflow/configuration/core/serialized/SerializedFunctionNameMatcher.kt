@@ -1,4 +1,4 @@
-package org.seqra.dataflow.configuration.jvm.serialized
+package org.seqra.dataflow.configuration.core.serialized
 
 import com.charleskorn.kaml.YamlContentPolymorphicSerializer
 import com.charleskorn.kaml.YamlMap

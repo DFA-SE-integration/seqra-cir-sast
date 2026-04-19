@@ -1,4 +1,4 @@
-package org.seqra.dataflow.configuration.jvm
+package org.seqra.dataflow.configuration.core
 
 import org.seqra.ir.api.common.CommonMethod
 import org.seqra.ir.api.jvm.JIRField

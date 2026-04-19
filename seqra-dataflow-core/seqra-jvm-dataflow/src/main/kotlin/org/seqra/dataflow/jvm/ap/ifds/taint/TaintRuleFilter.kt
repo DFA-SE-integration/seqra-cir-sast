@@ -1,6 +1,6 @@
 package org.seqra.dataflow.jvm.ap.ifds.taint
 
-import org.seqra.dataflow.configuration.jvm.TaintConfigurationItem
+import org.seqra.dataflow.configuration.core.TaintConfigurationItem
 
 
 fun interface TaintRuleFilter {

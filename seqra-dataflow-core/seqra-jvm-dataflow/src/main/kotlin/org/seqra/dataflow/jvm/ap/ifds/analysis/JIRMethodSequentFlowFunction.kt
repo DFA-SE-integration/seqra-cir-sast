@@ -10,7 +10,7 @@ import org.seqra.dataflow.ap.ifds.access.InitialFactAp
 import org.seqra.dataflow.ap.ifds.analysis.MethodSequentFlowFunction
 import org.seqra.dataflow.ap.ifds.analysis.MethodSequentFlowFunction.Sequent
 import org.seqra.dataflow.ap.ifds.taint.TaintSinkTracker.VulnerabilityTriggerPosition
-import org.seqra.dataflow.configuration.jvm.ConstantTrue
+import org.seqra.dataflow.configuration.core.ConstantTrue
 import org.seqra.dataflow.jvm.ap.ifds.CalleePositionToJIRValueResolver
 import org.seqra.dataflow.jvm.ap.ifds.JIRMarkAwareConditionRewriter
 import org.seqra.dataflow.jvm.ap.ifds.MethodFlowFunctionUtils

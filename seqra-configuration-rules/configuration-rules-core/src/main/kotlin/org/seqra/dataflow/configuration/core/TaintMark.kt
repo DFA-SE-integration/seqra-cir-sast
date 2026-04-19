@@ -1,4 +1,4 @@
-package org.seqra.dataflow.configuration.jvm
+package org.seqra.dataflow.configuration.core
 
 @Suppress("EqualsOrHashCode")
 data class TaintMark(val name: String) {

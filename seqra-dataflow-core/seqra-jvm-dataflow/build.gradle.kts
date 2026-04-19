@@ -1,4 +1,4 @@
-import SeqraConfigurationDependency.seqraRulesJvm
+import SeqraConfigurationDependency.seqraRulesCore
 import SeqraIrDependency.seqra_ir_api_jvm
 import SeqraIrDependency.seqra_ir_api_storage
 import SeqraIrDependency.seqra_ir_core
@@ -23,7 +23,7 @@ dependencies {
     api(project(":seqra-dataflow"))
     implementation(seqraUtilCommon)
     implementation(seqraUtilJvm)
-    implementation(seqraRulesJvm)
+    implementation(seqraRulesCore)
 
     implementation(seqra_ir_api_jvm)
     implementation(seqra_ir_core)

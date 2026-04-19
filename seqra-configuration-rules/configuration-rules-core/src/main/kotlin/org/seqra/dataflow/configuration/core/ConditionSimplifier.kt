@@ -1,4 +1,4 @@
-package org.seqra.dataflow.configuration.jvm
+package org.seqra.dataflow.configuration.core
 
 object ConditionSimplifier : ConditionVisitor<Condition> {
     override fun visit(condition: And): Condition {
