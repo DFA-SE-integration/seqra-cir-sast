@@ -16,7 +16,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
-import org.seqra.dataflow.configuration.jvm.serialized.SinkMetaData
+import org.seqra.dataflow.configuration.core.serialized.SinkMetaData
 import org.seqra.semgrep.pattern.SemgrepErrorEntry
 import org.seqra.semgrep.pattern.SemgrepJavaPattern
 import org.seqra.semgrep.pattern.SemgrepJavaPatternParser

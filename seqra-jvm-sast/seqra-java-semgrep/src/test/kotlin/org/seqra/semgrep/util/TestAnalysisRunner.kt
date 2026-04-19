@@ -5,8 +5,8 @@ import org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager
 import org.seqra.dataflow.ap.ifds.access.ApMode
 import org.seqra.dataflow.ap.ifds.trace.TraceResolver
 import org.seqra.dataflow.ap.ifds.trace.VulnerabilityWithTrace
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedTaintConfig
-import org.seqra.dataflow.configuration.jvm.serialized.loadSerializedTaintConfig
+import org.seqra.dataflow.configuration.core.serialized.SerializedTaintConfig
+import org.seqra.dataflow.configuration.core.serialized.loadSerializedTaintConfig
 import org.seqra.dataflow.ifds.SingletonUnit
 import org.seqra.dataflow.ifds.UnitResolver
 import org.seqra.dataflow.ifds.UnknownUnit

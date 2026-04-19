@@ -1,10 +1,10 @@
 package org.seqra.jvm.sast.dataflow.rules
 
-import org.seqra.dataflow.configuration.jvm.ConditionNameMatcher
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedNameMatcher
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedNameMatcher.ClassPattern
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedNameMatcher.Pattern
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedNameMatcher.Simple
+import org.seqra.dataflow.configuration.core.ConditionNameMatcher
+import org.seqra.dataflow.configuration.core.serialized.SerializedNameMatcher
+import org.seqra.dataflow.configuration.core.serialized.SerializedNameMatcher.ClassPattern
+import org.seqra.dataflow.configuration.core.serialized.SerializedNameMatcher.Pattern
+import org.seqra.dataflow.configuration.core.serialized.SerializedNameMatcher.Simple
 import java.util.BitSet
 
 fun SerializedNameMatcher.toConditionNameMatcher(patternManager: PatternManager): ConditionNameMatcher? {

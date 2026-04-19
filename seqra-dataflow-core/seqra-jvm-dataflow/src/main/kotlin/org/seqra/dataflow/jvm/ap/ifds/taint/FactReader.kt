@@ -8,7 +8,7 @@ import org.seqra.dataflow.ap.ifds.TaintMarkAccessor
 import org.seqra.dataflow.ap.ifds.access.ApManager
 import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
-import org.seqra.dataflow.configuration.jvm.TaintMark
+import org.seqra.dataflow.configuration.core.TaintMark
 
 interface FactReader {
     val base: AccessPathBase

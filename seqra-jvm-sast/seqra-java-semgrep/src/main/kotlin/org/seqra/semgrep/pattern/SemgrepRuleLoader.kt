@@ -8,7 +8,7 @@ import com.charleskorn.kaml.YamlMap
 import com.charleskorn.kaml.YamlScalar
 import kotlinx.serialization.decodeFromString
 import org.seqra.dataflow.configuration.CommonTaintConfigurationSinkMeta
-import org.seqra.dataflow.configuration.jvm.serialized.SinkMetaData
+import org.seqra.dataflow.configuration.core.serialized.SinkMetaData
 import org.seqra.semgrep.pattern.SemgrepTraceEntry.Step
 import org.seqra.semgrep.pattern.conversion.ActionListBuilder
 import org.seqra.semgrep.pattern.conversion.SemgrepPatternParser

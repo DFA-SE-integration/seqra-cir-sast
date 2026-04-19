@@ -1,10 +1,10 @@
 package org.seqra.semgrep.pattern
 
-import org.seqra.dataflow.configuration.jvm.serialized.AnalysisEndSink
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedFieldRule
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedItem
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedRule
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedTaintConfig
+import org.seqra.dataflow.configuration.core.serialized.AnalysisEndSink
+import org.seqra.dataflow.configuration.core.serialized.SerializedFieldRule
+import org.seqra.dataflow.configuration.core.serialized.SerializedItem
+import org.seqra.dataflow.configuration.core.serialized.SerializedRule
+import org.seqra.dataflow.configuration.core.serialized.SerializedTaintConfig
 
 data class TaintRuleFromSemgrep(
     val ruleId: String,
