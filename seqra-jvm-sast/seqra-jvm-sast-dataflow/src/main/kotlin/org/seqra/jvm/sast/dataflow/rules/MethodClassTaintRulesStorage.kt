@@ -1,12 +1,12 @@
 package org.seqra.jvm.sast.dataflow.rules
 
-import org.seqra.dataflow.configuration.jvm.serialized.PositionBase
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedCondition
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedNameMatcher.ClassPattern
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedNameMatcher.Pattern
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedNameMatcher.Simple
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedRule
-import org.seqra.dataflow.configuration.jvm.serialized.modifyCondition
+import org.seqra.dataflow.configuration.core.serialized.PositionBase
+import org.seqra.dataflow.configuration.core.serialized.SerializedCondition
+import org.seqra.dataflow.configuration.core.serialized.SerializedNameMatcher.ClassPattern
+import org.seqra.dataflow.configuration.core.serialized.SerializedNameMatcher.Pattern
+import org.seqra.dataflow.configuration.core.serialized.SerializedNameMatcher.Simple
+import org.seqra.dataflow.configuration.core.serialized.SerializedRule
+import org.seqra.dataflow.configuration.core.serialized.modifyCondition
 import org.seqra.dataflow.jvm.util.JIRHierarchyInfo
 import org.seqra.ir.api.jvm.JIRClassOrInterface
 import org.seqra.ir.api.jvm.JIRMethod

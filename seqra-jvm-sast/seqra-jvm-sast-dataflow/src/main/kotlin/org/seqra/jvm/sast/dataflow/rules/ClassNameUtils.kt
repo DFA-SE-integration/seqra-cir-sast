@@ -1,9 +1,9 @@
 package org.seqra.jvm.sast.dataflow.rules
 
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedNameMatcher
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedNameMatcher.ClassPattern
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedNameMatcher.Pattern
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedNameMatcher.Simple
+import org.seqra.dataflow.configuration.core.serialized.SerializedNameMatcher
+import org.seqra.dataflow.configuration.core.serialized.SerializedNameMatcher.ClassPattern
+import org.seqra.dataflow.configuration.core.serialized.SerializedNameMatcher.Pattern
+import org.seqra.dataflow.configuration.core.serialized.SerializedNameMatcher.Simple
 
 private const val DOT_DELIMITER = "."
 

@@ -1,11 +1,11 @@
-import SeqraConfigurationDependency.seqraRulesJvm
+import SeqraConfigurationDependency.seqraRulesCore
 
 plugins {
     `kotlin-conventions`
 }
 
 dependencies {
-    implementation(seqraRulesJvm)
+    implementation(seqraRulesCore)
 }
 
 tasks.withType<ProcessResources> {

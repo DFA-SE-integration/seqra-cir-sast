@@ -3,12 +3,12 @@ package org.seqra.jvm.sast.project.tester
 import kotlinx.serialization.Serializable
 import org.seqra.ir.api.jvm.JIRMethod
 import org.seqra.ir.api.jvm.PredefinedPrimitives
-import org.seqra.dataflow.configuration.jvm.Argument
-import org.seqra.dataflow.configuration.jvm.ClassStatic
-import org.seqra.dataflow.configuration.jvm.Position
-import org.seqra.dataflow.configuration.jvm.PositionWithAccess
-import org.seqra.dataflow.configuration.jvm.Result
-import org.seqra.dataflow.configuration.jvm.This
+import org.seqra.dataflow.configuration.core.Argument
+import org.seqra.dataflow.configuration.core.ClassStatic
+import org.seqra.dataflow.configuration.core.Position
+import org.seqra.dataflow.configuration.core.PositionWithAccess
+import org.seqra.dataflow.configuration.core.Result
+import org.seqra.dataflow.configuration.core.This
 
 @Serializable
 data class TracePair(

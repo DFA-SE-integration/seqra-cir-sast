@@ -1,4 +1,4 @@
-package org.seqra.dataflow.configuration.jvm
+package org.seqra.dataflow.configuration.core
 
 import org.seqra.ir.api.jvm.JIRType
 import java.util.Objects

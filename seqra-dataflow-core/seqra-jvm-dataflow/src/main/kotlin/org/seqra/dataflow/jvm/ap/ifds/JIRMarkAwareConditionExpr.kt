@@ -1,6 +1,6 @@
 package org.seqra.dataflow.jvm.ap.ifds
 
-import org.seqra.dataflow.configuration.jvm.ContainsMark
+import org.seqra.dataflow.configuration.core.ContainsMark
 import org.seqra.dataflow.jvm.ap.ifds.JIRMarkAwareConditionExpr.And
 import org.seqra.dataflow.jvm.ap.ifds.JIRMarkAwareConditionExpr.Literal
 import org.seqra.dataflow.jvm.ap.ifds.JIRMarkAwareConditionExpr.Or

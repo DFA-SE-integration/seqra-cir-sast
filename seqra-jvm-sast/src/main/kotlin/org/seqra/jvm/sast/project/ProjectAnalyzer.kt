@@ -7,8 +7,8 @@ import org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager
 import org.seqra.dataflow.ap.ifds.access.ApMode
 import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.dataflow.ap.ifds.trace.VulnerabilityWithTrace
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedTaintConfig
-import org.seqra.dataflow.configuration.jvm.serialized.loadSerializedTaintConfig
+import org.seqra.dataflow.configuration.core.serialized.SerializedTaintConfig
+import org.seqra.dataflow.configuration.core.serialized.loadSerializedTaintConfig
 import org.seqra.dataflow.jvm.ap.ifds.JIRSummarySerializationContext
 import org.seqra.dataflow.jvm.ap.ifds.taint.TaintRulesProvider
 import org.seqra.dataflow.jvm.ap.ifds.taint.applyAnalysisEndSinksForEntryPoints

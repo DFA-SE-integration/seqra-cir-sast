@@ -1,7 +1,7 @@
 package org.seqra.semgrep.util
 
 import base.RuleSample
-import org.seqra.dataflow.configuration.jvm.serialized.SinkMetaData
+import org.seqra.dataflow.configuration.core.serialized.SinkMetaData
 import org.seqra.semgrep.pattern.SemgrepRuleLoadTrace
 import org.seqra.semgrep.pattern.SemgrepTraceEntry
 import org.seqra.semgrep.pattern.conversion.SemgrepRuleAutomataBuilder
