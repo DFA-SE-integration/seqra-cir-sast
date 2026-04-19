@@ -1,4 +1,4 @@
-package org.seqra.dataflow.configuration.jvm
+package org.seqra.dataflow.configuration.core
 
 interface PositionResolver<T> {
     fun resolve(position: Position): T

@@ -26,7 +26,7 @@ version = rootProperties.getProperty("seqraConfigRulesVersion")
 
 publishing {
     publications {
-        create<MavenPublication>("rules-jvm") {
+        create<MavenPublication>("rules-core") {
             from(components["java"])
             tasks.findByName("kotlinSourcesJar")?.let { artifact(it) }
         }

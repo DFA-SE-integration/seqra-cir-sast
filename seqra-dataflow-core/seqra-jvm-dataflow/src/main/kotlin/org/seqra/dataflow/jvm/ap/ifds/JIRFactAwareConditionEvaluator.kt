@@ -1,8 +1,8 @@
 package org.seqra.dataflow.jvm.ap.ifds
 
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
-import org.seqra.dataflow.configuration.jvm.ContainsMark
-import org.seqra.dataflow.configuration.jvm.TaintMark
+import org.seqra.dataflow.configuration.core.ContainsMark
+import org.seqra.dataflow.configuration.core.TaintMark
 import org.seqra.dataflow.jvm.ap.ifds.JIRMarkAwareConditionExpr.Literal
 import org.seqra.dataflow.jvm.ap.ifds.taint.FactAwareConditionEvaluator
 import org.seqra.dataflow.jvm.ap.ifds.taint.FactReader

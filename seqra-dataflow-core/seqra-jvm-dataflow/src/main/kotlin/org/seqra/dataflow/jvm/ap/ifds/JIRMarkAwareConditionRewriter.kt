@@ -1,11 +1,11 @@
 package org.seqra.dataflow.jvm.ap.ifds
 
-import org.seqra.dataflow.configuration.jvm.And
-import org.seqra.dataflow.configuration.jvm.Condition
-import org.seqra.dataflow.configuration.jvm.ContainsMark
-import org.seqra.dataflow.configuration.jvm.Not
-import org.seqra.dataflow.configuration.jvm.Or
-import org.seqra.dataflow.configuration.jvm.PositionResolver
+import org.seqra.dataflow.configuration.core.PositionResolver
+import org.seqra.dataflow.configuration.core.And
+import org.seqra.dataflow.configuration.core.Condition
+import org.seqra.dataflow.configuration.core.ContainsMark
+import org.seqra.dataflow.configuration.core.Not
+import org.seqra.dataflow.configuration.core.Or
 import org.seqra.dataflow.jvm.ap.ifds.JIRMarkAwareConditionExpr.Literal
 import org.seqra.dataflow.jvm.ap.ifds.taint.JIRBasicAtomEvaluator
 import org.seqra.ir.api.jvm.cfg.JIRValue

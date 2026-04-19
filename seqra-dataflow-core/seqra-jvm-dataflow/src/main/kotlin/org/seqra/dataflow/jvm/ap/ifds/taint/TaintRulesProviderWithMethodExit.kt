@@ -3,7 +3,7 @@ package org.seqra.dataflow.jvm.ap.ifds.taint
 import org.seqra.ir.api.common.CommonMethod
 import org.seqra.ir.api.common.cfg.CommonInst
 import org.seqra.ir.api.jvm.JIRMethod
-import org.seqra.dataflow.configuration.jvm.TaintMethodExitSink
+import org.seqra.dataflow.configuration.core.TaintMethodExitSink
 
 class TaintRulesProviderWithMethodExit(
     private val entryPoints: Set<JIRMethod>,

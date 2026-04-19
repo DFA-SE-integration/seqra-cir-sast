@@ -1,6 +1,6 @@
 package org.seqra.dataflow.jvm.ap.ifds
 
-import org.seqra.dataflow.configuration.jvm.Condition
+import org.seqra.dataflow.configuration.core.Condition
 import org.seqra.dataflow.jvm.ap.ifds.taint.ConditionEvaluator
 
 class JIRSimpleFactAwareConditionEvaluator(

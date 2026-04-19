@@ -1,7 +1,7 @@
 package org.seqra.jvm.sast.util
 
-import org.seqra.dataflow.configuration.jvm.serialized.SerializedTaintConfig
-import org.seqra.dataflow.configuration.jvm.serialized.loadSerializedTaintConfig
+import org.seqra.dataflow.configuration.core.serialized.SerializedTaintConfig
+import org.seqra.dataflow.configuration.core.serialized.loadSerializedTaintConfig
 import java.nio.file.Path
 import kotlin.io.path.Path
 
