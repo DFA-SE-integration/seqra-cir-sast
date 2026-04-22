@@ -31,6 +31,12 @@ interface CIRFunction : CommonMethod {
     val id: CIRFunctionID
     val blocks: CIRBlockList
     val allInstructions: List<CIRInst>
+
+    /**
+     * [CIRAssignInst] indexed by [CIRAssignInst.lhv] (typically [MLIROpValue]).
+     */
+    val assignInstByLhv: Map<MLIRValue, CIRAssignInst>
+
     val info: CIRFuncOp
     val classpath: CIRClasspath
 
