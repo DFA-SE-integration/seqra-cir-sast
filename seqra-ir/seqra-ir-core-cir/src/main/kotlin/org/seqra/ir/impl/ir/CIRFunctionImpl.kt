@@ -46,6 +46,10 @@ class CIRFunctionImpl(
         flattenedInstructions
     }
 
+    override val assignInstByLhv: Map<MLIRValue, CIRAssignInst> by lazy {
+        allInstructions.filterIsInstance<CIRAssignInst>().associateBy { it.lhv }
+    }
+
     // Utils
     override fun <T> withIRNode(body: (ByteArray?) -> T): T {
         return body(source.bytecodeNode)
