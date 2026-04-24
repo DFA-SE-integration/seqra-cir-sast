@@ -1,0 +1,61 @@
+// clang-format off
+syntax = "proto3";
+
+package protocir;
+option java_package = "org.jacodb.impl.grpc";
+
+import "attr.proto";
+import "setup.proto";
+import "type.proto";
+import "op.proto";
+
+message MLIRArgLocList { repeated MLIRLocation list = 1; }
+
+message MLIRBlock {
+  MLIRBlockID id = 1;
+  repeated MLIROp operations = 2;
+  repeated MLIRTypeID argument_types = 3;
+  MLIRArgLocList arg_locs = 4;
+}
+
+message MLIRBlockList {
+  repeated MLIRBlock block = 1;
+}
+
+message CIRFunction {
+  CIRFunctionID id = 1;
+  MLIRBlockList blocks = 2;
+  CIRFuncOp info = 3;
+  MLIRLocation loc = 4;
+  MLIRArgLocList arg_locs = 5;
+}
+
+message CIRGlobal {
+  CIRGlobalID id = 1;
+  CIRGlobalOp info = 3;
+  MLIRLocation loc = 4;
+}
+
+message MLIRRawNamedAttr {
+  MLIRStringAttr name = 1;
+  string raw_value = 2;
+}
+
+message MLIRModuleOp {
+  oneof op {
+    CIRFunctionID function = 1;
+    CIRGlobalID global = 2;
+  }
+}
+
+message MLIRModule {
+  MLIRModuleID id = 1;
+  repeated MLIRNamedAttr attributes = 2;
+  repeated CIRFunction functions = 3;
+  repeated CIRGlobal globals = 4;
+  repeated MLIRType types = 5;
+  MLIRLocation loc = 6;
+  repeated MLIRRawNamedAttr raw_attrs = 7;
+  repeated MLIRModuleOp op_order = 8;
+}
+// clang-format on
