@@ -16,6 +16,9 @@ class CIRFunctionImpl(
     // ID
     override val id: CIRFunctionID = source.functionID
 
+    // Enclosing struct/class
+    override fun enclosingStructType() = typeResolver.enclosingStructType()
+
     // Info
     override val info: CIRFuncOp
         get() = buildCIRFuncOp(Op.CIRFuncOp.parseFrom(source.infoNode))
