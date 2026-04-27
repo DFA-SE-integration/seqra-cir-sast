@@ -32,6 +32,9 @@ interface CIRFunction : CommonMethod {
     val blocks: CIRBlockList
     val allInstructions: List<CIRInst>
 
+    //
+    fun enclosingStructType(): CIRStructType? = null
+
     /**
      * [CIRAssignInst] indexed by [CIRAssignInst.lhv] (typically [MLIROpValue]).
      */
