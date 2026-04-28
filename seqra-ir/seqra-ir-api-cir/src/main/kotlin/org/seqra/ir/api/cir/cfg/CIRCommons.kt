@@ -1,10 +1,20 @@
 package org.seqra.ir.api.cir.cfg
 
-import org.seqra.ir.api.common.CommonMethod
 import org.seqra.ir.api.common.CommonType
 import org.seqra.ir.api.common.cfg.CommonExpr
 import org.seqra.ir.api.common.cfg.CommonInst
 import org.seqra.ir.api.common.cfg.CommonValue
+
+// Common
+
+/** CIRRegionBranchOpInterface interface */
+interface CIRRegionBranchOpInterface
+
+interface CIRThrowInterface
+
+interface CIRCatchInterface
+
+// Inst
 
 interface CIRInst : CommonInst {
     override val location: CIRInstLocation
@@ -14,6 +24,7 @@ interface CIRInst : CommonInst {
         get() = location.method
 }
 
+/** Terminator trait */
 interface CIRTerminatingInst : CIRInst
 
 // Expressions
