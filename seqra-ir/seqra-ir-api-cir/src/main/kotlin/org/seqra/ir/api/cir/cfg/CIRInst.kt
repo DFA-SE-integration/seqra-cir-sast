@@ -148,20 +148,18 @@ data class CIRCallOpInst(
     override val location: CIRInstLocation,
     override val id: MLIROpID,
 
-    val arg_ops: List<MLIRValue>,
+    override val arg_ops: List<MLIRValue>,
 
-    val exception: MLIRUnitAttr?,
-    val callee: MLIRFlatSymbolRefAttr?,
-    val callingConv: CIRCallingConv,
-    val extraAttrs: CIRExtraFuncAttributesAttr,
+    override val exception: MLIRUnitAttr?,
+    override val callee: MLIRFlatSymbolRefAttr?,
+    override val callingConv: CIRCallingConv,
+    override val extraAttrs: CIRExtraFuncAttributesAttr,
 
-    val result: MLIRTypeID?,
+    override val result: MLIRTypeID?,
 
-    val calleeRef: CIRCalleeRef?,
-) : CIRInst, CommonCallExpr {
-    override val typeName: String get() = result?.typeName ?: "void"
-    override val args: List<CommonValue> get() = arg_ops
-}
+    // Null in indirect calls(see arg#0 for callee ptr)
+    override val calleeRef: CIRCalleeRef?,
+) : CIRDirectCall, CIRInst
 
 data class CIRCatchParamOpInst(
     override val location: CIRInstLocation,
@@ -472,22 +470,21 @@ data class CIRTryCallOpInst(
 
     val contOperands: List<MLIRValue>,
     val landingPadOperands: List<MLIRValue>,
-    val arg_ops: List<MLIRValue>,
+    override val arg_ops: List<MLIRValue>,
 
-    val callee: MLIRFlatSymbolRefAttr?,
-    val callingConv: CIRCallingConv,
-    val extraAttrs: CIRExtraFuncAttributesAttr,
+    override val exception: MLIRUnitAttr? = null, // TODO, sorry, skill issue:(
+    override val callee: MLIRFlatSymbolRefAttr?,
+    override val callingConv: CIRCallingConv,
+    override val extraAttrs: CIRExtraFuncAttributesAttr,
 
     val cont: MLIRBlockID,
     val landingPad: MLIRBlockID,
 
-    val result: MLIRTypeID?,
+    override val result: MLIRTypeID?,
 
-    val calleeRef: CIRCalleeRef?,
-) : CIRInst, CommonCallExpr {
-    override val typeName: String get() = result?.typeName ?: "void"
-    override val args: List<CommonValue> get() = arg_ops
-}
+    // Null in indirect calls(see arg#0 for callee ptr)
+    override val calleeRef: CIRCalleeRef?,
+) : CIRDirectCall, CIRInst
 
 data class CIRUnreachableOpInst(
     override val location: CIRInstLocation,
