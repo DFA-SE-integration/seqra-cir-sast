@@ -218,7 +218,7 @@ data class CIRDynamicCastOpExpr(
     val info: CIRDynamicCastInfoAttr?,
     val relativeLayout: MLIRUnitAttr?,
     val result: MLIRTypeID,
-) : CIRExpr {
+) : CIRExpr, CIRThrowInterface {
     override val type: MLIRTypeID
         get() = result
 }
