@@ -164,7 +164,7 @@ data class CIRCallOpInst(
 
     // Null in indirect calls(see arg#0 for callee ptr)
     override val calleeRef: CIRCalleeRef?,
-) : CIRDirectCall, CIRInst
+) : CIRDirectCall, CIRInst, CIRThrowInterface
 
 data class CIRCatchParamOpInst(
     override val location: CIRInstLocation,
@@ -188,6 +188,19 @@ data class CIRContinueOpInst(
     override val location: CIRInstLocation,
     override val id: MLIROpID,
 ) : CIRInst, CIRTerminatingInst
+
+data class CIRDynamicCastOp(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+
+    val src: MLIRValue,
+
+    val kind: CIRDynamicCastKind,
+    val info: CIRDynamicCastInfoAttr?,
+    val relativeLayout: MLIRUnitAttr?,
+
+    val result: MLIRTypeID,
+) : CIRInst, CIRThrowInterface
 
 data class CIRClearCacheOpInst(
     override val location: CIRInstLocation,
@@ -480,7 +493,7 @@ data class CIRThrowOpInst(
     val typeInfo: MLIRFlatSymbolRefAttr?,
     val dtor: MLIRFlatSymbolRefAttr?,
 
-    ) : CIRInst, CIRTerminatingInst
+    ) : CIRInst, CIRTerminatingInst, CIRThrowInterface
 
 data class CIRTrapOpInst(
     override val location: CIRInstLocation,
