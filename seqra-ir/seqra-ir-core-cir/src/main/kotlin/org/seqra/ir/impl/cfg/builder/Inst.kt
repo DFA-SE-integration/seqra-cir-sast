@@ -546,6 +546,7 @@ fun buildCIRTryCallOpInst(inst: Op.CIRTryCallOp, id: MLIROpID, location: CIRInst
         buildMLIRValueArray(inst.contOperandsList),
         buildMLIRValueArray(inst.landingPadOperandsList),
         buildMLIRValueArray(inst.argOpsList),
+        null,
         if (inst.hasCallee()) buildMLIRFlatSymbolRefAttr(inst.callee) else null,
         buildCIRCallingConv(inst.callingConv),
         buildCIRExtraFuncAttributesAttr(inst.extraAttrs),

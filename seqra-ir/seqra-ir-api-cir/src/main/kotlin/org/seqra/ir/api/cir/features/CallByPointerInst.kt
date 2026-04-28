@@ -1,7 +1,7 @@
 package org.seqra.ir.api.cir.features
 
-import org.seqra.ir.api.cir.cfg.CIRCallOpInst
 import org.seqra.ir.api.cir.cfg.CIRCallingConv
+import org.seqra.ir.api.cir.cfg.CIRDirectCall
 import org.seqra.ir.api.cir.cfg.CIRExtraFuncAttributesAttr
 import org.seqra.ir.api.cir.cfg.CIRInst
 import org.seqra.ir.api.cir.cfg.CIRInstLocation
@@ -12,7 +12,7 @@ import org.seqra.ir.api.cir.cfg.MLIRUnitAttr
 import org.seqra.ir.api.cir.cfg.MLIRValue
 
 
-data class CIRCallByPointerOpInst(val actualCall: CIRCallOpInst) : CIRInst {
+data class CIRCallByPointerOpInst(val actualCall: CIRDirectCall) : CIRInst {
     override val id: MLIROpID = actualCall.id
 
     override val location: CIRInstLocation = actualCall.location
