@@ -135,6 +135,7 @@ class CIRInstBuilder(private val function: CIRFunction) {
             Op.MLIROp.OperationCase.SWITCH_FLAT_OP -> buildCIRSwitchFlatOpInst(inst.switchFlatOp, id, location)
             Op.MLIROp.OperationCase.THROW_OP -> buildCIRThrowOpInst(inst.throwOp, id, location)
             Op.MLIROp.OperationCase.TRAP_OP -> buildCIRTrapOpInst(inst.trapOp, id, location)
+            Op.MLIROp.OperationCase.TRY_OP -> buildCIRTryOpInst(inst.tryOp, id, location)
             Op.MLIROp.OperationCase.TRY_CALL_OP -> buildCIRTryCallOpInst(inst.tryCallOp, id, location)
             Op.MLIROp.OperationCase.UNREACHABLE_OP -> buildCIRUnreachableOpInst(inst.unreachableOp, id, location)
             Op.MLIROp.OperationCase.VA_ARG_OP -> buildCIRVAArgOpInst(inst.vaArgOp, id, location)
@@ -702,6 +703,15 @@ fun buildCIRDynamicCastOp(inst: Op.CIRDynamicCastOp, id: MLIROpID, location: CIR
         if (inst.hasRelativeLayout()) buildMLIRUnitAttr(inst.relativeLayout) else null,
         buildMLIRTypeID(inst.result)
         )
+
+fun buildCIRTryOpInst(inst: Op.CIRTryOp, id: MLIROpID, location: CIRInstLocation) =
+    CIRTryOpInst(
+        location,
+        id,
+        if (inst.hasSynthetic()) buildMLIRUnitAttr(inst.synthetic) else null,
+        if (inst.hasCleanup()) buildMLIRUnitAttr(inst.cleanup) else null,
+        if (inst.hasCatchTypes()) buildMLIRArrayAttr(inst.catchTypes) else null,
+    )
 
 fun buildCIRYieldOpInst(inst: Op.CIRYieldOp, id: MLIROpID, location: CIRInstLocation) =
     CIRYieldOpInst(

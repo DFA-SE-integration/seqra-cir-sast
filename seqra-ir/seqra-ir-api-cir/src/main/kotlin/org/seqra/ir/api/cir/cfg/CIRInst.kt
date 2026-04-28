@@ -175,7 +175,7 @@ data class CIRCatchParamOpInst(
     val kind: CIRCatchParamKind?,
 
     val param: MLIRTypeID?,
-) : CIRInst
+) : CIRInst, CIRCatchInterface
 
 data class CIRConditionOpInst(
     override val location: CIRInstLocation,
@@ -232,7 +232,7 @@ data class CIREhInflightOpInst(
 
     val exceptionPtr: MLIRTypeID,
     val typeId: MLIRTypeID,
-) : CIRInst
+) : CIRInst, CIRCatchInterface
 
 data class CIRExpectOpInst(
     override val location: CIRInstLocation,
@@ -500,6 +500,15 @@ data class CIRTrapOpInst(
     override val id: MLIROpID,
 
     ) : CIRInst, CIRTerminatingInst
+
+data class CIRTryOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+
+    val synthetic: MLIRUnitAttr?,
+    val cleanup: MLIRUnitAttr?,
+    val catchTypes: MLIRArrayAttr?,
+) : CIRInst, CIRRegionBranchOpInterface, CIRCatchInterface
 
 data class CIRTryCallOpInst(
     override val location: CIRInstLocation,
