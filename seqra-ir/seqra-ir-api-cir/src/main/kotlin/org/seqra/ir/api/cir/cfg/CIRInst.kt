@@ -132,7 +132,7 @@ data class CIRBrCondOpInst(
     val destTrue: MLIRBlockID,
     val destFalse: MLIRBlockID,
 
-    ) : CIRInst
+    ) : CIRInst, CIRTerminatingInst
 
 data class CIRBrOpInst(
     override val location: CIRInstLocation,
@@ -142,7 +142,12 @@ data class CIRBrOpInst(
 
     val dest: MLIRBlockID,
 
-    ) : CIRInst
+    ) : CIRInst, CIRTerminatingInst
+
+data class CIRBreakOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+) : CIRInst, CIRTerminatingInst
 
 data class CIRCallOpInst(
     override val location: CIRInstLocation,
@@ -171,6 +176,18 @@ data class CIRCatchParamOpInst(
 
     val param: MLIRTypeID?,
 ) : CIRInst
+
+data class CIRConditionOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+
+    val condition: MLIRValue,
+) : CIRInst, CIRTerminatingInst
+
+data class CIRContinueOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+) : CIRInst, CIRTerminatingInst
 
 data class CIRClearCacheOpInst(
     override val location: CIRInstLocation,
@@ -256,6 +273,13 @@ data class CIRGetRuntimeMemberOpInst(
 
     val result: MLIRTypeID,
 ) : CIRInst
+
+data class CIRGotoOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+
+    val label: MLIRStringAttr,
+) : CIRInst, CIRTerminatingInst
 
 data class CIRLLVMIntrinsicCallOpInst(
     override val location: CIRInstLocation,
@@ -366,7 +390,7 @@ data class CIRResumeOpInst(
 
     val rethrow: MLIRUnitAttr?,
 
-    ) : CIRInst
+    ) : CIRInst, CIRTerminatingInst
 
 data class CIRReturnOpInst(
     override val location: CIRInstLocation,
@@ -445,7 +469,7 @@ data class CIRSwitchFlatOpInst(
     val defaultDestination: MLIRBlockID,
     val caseDestinations: List<MLIRBlockID>,
 
-    ) : CIRInst
+    ) : CIRInst, CIRTerminatingInst
 
 data class CIRThrowOpInst(
     override val location: CIRInstLocation,
@@ -462,7 +486,7 @@ data class CIRTrapOpInst(
     override val location: CIRInstLocation,
     override val id: MLIROpID,
 
-    ) : CIRInst
+    ) : CIRInst, CIRTerminatingInst
 
 data class CIRTryCallOpInst(
     override val location: CIRInstLocation,
@@ -484,13 +508,13 @@ data class CIRTryCallOpInst(
 
     // Null in indirect calls(see arg#0 for callee ptr)
     override val calleeRef: CIRCalleeRef?,
-) : CIRDirectCall, CIRInst
+) : CIRDirectCall, CIRInst, CIRTerminatingInst
 
 data class CIRUnreachableOpInst(
     override val location: CIRInstLocation,
     override val id: MLIROpID,
 
-    ) : CIRInst
+    ) : CIRInst, CIRTerminatingInst
 
 data class CIRVAArgOpInst(
     override val location: CIRInstLocation,
@@ -525,6 +549,13 @@ data class CIRVAStartOpInst(
     val arg_list: MLIRValue,
 
     ) : CIRInst
+
+data class CIRYieldOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+
+    val args: List<MLIRValue>,
+) : CIRInst, CIRTerminatingInst
 
 data class CIRVecCmpOpInst(
     override val location: CIRInstLocation,

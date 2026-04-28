@@ -101,16 +101,20 @@ class CIRInstBuilder(private val function: CIRFunction) {
             Op.MLIROp.OperationCase.BIN_OP_OVERFLOW_OP -> buildCIRBinOpOverflowOpInst(inst.binOpOverflowOp, id, location)
             Op.MLIROp.OperationCase.BR_COND_OP -> buildCIRBrCondOpInst(inst.brCondOp, id, location)
             Op.MLIROp.OperationCase.BR_OP -> buildCIRBrOpInst(inst.brOp, id, location)
+            Op.MLIROp.OperationCase.BREAK_OP -> buildCIRBreakOpInst(id, location)
             Op.MLIROp.OperationCase.CALL_OP -> buildCIRCallOpInst(inst.callOp, id, location)
             Op.MLIROp.OperationCase.CATCH_PARAM_OP -> buildCIRCatchParamOpInst(inst.catchParamOp, id, location)
             Op.MLIROp.OperationCase.CLEAR_CACHE_OP -> buildCIRClearCacheOpInst(inst.clearCacheOp, id, location)
             Op.MLIROp.OperationCase.COPY_OP -> buildCIRCopyOpInst(inst.copyOp, id, location)
+            Op.MLIROp.OperationCase.CONDITION_OP -> buildCIRConditionOpInst(inst.conditionOp, id, location)
+            Op.MLIROp.OperationCase.CONTINUE_OP -> buildCIRContinueOpInst(id, location)
             Op.MLIROp.OperationCase.EH_INFLIGHT_OP -> buildCIREhInflightOpInst(inst.ehInflightOp, id, location)
             Op.MLIROp.OperationCase.EXPECT_OP -> buildCIRExpectOpInst(inst.expectOp, id, location)
             Op.MLIROp.OperationCase.FREE_EXCEPTION_OP -> buildCIRFreeExceptionOpInst(inst.freeExceptionOp, id, location)
             Op.MLIROp.OperationCase.GET_BITFIELD_OP -> buildCIRGetBitfieldOpInst(inst.getBitfieldOp, id, location)
             Op.MLIROp.OperationCase.GET_METHOD_OP -> buildCIRGetMethodOpInst(inst.getMethodOp, id, location)
             Op.MLIROp.OperationCase.GET_RUNTIME_MEMBER_OP -> buildCIRGetRuntimeMemberOpInst(inst.getRuntimeMemberOp, id, location)
+            Op.MLIROp.OperationCase.GOTO_OP -> buildCIRGotoOpInst(inst.gotoOp, id, location)
             Op.MLIROp.OperationCase.LLVM_INTRINSIC_CALL_OP -> buildCIRLLVMIntrinsicCallOpInst(inst.llvmIntrinsicCallOp, id, location)
             Op.MLIROp.OperationCase.LOAD_OP -> buildCIRLoadOpInst(inst.loadOp, id, location)
             Op.MLIROp.OperationCase.MEM_CHR_OP -> buildCIRMemChrOpInst(inst.memChrOp, id, location)
@@ -144,6 +148,7 @@ class CIRInstBuilder(private val function: CIRFunction) {
             Op.MLIROp.OperationCase.VEC_SHUFFLE_OP -> buildCIRVecShuffleOpInst(inst.vecShuffleOp, id, location)
             Op.MLIROp.OperationCase.VEC_SPLAT_OP -> buildCIRVecSplatOpInst(inst.vecSplatOp, id, location)
             Op.MLIROp.OperationCase.VEC_TERNARY_OP -> buildCIRVecTernaryOpInst(inst.vecTernaryOp, id, location)
+            Op.MLIROp.OperationCase.YIELD_OP -> buildCIRYieldOpInst(inst.yieldOp, id, location)
             else -> throw Exception()
         }
     }
@@ -360,6 +365,13 @@ fun buildCIRGetRuntimeMemberOpInst(inst: Op.CIRGetRuntimeMemberOp, id: MLIROpID,
         buildMLIRValue(inst.member),
         buildMLIRTypeID(inst.result),
 )
+
+fun buildCIRGotoOpInst(inst: Op.CIRGotoOp, id: MLIROpID, location: CIRInstLocation) =
+    CIRGotoOpInst(
+        location,
+        id,
+        buildMLIRStringAttr(inst.label),
+    )
 
 fun buildCIRLLVMIntrinsicCallOpInst(inst: Op.CIRLLVMIntrinsicCallOp, id: MLIROpID, location: CIRInstLocation) =
     CIRLLVMIntrinsicCallOpInst(
@@ -666,3 +678,22 @@ fun buildCIRVecTernaryOpInst(inst: Op.CIRVecTernaryOp, id: MLIROpID, location: C
         buildMLIRTypeID(inst.result),
 )
 
+fun buildCIRBreakOpInst(id: MLIROpID, location: CIRInstLocation) =
+    CIRBreakOpInst(location, id)
+
+fun buildCIRConditionOpInst(inst: Op.CIRConditionOp, id: MLIROpID, location: CIRInstLocation) =
+    CIRConditionOpInst(
+        location,
+        id,
+        buildMLIRValue(inst.condition),
+    )
+
+fun buildCIRContinueOpInst(id: MLIROpID, location: CIRInstLocation) =
+    CIRContinueOpInst(location, id)
+
+fun buildCIRYieldOpInst(inst: Op.CIRYieldOp, id: MLIROpID, location: CIRInstLocation) =
+    CIRYieldOpInst(
+        location,
+        id,
+        buildMLIRValueArray(inst.argsList),
+    )
