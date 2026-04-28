@@ -1,8 +1,7 @@
 package org.seqra.ir.api.cir.cfg
 
+import org.seqra.ir.api.cir.CIRClasspath
 import org.seqra.ir.api.common.CommonTypeName
-import java.math.BigDecimal
-import java.math.BigInteger
 
 data class MLIRModuleID(
     val id: String,
@@ -32,3 +31,20 @@ data class MLIRTypeID(
 data class MLIROpID(
     val id: Long,
 )
+
+fun MLIRTypeID.normalizeIndirectFunctionTypeId(cp: CIRClasspath): MLIRTypeID? {
+    val resolvedType = cp.findTypeOrNull(this) ?: return null
+    return when (resolvedType) {
+        is CIRPointerType -> resolvedType.pointee.normalizeFunctionTypeId(cp)
+        else -> null
+    }
+}
+
+fun MLIRTypeID.normalizeFunctionTypeId(cp: CIRClasspath): MLIRTypeID? {
+    val resolvedType = cp.findTypeOrNull(this) ?: return null
+    return when (resolvedType) {
+        is CIRFuncType -> resolvedType.id
+        is CIRMethodType -> resolvedType.memberFuncTy.normalizeFunctionTypeId(cp)
+        else -> null
+    }
+}
