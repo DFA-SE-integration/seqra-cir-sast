@@ -108,6 +108,7 @@ class CIRInstBuilder(private val function: CIRFunction) {
             Op.MLIROp.OperationCase.COPY_OP -> buildCIRCopyOpInst(inst.copyOp, id, location)
             Op.MLIROp.OperationCase.CONDITION_OP -> buildCIRConditionOpInst(inst.conditionOp, id, location)
             Op.MLIROp.OperationCase.CONTINUE_OP -> buildCIRContinueOpInst(id, location)
+            Op.MLIROp.OperationCase.DYNAMIC_CAST_OP -> buildCIRDynamicCastOp(inst.dynamicCastOp, id, location)
             Op.MLIROp.OperationCase.EH_INFLIGHT_OP -> buildCIREhInflightOpInst(inst.ehInflightOp, id, location)
             Op.MLIROp.OperationCase.EXPECT_OP -> buildCIRExpectOpInst(inst.expectOp, id, location)
             Op.MLIROp.OperationCase.FREE_EXCEPTION_OP -> buildCIRFreeExceptionOpInst(inst.freeExceptionOp, id, location)
@@ -690,6 +691,17 @@ fun buildCIRConditionOpInst(inst: Op.CIRConditionOp, id: MLIROpID, location: CIR
 
 fun buildCIRContinueOpInst(id: MLIROpID, location: CIRInstLocation) =
     CIRContinueOpInst(location, id)
+
+fun buildCIRDynamicCastOp(inst: Op.CIRDynamicCastOp, id: MLIROpID, location: CIRInstLocation) =
+    CIRDynamicCastOp(
+        location,
+        id,
+        buildMLIRValue(inst.src),
+        buildCIRDynamicCastKind(inst.kind),
+        if (inst.hasInfo()) buildCIRDynamicCastInfoAttr(inst.info) else null,
+        if (inst.hasRelativeLayout()) buildMLIRUnitAttr(inst.relativeLayout) else null,
+        buildMLIRTypeID(inst.result)
+        )
 
 fun buildCIRYieldOpInst(inst: Op.CIRYieldOp, id: MLIROpID, location: CIRInstLocation) =
     CIRYieldOpInst(
