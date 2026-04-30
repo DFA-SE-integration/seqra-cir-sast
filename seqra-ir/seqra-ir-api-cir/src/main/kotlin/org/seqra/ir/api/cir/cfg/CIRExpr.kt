@@ -223,6 +223,14 @@ data class CIRDynamicCastOpExpr(
         get() = result
 }
 
+data class CIRTernaryOpExpr(
+    val cond: MLIRValue,
+    val result: MLIRTypeID,
+) : CIRExpr, CIRRegionBranchOpInterface {
+    override val type: MLIRTypeID
+        get() = result
+}
+
 data class CIREhTypeIdOpExpr(
     val typeSym: MLIRFlatSymbolRefAttr,
     val typeId: MLIRTypeID,
