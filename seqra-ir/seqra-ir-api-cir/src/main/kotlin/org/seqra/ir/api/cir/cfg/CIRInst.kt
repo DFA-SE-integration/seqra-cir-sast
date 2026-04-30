@@ -149,6 +149,14 @@ data class CIRBreakOpInst(
     override val id: MLIROpID,
 ) : CIRInst, CIRTerminatingInst
 
+data class CIRCaseOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+
+    val value: MLIRArrayAttr,
+    val kind: CIRCaseOpKind,
+) : CIRInst, CIRRegionBranchOpInterface
+
 data class CIRCallOpInst(
     override val location: CIRInstLocation,
     override val id: MLIROpID,
@@ -188,6 +196,11 @@ data class CIRContinueOpInst(
     override val location: CIRInstLocation,
     override val id: MLIROpID,
 ) : CIRInst, CIRTerminatingInst
+
+data class CIRDoWhileOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+) : CIRInst, CIRRegionBranchOpInterface
 
 data class CIRDynamicCastOp(
     override val location: CIRInstLocation,
@@ -233,6 +246,18 @@ data class CIREhInflightOpInst(
     val exceptionPtr: MLIRTypeID,
     val typeId: MLIRTypeID,
 ) : CIRInst, CIRCatchInterface
+
+data class CIRForOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+) : CIRInst, CIRRegionBranchOpInterface
+
+data class CIRIfOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+
+    val condition: MLIRValue,
+) : CIRInst, CIRRegionBranchOpInterface
 
 data class CIRExpectOpInst(
     override val location: CIRInstLocation,
@@ -413,6 +438,13 @@ data class CIRReturnOpInst(
 
     ) : CIRInst, CIRTerminatingInst
 
+data class CIRScopeOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+
+    val results: MLIRTypeID?,
+) : CIRInst, CIRRegionBranchOpInterface
+
 data class CIRSetBitfieldOpInst(
     override val location: CIRInstLocation,
     override val id: MLIROpID,
@@ -483,6 +515,13 @@ data class CIRSwitchFlatOpInst(
     val caseDestinations: List<MLIRBlockID>,
 
     ) : CIRInst, CIRTerminatingInst
+
+data class CIRSwitchOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+
+    val condition: MLIRValue,
+) : CIRInst, CIRRegionBranchOpInterface
 
 data class CIRThrowOpInst(
     override val location: CIRInstLocation,
@@ -572,12 +611,24 @@ data class CIRVAStartOpInst(
 
     ) : CIRInst
 
+data class CIRWhileOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+) : CIRInst, CIRRegionBranchOpInterface
+
 data class CIRYieldOpInst(
     override val location: CIRInstLocation,
     override val id: MLIROpID,
 
     val args: List<MLIRValue>,
 ) : CIRInst, CIRTerminatingInst
+
+data class CIRAwaitOpInst(
+    override val location: CIRInstLocation,
+    override val id: MLIROpID,
+
+    val kind: CIRAwaitKind,
+) : CIRInst, CIRRegionBranchOpInterface
 
 data class CIRVecCmpOpInst(
     override val location: CIRInstLocation,

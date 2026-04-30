@@ -92,7 +92,7 @@ data class CIRGlobalOp(
     val alignment: MLIRIntegerAttr?,
     val section: MLIRStringAttr?,
     val annotations: MLIRArrayAttr?,
-)
+) : CIRRegionBranchOpInterface
 
 data class CIRGlobal(
     val id: CIRGlobalID,

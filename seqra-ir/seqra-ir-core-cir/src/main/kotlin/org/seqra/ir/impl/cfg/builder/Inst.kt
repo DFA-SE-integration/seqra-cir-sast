@@ -102,6 +102,7 @@ class CIRInstBuilder(private val function: CIRFunction) {
             Op.MLIROp.OperationCase.BR_COND_OP -> buildCIRBrCondOpInst(inst.brCondOp, id, location)
             Op.MLIROp.OperationCase.BR_OP -> buildCIRBrOpInst(inst.brOp, id, location)
             Op.MLIROp.OperationCase.BREAK_OP -> buildCIRBreakOpInst(id, location)
+            Op.MLIROp.OperationCase.CASE_OP -> buildCIRCaseOpInst(inst.caseOp, id, location)
             Op.MLIROp.OperationCase.CALL_OP -> buildCIRCallOpInst(inst.callOp, id, location)
             Op.MLIROp.OperationCase.CATCH_PARAM_OP -> buildCIRCatchParamOpInst(inst.catchParamOp, id, location)
             Op.MLIROp.OperationCase.CLEAR_CACHE_OP -> buildCIRClearCacheOpInst(inst.clearCacheOp, id, location)
@@ -109,13 +110,16 @@ class CIRInstBuilder(private val function: CIRFunction) {
             Op.MLIROp.OperationCase.CONDITION_OP -> buildCIRConditionOpInst(inst.conditionOp, id, location)
             Op.MLIROp.OperationCase.CONTINUE_OP -> buildCIRContinueOpInst(id, location)
             Op.MLIROp.OperationCase.DYNAMIC_CAST_OP -> buildCIRDynamicCastOp(inst.dynamicCastOp, id, location)
+            Op.MLIROp.OperationCase.DO_WHILE_OP -> buildCIRDoWhileOpInst(id, location)
             Op.MLIROp.OperationCase.EH_INFLIGHT_OP -> buildCIREhInflightOpInst(inst.ehInflightOp, id, location)
             Op.MLIROp.OperationCase.EXPECT_OP -> buildCIRExpectOpInst(inst.expectOp, id, location)
             Op.MLIROp.OperationCase.FREE_EXCEPTION_OP -> buildCIRFreeExceptionOpInst(inst.freeExceptionOp, id, location)
+            Op.MLIROp.OperationCase.FOR_OP -> buildCIRForOpInst(id, location)
             Op.MLIROp.OperationCase.GET_BITFIELD_OP -> buildCIRGetBitfieldOpInst(inst.getBitfieldOp, id, location)
             Op.MLIROp.OperationCase.GET_METHOD_OP -> buildCIRGetMethodOpInst(inst.getMethodOp, id, location)
             Op.MLIROp.OperationCase.GET_RUNTIME_MEMBER_OP -> buildCIRGetRuntimeMemberOpInst(inst.getRuntimeMemberOp, id, location)
             Op.MLIROp.OperationCase.GOTO_OP -> buildCIRGotoOpInst(inst.gotoOp, id, location)
+            Op.MLIROp.OperationCase.IF_OP -> buildCIRIfOpInst(inst.ifOp, id, location)
             Op.MLIROp.OperationCase.LLVM_INTRINSIC_CALL_OP -> buildCIRLLVMIntrinsicCallOpInst(inst.llvmIntrinsicCallOp, id, location)
             Op.MLIROp.OperationCase.LOAD_OP -> buildCIRLoadOpInst(inst.loadOp, id, location)
             Op.MLIROp.OperationCase.MEM_CHR_OP -> buildCIRMemChrOpInst(inst.memChrOp, id, location)
@@ -127,12 +131,14 @@ class CIRInstBuilder(private val function: CIRFunction) {
             Op.MLIROp.OperationCase.PREFETCH_OP -> buildCIRPrefetchOpInst(inst.prefetchOp, id, location)
             Op.MLIROp.OperationCase.RESUME_OP -> buildCIRResumeOpInst(inst.resumeOp, id, location)
             Op.MLIROp.OperationCase.RETURN_OP -> buildCIRReturnOpInst(inst.returnOp, id, location)
+            Op.MLIROp.OperationCase.SCOPE_OP -> buildCIRScopeOpInst(inst.scopeOp, id, location)
             Op.MLIROp.OperationCase.SET_BITFIELD_OP -> buildCIRSetBitfieldOpInst(inst.setBitfieldOp, id, location)
             Op.MLIROp.OperationCase.STACK_RESTORE_OP -> buildCIRStackRestoreOpInst(inst.stackRestoreOp, id, location)
             Op.MLIROp.OperationCase.STACK_SAVE_OP -> buildCIRStackSaveOpInst(inst.stackSaveOp, id, location)
             Op.MLIROp.OperationCase.STD_FIND_OP -> buildCIRStdFindOpInst(inst.stdFindOp, id, location)
             Op.MLIROp.OperationCase.STORE_OP -> buildCIRStoreOpInst(inst.storeOp, id, location)
             Op.MLIROp.OperationCase.SWITCH_FLAT_OP -> buildCIRSwitchFlatOpInst(inst.switchFlatOp, id, location)
+            Op.MLIROp.OperationCase.SWITCH_OP -> buildCIRSwitchOpInst(inst.switchOp, id, location)
             Op.MLIROp.OperationCase.THROW_OP -> buildCIRThrowOpInst(inst.throwOp, id, location)
             Op.MLIROp.OperationCase.TRAP_OP -> buildCIRTrapOpInst(inst.trapOp, id, location)
             Op.MLIROp.OperationCase.TRY_OP -> buildCIRTryOpInst(inst.tryOp, id, location)
@@ -151,6 +157,8 @@ class CIRInstBuilder(private val function: CIRFunction) {
             Op.MLIROp.OperationCase.VEC_SPLAT_OP -> buildCIRVecSplatOpInst(inst.vecSplatOp, id, location)
             Op.MLIROp.OperationCase.VEC_TERNARY_OP -> buildCIRVecTernaryOpInst(inst.vecTernaryOp, id, location)
             Op.MLIROp.OperationCase.YIELD_OP -> buildCIRYieldOpInst(inst.yieldOp, id, location)
+            Op.MLIROp.OperationCase.WHILE_OP -> buildCIRWhileOpInst(id, location)
+            Op.MLIROp.OperationCase.AWAIT_OP -> buildCIRAwaitOpInst(inst.awaitOp, id, location)
             else -> throw Exception()
         }
     }
@@ -680,8 +688,23 @@ fun buildCIRVecTernaryOpInst(inst: Op.CIRVecTernaryOp, id: MLIROpID, location: C
         buildMLIRTypeID(inst.result),
 )
 
+fun buildCIRAwaitOpInst(inst: Op.CIRAwaitOp, id: MLIROpID, location: CIRInstLocation) =
+    CIRAwaitOpInst(
+        location,
+        id,
+        buildCIRAwaitKind(inst.kind),
+    )
+
 fun buildCIRBreakOpInst(id: MLIROpID, location: CIRInstLocation) =
     CIRBreakOpInst(location, id)
+
+fun buildCIRCaseOpInst(inst: Op.CIRCaseOp, id: MLIROpID, location: CIRInstLocation) =
+    CIRCaseOpInst(
+        location,
+        id,
+        buildMLIRArrayAttr(inst.value),
+        buildCIRCaseOpKind(inst.kind),
+    )
 
 fun buildCIRConditionOpInst(inst: Op.CIRConditionOp, id: MLIROpID, location: CIRInstLocation) =
     CIRConditionOpInst(
@@ -692,6 +715,9 @@ fun buildCIRConditionOpInst(inst: Op.CIRConditionOp, id: MLIROpID, location: CIR
 
 fun buildCIRContinueOpInst(id: MLIROpID, location: CIRInstLocation) =
     CIRContinueOpInst(location, id)
+
+fun buildCIRDoWhileOpInst(id: MLIROpID, location: CIRInstLocation) =
+    CIRDoWhileOpInst(location, id)
 
 fun buildCIRDynamicCastOp(inst: Op.CIRDynamicCastOp, id: MLIROpID, location: CIRInstLocation) =
     CIRDynamicCastOp(
@@ -704,6 +730,30 @@ fun buildCIRDynamicCastOp(inst: Op.CIRDynamicCastOp, id: MLIROpID, location: CIR
         buildMLIRTypeID(inst.result)
         )
 
+fun buildCIRForOpInst(id: MLIROpID, location: CIRInstLocation) =
+    CIRForOpInst(location, id)
+
+fun buildCIRIfOpInst(inst: Op.CIRIfOp, id: MLIROpID, location: CIRInstLocation) =
+    CIRIfOpInst(
+        location,
+        id,
+        buildMLIRValue(inst.condition),
+    )
+
+fun buildCIRScopeOpInst(inst: Op.CIRScopeOp, id: MLIROpID, location: CIRInstLocation) =
+    CIRScopeOpInst(
+        location,
+        id,
+        if (inst.hasResults()) buildMLIRTypeID(inst.results) else null,
+    )
+
+fun buildCIRSwitchOpInst(inst: Op.CIRSwitchOp, id: MLIROpID, location: CIRInstLocation) =
+    CIRSwitchOpInst(
+        location,
+        id,
+        buildMLIRValue(inst.condition),
+    )
+
 fun buildCIRTryOpInst(inst: Op.CIRTryOp, id: MLIROpID, location: CIRInstLocation) =
     CIRTryOpInst(
         location,
@@ -712,6 +762,9 @@ fun buildCIRTryOpInst(inst: Op.CIRTryOp, id: MLIROpID, location: CIRInstLocation
         if (inst.hasCleanup()) buildMLIRUnitAttr(inst.cleanup) else null,
         if (inst.hasCatchTypes()) buildMLIRArrayAttr(inst.catchTypes) else null,
     )
+
+fun buildCIRWhileOpInst(id: MLIROpID, location: CIRInstLocation) =
+    CIRWhileOpInst(location, id)
 
 fun buildCIRYieldOpInst(inst: Op.CIRYieldOp, id: MLIROpID, location: CIRInstLocation) =
     CIRYieldOpInst(
