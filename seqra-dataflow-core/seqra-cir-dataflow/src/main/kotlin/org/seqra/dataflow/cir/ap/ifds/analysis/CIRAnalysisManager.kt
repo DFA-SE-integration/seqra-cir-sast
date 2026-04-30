@@ -90,7 +90,8 @@ class CIRAnalysisManager(
         apManager: ApManager,
         analysisContext: MethodAnalysisContext
     ): MethodStartPrecondition {
-        throw RuntimeException("Not implemented")
+        cirDowncast<CIRMethodAnalysisContext>(analysisContext)
+        return CIRMethodStartPrecondition(apManager, analysisContext)
     }
 
     override fun getMethodSequentFlowFunction(
@@ -109,7 +110,10 @@ class CIRAnalysisManager(
         analysisContext: MethodAnalysisContext,
         currentInst: CommonInst
     ): MethodSequentPrecondition {
-        throw RuntimeException("Not implemented")
+        cirDowncast<CIRInst>(currentInst)
+        cirDowncast<CIRMethodAnalysisContext>(analysisContext)
+
+        return CIRMethodSequentPrecondition(apManager, currentInst, analysisContext)
     }
 
     override fun getMethodCallFlowFunction(
@@ -140,7 +144,18 @@ class CIRAnalysisManager(
         callExpr: CommonCallExpr,
         statement: CommonInst
     ): MethodCallPrecondition {
-        throw RuntimeException("Not implemented")
+        cirDowncast<MLIRValue?>(returnValue)
+        cirDowncast<CIRDirectCall>(callExpr)
+        cirDowncast<CIRInst>(statement)
+        cirDowncast<CIRMethodAnalysisContext>(analysisContext)
+
+        return CIRMethodCallPrecondition(
+            apManager,
+            analysisContext,
+            returnValue,
+            callExpr,
+            statement
+        )
     }
 
     override fun getMethodCallSummaryHandler(
