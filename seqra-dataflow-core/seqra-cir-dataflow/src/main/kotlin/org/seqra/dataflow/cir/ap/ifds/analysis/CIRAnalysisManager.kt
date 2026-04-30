@@ -18,25 +18,39 @@ import org.seqra.dataflow.ap.ifds.trace.MethodCallPrecondition
 import org.seqra.dataflow.ap.ifds.trace.MethodSequentPrecondition
 import org.seqra.dataflow.ap.ifds.trace.MethodStartPrecondition
 import org.seqra.dataflow.cir.ap.ifds.CIRCallResolver
+import org.seqra.dataflow.cir.ap.ifds.CIRFactTypeChecker
 import org.seqra.dataflow.cir.ap.ifds.CIRLanguageManager
+import org.seqra.dataflow.cir.ap.ifds.CIRMethodCallFactMapper
 import org.seqra.dataflow.cir.ap.ifds.cirDowncast
 import org.seqra.dataflow.ifds.UnitResolver
 import org.seqra.ir.api.cir.CIRClasspath
+import org.seqra.ir.api.cir.cfg.CIRCallOpInst
+import org.seqra.ir.api.cir.cfg.CIRInst
+import org.seqra.ir.api.cir.cfg.CIRTryCallOpInst
+import org.seqra.ir.api.cir.cfg.MLIRValue
 import org.seqra.ir.api.common.CommonMethod
 import org.seqra.ir.api.common.cfg.CommonCallExpr
 import org.seqra.ir.api.common.cfg.CommonInst
 import org.seqra.ir.api.common.cfg.CommonValue
+import org.seqra.cir.graph.CApplicationGraph
+import org.seqra.dataflow.cir.ap.ifds.CIRLocalAliasAnalysis
+import org.seqra.dataflow.cir.ap.ifds.CIRMethodContextSerializer
 import org.seqra.util.analysis.ApplicationGraph
 
 class CIRAnalysisManager(
     cp: CIRClasspath,
+    private val applyAliasInfo: Boolean = false, // TODO implement via seadsa
 ) : CIRLanguageManager(cp), TaintAnalysisManager {
+    private val factTypeChecker = CIRFactTypeChecker(cp)
+
     override fun getMethodCallResolver(
         graph: ApplicationGraph<CommonMethod, CommonInst>,
         unitResolver: UnitResolver<CommonMethod>,
         runner: TaintAnalysisUnitRunner
     ): MethodCallResolver {
         val cIRCallResolver = CIRCallResolver(cp)
+
+        return CIRMethodCallResolver(cIRCallResolver, runner)
     }
 
     override fun getMethodAnalysisContext(
@@ -44,7 +58,24 @@ class CIRAnalysisManager(
         graph: ApplicationGraph<CommonMethod, CommonInst>,
         taintAnalysisContext: TaintAnalysisContext
     ): MethodAnalysisContext {
-        throw RuntimeException("Not implemented")
+        val entryPointStatement = methodEntryPoint.statement
+        cirDowncast<CIRInst>(entryPointStatement)
+        cirDowncast<CApplicationGraph>(graph)
+
+//        TODO
+        val aliasAnalysis = if (applyAliasInfo) {
+            CIRLocalAliasAnalysis(entryPointStatement, graph, this)
+        } else {
+            null
+        }
+
+        val method = entryPointStatement.method
+//        val localVariableReachability = JIRLocalVariableReachability(method, graph, this)
+        return CIRMethodAnalysisContext(
+            methodEntryPoint,
+            factTypeChecker,
+            aliasAnalysis,
+            taintAnalysisContext)
     }
 
     override fun getMethodStartFlowFunction(
@@ -62,19 +93,22 @@ class CIRAnalysisManager(
         throw RuntimeException("Not implemented")
     }
 
-    override fun getMethodSequentPrecondition(
-        apManager: ApManager,
-        analysisContext: MethodAnalysisContext,
-        currentInst: CommonInst
-    ): MethodSequentPrecondition {
-        throw RuntimeException("Not implemented")
-    }
-
     override fun getMethodSequentFlowFunction(
         apManager: ApManager,
         analysisContext: MethodAnalysisContext,
         currentInst: CommonInst
     ): MethodSequentFlowFunction {
+        cirDowncast<CIRInst>(currentInst)
+        cirDowncast<CIRMethodAnalysisContext>(analysisContext)
+
+        return CIRMethodSequentFlowFunction(apManager, analysisContext, currentInst)
+    }
+
+    override fun getMethodSequentPrecondition(
+        apManager: ApManager,
+        analysisContext: MethodAnalysisContext,
+        currentInst: CommonInst
+    ): MethodSequentPrecondition {
         throw RuntimeException("Not implemented")
     }
 
@@ -85,15 +119,20 @@ class CIRAnalysisManager(
         callExpr: CommonCallExpr,
         statement: CommonInst
     ): MethodCallFlowFunction {
-        throw RuntimeException("Not implemented")
-    }
+        cirDowncast<CIRMethodAnalysisContext>(analysisContext)
+        cirDowncast<CIRInst>(statement)
+        cirDowncast<MLIRValue?>(returnValue)
+        check(callExpr is CIRCallOpInst || callExpr is CIRTryCallOpInst) {
+            "Not a CIR call expression: $callExpr"
+        }
 
-    override fun getMethodCallSummaryHandler(
-        apManager: ApManager,
-        analysisContext: MethodAnalysisContext,
-        statement: CommonInst
-    ): MethodCallSummaryHandler {
-        throw RuntimeException("Not implemented")
+        return CIRMethodCallFlowFunction(
+            apManager,
+            analysisContext,
+            returnValue,
+            callExpr,
+            statement,
+        )
     }
 
     override fun getMethodCallPrecondition(
@@ -106,13 +145,26 @@ class CIRAnalysisManager(
         throw RuntimeException("Not implemented")
     }
 
+    override fun getMethodCallSummaryHandler(
+        apManager: ApManager,
+        analysisContext: MethodAnalysisContext,
+        statement: CommonInst
+    ): MethodCallSummaryHandler {
+        cirDowncast<CIRInst>(statement)
+        cirDowncast<CIRMethodAnalysisContext>(analysisContext)
+
+        return CIRMethodCallSummaryHandler(statement, analysisContext)
+    }
+
     override fun isReachable(
         apManager: ApManager,
         analysisContext: MethodAnalysisContext,
         base: AccessPathBase,
         statement: CommonInst
     ): Boolean {
-        throw RuntimeException("Not implemented")
+        cirDowncast<CIRInst>(statement)
+        cirDowncast<CIRMethodAnalysisContext>(analysisContext)
+        return true
     }
 
     override fun isValidMethodExitFact(
@@ -120,14 +172,33 @@ class CIRAnalysisManager(
         analysisContext: MethodAnalysisContext,
         fact: FinalFactAp
     ): Boolean {
-        throw RuntimeException("Not implemented")
+        cirDowncast<CIRMethodAnalysisContext>(analysisContext)
+        return CIRMethodCallFactMapper.isValidMethodExitFact(fact)
     }
 
+    override val methodContextSerializer = CIRMethodContextSerializer(cp)
+
     override fun onInstructionReached(inst: CommonInst) {
-        throw RuntimeException("Not implemented")
+        // Nothing to do
     }
 
     override fun reportLanguageSpecificRunnerProgress(logger: KLogger) {
-        throw RuntimeException("Not implemented")
+        logger.debug {
+            val localTotal = factTypeChecker.localFactsTotal.sum()
+            val localRejected = factTypeChecker.localFactsRejected.sum()
+            val accessTotal = factTypeChecker.accessTotal.sum()
+            val accessRejected = factTypeChecker.accessRejected.sum()
+            buildString {
+                append("Fact types: ")
+                append("local $localRejected/$localTotal (${percentToString(localRejected, localTotal)})")
+                append(" | ")
+                append("access $accessRejected/$accessTotal (${percentToString(accessRejected, accessTotal)})")
+            }
+        }
+    }
+
+    private fun percentToString(current: Long, total: Long): String {
+        val percentValue = current.toDouble() / total
+        return String.format("%.2f", percentValue * 100) + "%"
     }
 }
