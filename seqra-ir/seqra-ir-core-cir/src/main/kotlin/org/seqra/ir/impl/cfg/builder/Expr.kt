@@ -64,6 +64,7 @@ fun buildExpr(expr: Op.MLIROp) = when (expr.operationCase!!) {
     Op.MLIROp.OperationCase.SIGN_BIT_OP -> buildCIRSignBitOpExpr(expr.signBitOp)
     Op.MLIROp.OperationCase.SIN_OP -> buildCIRSinOpExpr(expr.sinOp)
     Op.MLIROp.OperationCase.SQRT_OP -> buildCIRSqrtOpExpr(expr.sqrtOp)
+    Op.MLIROp.OperationCase.TERNARY_OP -> buildCIRTernaryOpExpr(expr.ternaryOp)
     Op.MLIROp.OperationCase.TRUNC_OP -> buildCIRTruncOpExpr(expr.truncOp)
     Op.MLIROp.OperationCase.UNARY_OP -> buildCIRUnaryOpExpr(expr.unaryOp)
     Op.MLIROp.OperationCase.VTT_ADDR_POINT_OP -> buildCIRVTTAddrPointOpExpr(expr.vttAddrPointOp)
@@ -243,6 +244,12 @@ fun buildCIRDynamicCastOpExpr(expr: Op.CIRDynamicCastOp) =
         if (expr.hasRelativeLayout()) buildMLIRUnitAttr(expr.relativeLayout) else null,
         buildMLIRTypeID(expr.result),
 )
+
+fun buildCIRTernaryOpExpr(expr: Op.CIRTernaryOp) =
+    CIRTernaryOpExpr(
+        buildMLIRValue(expr.cond),
+        buildMLIRTypeID(expr.result),
+    )
 
 fun buildCIREhTypeIdOpExpr(expr: Op.CIREhTypeIdOp) = 
     CIREhTypeIdOpExpr(
