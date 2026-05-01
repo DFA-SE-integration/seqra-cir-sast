@@ -7,11 +7,12 @@ import org.seqra.dataflow.ap.ifds.taint.TaintAnalysisContext
 import org.seqra.dataflow.cir.ap.ifds.CIRFactTypeChecker
 import org.seqra.dataflow.cir.ap.ifds.CIRLocalAliasAnalysis
 import org.seqra.dataflow.cir.ap.ifds.CIRMethodCallFactMapper
+import org.seqra.dataflow.cir.ap.ifds.CIRLocalVariableReachability
 
 class CIRMethodAnalysisContext(
     override val methodEntryPoint: MethodEntryPoint,
     val factTypeChecker: CIRFactTypeChecker,
-//    val localVariableReachability: JIRLocalVariableReachability,
+    val localVariableReachability: CIRLocalVariableReachability,
     val aliasAnalysis: CIRLocalAliasAnalysis?,
     val taint: TaintAnalysisContext,
 ) : MethodAnalysisContext {
