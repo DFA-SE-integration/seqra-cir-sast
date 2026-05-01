@@ -34,6 +34,7 @@ import org.seqra.ir.api.common.cfg.CommonInst
 import org.seqra.ir.api.common.cfg.CommonValue
 import org.seqra.cir.graph.CApplicationGraph
 import org.seqra.dataflow.cir.ap.ifds.CIRLocalAliasAnalysis
+import org.seqra.dataflow.cir.ap.ifds.CIRLocalVariableReachability
 import org.seqra.dataflow.cir.ap.ifds.CIRMethodContextSerializer
 import org.seqra.util.analysis.ApplicationGraph
 
@@ -70,10 +71,11 @@ class CIRAnalysisManager(
         }
 
         val method = entryPointStatement.method
-//        val localVariableReachability = JIRLocalVariableReachability(method, graph, this)
+        val localVariableReachability = CIRLocalVariableReachability(method, graph, this)
         return CIRMethodAnalysisContext(
             methodEntryPoint,
             factTypeChecker,
+            localVariableReachability,
             aliasAnalysis,
             taintAnalysisContext)
     }
@@ -162,9 +164,8 @@ class CIRAnalysisManager(
         base: AccessPathBase,
         statement: CommonInst
     ): Boolean {
-        cirDowncast<CIRInst>(statement)
         cirDowncast<CIRMethodAnalysisContext>(analysisContext)
-        return true
+        return analysisContext.localVariableReachability.isReachable(base, statement)
     }
 
     override fun isValidMethodExitFact(
