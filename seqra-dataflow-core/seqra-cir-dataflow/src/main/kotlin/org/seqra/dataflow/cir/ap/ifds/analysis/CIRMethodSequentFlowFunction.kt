@@ -198,6 +198,7 @@ class CIRMethodSequentFlowFunction(
 
     private fun resolveValueAccess(value: MLIRValue): MethodFlowFunctionUtils.Access = when (value) {
         is MLIROpValue -> currentInst.method.assignInstByLhv[value]
+            ?.takeIf { it.location.index < currentInst.location.index }
             ?.rhv
             ?.let(::resolveExprAccess)
             ?: mkBaseAccess(value)
