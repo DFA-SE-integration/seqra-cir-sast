@@ -31,6 +31,27 @@ find_package(Protobuf CONFIG REQUIRED)
 message(STATUS "Found Protobuf ${Protobuf_PACKAGE_VERSION}")
 message(STATUS "Using Protobuf.cmake in: ${Protobuf_DIR}")
 
+if (NOT DEFINED SEA_DSA_DIR)
+  set(SEA_DSA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../sea-dsa")
+endif()
+
+# Sea-dsa uses add_llvm_library; ensure AddLLVM is available (MLIR usually sets
+# LLVM_CMAKE_DIR).
+if (NOT DEFINED LLVM_CMAKE_DIR)
+  find_package(LLVM REQUIRED CONFIG HINTS "${CLANGIR_BUILD_DIR}"
+               NO_DEFAULT_PATH)
+endif()
+message(STATUS "Using LLVM CMake dir: ${LLVM_CMAKE_DIR}")
+list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
+include(AddLLVM)
+
+find_package(Boost 1.65 REQUIRED)
+message(STATUS "Found Boost ${Boost_VERSION}")
+include_directories(${Boost_INCLUDE_DIRS})
+
+set(SEA_DSA_BUILD_TOOLS_TESTS OFF CACHE BOOL "Sea-dsa tools/tests" FORCE)
+add_subdirectory("${SEA_DSA_DIR}" sea-dsa-build EXCLUDE_FROM_ALL)
+
 add_subdirectory(proto)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

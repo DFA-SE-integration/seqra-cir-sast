@@ -1,5 +1,6 @@
 #include "cir-tac/AliasSerializer.h"
 #include "cir-tac/AttrSerializer.h"
+#include "cir-tac/CirToLlvmIr.h"
 #include "cir-tac/OpSerializer.h"
 #include "cir-tac/TypeSerializer.h"
 #include "cir-tac/Util.h"
@@ -9,6 +10,7 @@
 #include <clang/CIR/Dialect/IR/CIRDialect.h>
 #include <clang/CIR/Passes.h>
 #include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/StringMap.h>
 #include <llvm/ADT/TypeSwitch.h>
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/ErrorHandling.h>
@@ -22,6 +24,8 @@
 #include <mlir/IR/Types.h>
 #include <mlir/IR/Visitors.h>
 #include <mlir/Parser/Parser.h>
+
+#include "llvm/IR/LLVMContext.h"
 
 #include <fstream>
 #include <stdexcept>
@@ -72,11 +76,6 @@ int main(int argc, char *argv[]) {
 
   TypeCache typeCache(pModuleID);
   AttributeSerializer attributeSerializer(pModuleID, typeCache);
-
-  // Alias data (populated per-function if --emit-alias is requested)
-  CIRModuleAliasData pAliasData;
-  *pAliasData.mutable_module_id() = pModuleID;
-  AliasSerializer aliasSerializer(pModuleID);
 
   auto &bodyRegion = (*module).getBodyRegion();
 
@@ -138,15 +137,6 @@ int main(int argc, char *argv[]) {
         MLIRModuleOp pModuleOp;
         *pModuleOp.mutable_function() = pFunctionID;
         *pModule.add_op_order() = pModuleOp;
-
-        // Compute and accumulate alias data for this function (same caches)
-        if (!aliasOutputPath.empty()) {
-          auto funcAliasData =
-              aliasSerializer.serializeFunction(cirFunc, opCache, blockCache, typeCache);
-          if (funcAliasData.alias_groups_size() > 0) {
-            *pAliasData.add_functions() = funcAliasData;
-          }
-        }
       } else if (auto cirGlobal = llvm::dyn_cast<cir::GlobalOp>(topOp)) {
         CIRGlobal *pGlobal = pModule.add_globals();
         CIRGlobalID pGlobalID;
@@ -209,11 +199,29 @@ int main(int argc, char *argv[]) {
   pModule.SerializeToString(&binary);
   llvm::outs() << binary;
 
-  // Write alias data to the requested file
+  // Write alias data (Sea-dsa) to the requested file
   if (!aliasOutputPath.empty()) {
+    CIRModuleAliasData pAliasData;
+    *pAliasData.mutable_module_id() = pModuleID;
+
+    llvm::StringMap<FunctionAliasContext> funcCtx;
+    AliasSerializer::buildFunctionContexts(*module, funcCtx);
+
+    llvm::LLVMContext llvmCtx;
+    std::unique_ptr<llvm::Module> llvmMod = lowerCirToLlvmIr(*module, llvmCtx);
+    if (llvmMod) {
+      AliasSerializer aliasSerializer(pModuleID);
+      pAliasData =
+          aliasSerializer.serializeModule(*llvmMod, typeCache, funcCtx);
+    } else {
+      llvm::errs() << "warning: failed to lower CIR to LLVM IR; "
+                      "writing empty alias data\n";
+    }
+
     std::ofstream aliasFile(aliasOutputPath, std::ios::binary | std::ios::trunc);
     if (!aliasFile) {
-      llvm::errs() << "error: cannot open alias output file: " << aliasOutputPath << "\n";
+      llvm::errs() << "error: cannot open alias output file: " << aliasOutputPath
+                   << "\n";
       return 1;
     }
     pAliasData.SerializeToOstream(&aliasFile);
