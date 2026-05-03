@@ -6,5 +6,7 @@ import org.seqra.ir.api.cir.CIRModuleSource
 import org.seqra.ir.api.cir.RegisteredLocation
 
 class CIRModuleSourceImpl(
-    override val node: IRNode, override val location: RegisteredLocation
+    override val node: IRNode,
+    override val location: RegisteredLocation,
+    override val aliasData: ByteArray? = null,
 ) : CIRModuleSource

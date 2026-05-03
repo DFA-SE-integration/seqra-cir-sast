@@ -44,15 +44,19 @@ class CIRErsPersistenceImpl(private var ers: EntityRelationshipStorage, private 
         if (modules.isEmpty()) {
             return
         }
-        val allModules = modules.map { (it.node as ModuleIRNode).asModuleInfo() }
         val locationId = location.id
         val moduleEntities = hashMapOf<MLIRModuleID, Entity>()
 
         write { txn ->
-            allModules.forEach { moduleInfo ->
+            modules.forEach { source ->
+                val moduleInfo = (source.node as ModuleIRNode).asModuleInfo()
                 txn.newEntity(PersistenceEntity.ENTITY_MODULE).also { module ->
                     moduleEntities[moduleInfo.id] = module
                     module[PersistenceEntity.Module.ID] = moduleInfo.id.id
+
+                    source.aliasData?.takeIf { it.isNotEmpty() }?.let { blob ->
+                        module.setRawBlob(PersistenceEntity.Module.ALIAS_DATA, blob)
+                    }
 
                     // Set up information about global constructors
                     // TODO: handle all attributes
@@ -144,7 +148,8 @@ class CIRErsPersistenceImpl(private var ers: EntityRelationshipStorage, private 
                     }
                 }
             }
-            allModules.forEach { moduleInfo ->
+            modules.forEach { source ->
+                val moduleInfo = (source.node as ModuleIRNode).asModuleInfo()
                 moduleEntities[moduleInfo.id]?.let { module ->
                     module["locationId"] = locationId
                 }
@@ -267,7 +272,10 @@ class CIRErsPersistenceImpl(private var ers: EntityRelationshipStorage, private 
     override fun findFunctionSourcesBySymbolName(classpath: CIRClasspath, symbolName: String): List<CIRFunctionSource> {
         return read { txn ->
             txn.find(PersistenceEntity.ENTITY_FUNCTION, PersistenceEntity.Function.NAME, symbolName)
-                .filter { it["ownerId"] in classpath.registeredLocationIds }
+                .filter {
+                    it["ownerId"] in classpath.registeredLocationIds &&
+                        it.get<FunctionKind>(PersistenceEntity.Function.DEF_OR_DECL) == FunctionKind.DEFINITION
+                }
                 .map { entity ->
                     val moduleName = entity.get<String>(PersistenceEntity.Function.MODULE)!!
                     val functionID = CIRFunctionID(MLIRModuleID(moduleName), symbolName)
@@ -326,6 +334,7 @@ object PersistenceEntity {
         const val ID = "nameID"
         const val ENTITY_GLOBAL_CTOR = "globalCtor"
         const val ENTITY_GLOBAL_DTOR = "globalDtor"
+        const val ALIAS_DATA = "aliasData"
     }
 
     object Function {
