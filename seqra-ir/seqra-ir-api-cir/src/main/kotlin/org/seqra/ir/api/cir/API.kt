@@ -2,6 +2,7 @@ package org.seqra.ir.api.cir
 
 import org.seqra.ir.api.cir.cfg.CIRFunctionID
 import org.seqra.ir.api.cir.cfg.CIRGlobalID
+import org.seqra.ir.api.cir.cfg.MLIRModuleID
 import org.seqra.ir.api.cir.cfg.MLIRTypeID
 import org.seqra.ir.api.storage.ers.Transaction
 import java.io.Closeable
@@ -40,6 +41,8 @@ interface CIRDatabasePersistence : Closeable {
     // Projects
     fun findGlobalCtors(classpath: CIRClasspath): List<CIRFunctionID>
     fun findGlobalDtors(classpath: CIRClasspath): List<CIRFunctionID>
+
+    fun findModuleAliasData(classpath: CIRClasspath, moduleId: MLIRModuleID): ByteArray?
 
     // DB
     fun createIndexes() {}
