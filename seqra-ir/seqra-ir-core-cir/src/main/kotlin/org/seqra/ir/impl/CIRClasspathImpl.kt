@@ -18,6 +18,7 @@ import org.seqra.ir.impl.features.CIRFeaturesChain
 import org.seqra.ir.impl.grpc.Model
 import org.seqra.ir.impl.grpc.Type
 import org.seqra.ir.impl.ir.CIRFunctionImpl
+import org.seqra.ir.impl.alias.CIRAliasDataCodec
 
 val logger = object : KLogging() {}.logger
 
@@ -31,6 +32,7 @@ class CIRClasspathImpl(
 
     private val featuresChain = CIRFeaturesChain(features + CIRClasspathFeatureImpl())
     private val functionsBySymbolNameCache = mutableMapOf<String, CIRFunction?>()
+    private val functionAliasByModuleId = mutableMapOf<String, Map<CIRFunctionID, CIRFunctionAliasData>>()
 
     init {
         assert(registeredLocationIds.isNotEmpty())
@@ -73,6 +75,21 @@ class CIRClasspathImpl(
 
     override fun getGlobalConstructors(): List<CIRFunctionID> = db.persistence.findGlobalCtors(this)
     override fun getGlobalDestructors(): List<CIRFunctionID> = db.persistence.findGlobalDtors(this)
+
+    override fun findFunctionAliasData(functionID: CIRFunctionID): CIRFunctionAliasData? {
+        val modId = functionID.moduleID.id
+        val byFn =
+            functionAliasByModuleId.getOrPut(modId) {
+                val raw = db.persistence.findModuleAliasData(this, functionID.moduleID) ?: return@getOrPut emptyMap()
+                try {
+                    CIRAliasDataCodec.decodeModule(raw)
+                } catch (e: Exception) {
+                    logger.warn(e) { "Failed to parse alias blob for module $modId" }
+                    emptyMap()
+                }
+            }
+        return byFn[functionID]
+    }
 
     // Constructors
     private fun newFunction(source: CIRFunctionSource): CIRFunction {
