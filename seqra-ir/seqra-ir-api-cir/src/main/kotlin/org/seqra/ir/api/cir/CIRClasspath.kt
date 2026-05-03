@@ -31,6 +31,9 @@ interface CIRClasspath : Closeable, CommonProject {
 
     fun getGlobalConstructors(): List<CIRFunctionID>
     fun getGlobalDestructors(): List<CIRFunctionID>
+
+    /** SeaDSA-backed alias groups for [functionID], if loaded from companion [.alias.pb] / persistence. */
+    fun findFunctionAliasData(functionID: CIRFunctionID): CIRFunctionAliasData? = null
 }
 
 interface CIRClasspathFeature {
