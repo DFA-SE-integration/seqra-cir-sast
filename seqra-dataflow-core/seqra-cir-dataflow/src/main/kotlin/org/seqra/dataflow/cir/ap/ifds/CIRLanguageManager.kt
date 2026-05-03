@@ -24,6 +24,7 @@ open class CIRLanguageManager(val cp: CIRClasspath) : LanguageManager {
 
     override fun getMaxInstIndex(method: CommonMethod): Int {
         cirDowncast<CIRFunction>(method)
+        if (method.allInstructions.isEmpty()) return 0
         return method.allInstructions.last().location.index
     }
 
