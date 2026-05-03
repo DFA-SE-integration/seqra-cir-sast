@@ -3,6 +3,8 @@ package org.seqra.dataflow.cir.ap.ifds.analysis
 import org.seqra.dataflow.ap.ifds.AccessPathBase
 import org.seqra.dataflow.ap.ifds.Accessor
 import org.seqra.dataflow.ap.ifds.ElementAccessor
+import org.seqra.dataflow.ap.ifds.FactTypeChecker
+import org.seqra.dataflow.ap.ifds.TaintMarkAccessor
 import org.seqra.dataflow.ap.ifds.access.ApManager
 import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
@@ -245,6 +247,12 @@ class CIRMethodSequentFlowFunction(
         propagateFactWithAccessorExclude: (FinalFactAp, Accessor) -> Unit,
     ) {
         if (!factAp.mayReadField(instance, accessor)) {
+            // Pointer-deriving operations (`cir.ptr_stride`, `cir.get_member`) preserve
+            // value-mark facts: a UAF (or any other) mark on the bare pointer value
+            // also taints any pointer derived from it via arithmetic / member offset.
+            if (factAp.base == instance && factAp.startsWithTaintMark()) {
+                propagateFact(factAp.rebase(assignTo))
+            }
             unchanged(factAp)
             return
         }
@@ -397,5 +405,30 @@ class CIRMethodSequentFlowFunction(
     // TODO
     private fun applyMethodExitSinkRules(methodResult: AccessPathBase, fact: FinalFactAp) {
         // Current CIR use-after-free configuration does not contain sink rules for method exit.
+    }
+
+    /**
+     * Returns `true` iff the access path begins with a [TaintMarkAccessor] at top level,
+     * i.e. the bare value (no nested field/element) carries a taint mark.
+     *
+     * Implemented via [FinalFactAp.filterFact] so it works uniformly across [ApMode] backends
+     * (tree / cactus / automata) without needing a new method on the [FactAp] interface.
+     */
+    private fun FinalFactAp.startsWithTaintMark(): Boolean {
+        val probe = StartsWithTaintMarkProbe()
+        filterFact(probe)
+        return probe.found
+    }
+
+    private class StartsWithTaintMarkProbe : FactTypeChecker.FactApFilter {
+        var found: Boolean = false
+            private set
+
+        override fun check(accessor: Accessor): FactTypeChecker.FilterResult {
+            if (accessor is TaintMarkAccessor) {
+                found = true
+            }
+            return FactTypeChecker.FilterResult.Reject
+        }
     }
 }
