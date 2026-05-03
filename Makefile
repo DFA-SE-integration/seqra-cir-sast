@@ -29,6 +29,8 @@ ifeq ($(HOST_ARCH), arm64)
     CIRTAC_COMPILER := $(MOUNT_ROOT)/cir-tac-ubuntu-arm64/cir-ser-proto/cir-ser-proto
 endif
 
+BUILD_TESTSUITE 	:= scripts/02_build_testsuite.sh
+
 # Common
 .PHONY: help docker_check
 
@@ -76,10 +78,13 @@ docker-shell:
 		-w $(MOUNT_ROOT) "$(DOCKER_IMAGE)"
 
 # cir-tac
-.PHONY: clangir-link-build clangir protobuf cir-tac
+.PHONY: clangir-link-build clangir protobuf cir-tac testsuite
+
+testsuite: docker_check clangir-link-build
+	bash "$(BUILD_TESTSUITE)"
 
 # Link done before $(ROOT)/clangir/llvm/build build with symlink
-clangir-link-build:
+clangir-link-build: docker_check
 	ln -s $(ROOT)/clangir/llvm/build /tmp/llvm-build
 
 clangir: docker_check
