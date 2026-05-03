@@ -1,6 +1,7 @@
 [submodule "clangir"]
 	path = clangir
 	url = git@github.com:DFA-SE-integration/clangir.git
+	branch = seqra
 [submodule "sea-dsa"]
 	path = sea-dsa
 	url = git@github.com:DFA-SE-integration/sea-dsa.git
