@@ -22,4 +22,8 @@ interface CIRBitCodeLocation {
     fun createRefreshed(): CIRBitCodeLocation?
 
     val modules: Map<String, ByteArray>
+
+    /** Optional per-protocir alias payloads (`.alias.pb`), keyed like [modules]. */
+    val moduleAliasData: Map<String, ByteArray>
+        get() = emptyMap()
 }
