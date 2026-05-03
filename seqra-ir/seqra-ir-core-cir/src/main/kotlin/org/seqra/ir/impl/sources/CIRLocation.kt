@@ -20,6 +20,13 @@ class CIRLocation(private val file: File) : CIRBitCodeLocation {
     override val modules: Map<String, ByteArray>
         get() = mapOf(file.path to Files.newInputStream(Paths.get(file.path)).readBytes())
 
+    override val moduleAliasData: Map<String, ByteArray>
+        get() {
+            val aliasFile = File(file.parent, file.nameWithoutExtension + ".alias.pb")
+            if (!aliasFile.isFile) return emptyMap()
+            return mapOf(file.path to aliasFile.readBytes())
+        }
+
     private val fileChecksum: String
         get() {
             return cirFile.let {
