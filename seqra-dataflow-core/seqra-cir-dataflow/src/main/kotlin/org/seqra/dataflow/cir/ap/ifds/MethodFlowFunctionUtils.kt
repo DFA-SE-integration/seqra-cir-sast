@@ -52,6 +52,14 @@ object MethodFlowFunctionUtils {
 
     fun FinalFactAp.clearField(field: Accessor): FinalFactAp? = clearAccessor(field)
 
+    fun accessPathBaseOrNull(value: MLIRValue): AccessPathBase? =
+        when (value) {
+            is MLIRValueRef -> accessPathBaseOrNull(value.value)
+            is MLIRBlockValue -> AccessPathBase.Argument(value.argIndex.toInt())
+            is MLIROpValue -> AccessPathBase.LocalVar(value.opIndex.id.toInt())
+            else -> null
+        }
+
     fun accessPathBase(value: MLIRValue): AccessPathBase = when (value) {
         is MLIRValueRef -> accessPathBase(value.value)
         is MLIRBlockValue -> AccessPathBase.Argument(value.argIndex.toInt())
