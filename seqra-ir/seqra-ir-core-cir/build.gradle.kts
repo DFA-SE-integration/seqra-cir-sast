@@ -190,9 +190,12 @@ tasks {
             resources.walk().forEach { file ->
                 if (file.extension == "cir") {
                     val protocir = Paths.get(file.parent, file.nameWithoutExtension + ".protocir").toFile()
+                    val aliasPb = Paths.get(file.parent, file.nameWithoutExtension + ".alias.pb").toFile()
 
                     val cmd: List<String> = listOf(
-                        cirTacCompilerFile.absolutePath, file.absolutePath
+                        cirTacCompilerFile.absolutePath,
+                        file.absolutePath,
+                        "--emit-alias=${aliasPb.absolutePath}",
                     )
 
                     println("Running: '${cmd.joinToString(" ")}'")
