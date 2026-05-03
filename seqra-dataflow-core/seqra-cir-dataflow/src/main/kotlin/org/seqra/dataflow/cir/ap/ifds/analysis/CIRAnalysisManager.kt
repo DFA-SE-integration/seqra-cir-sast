@@ -40,7 +40,7 @@ import org.seqra.util.analysis.ApplicationGraph
 
 class CIRAnalysisManager(
     cp: CIRClasspath,
-    private val applyAliasInfo: Boolean = false, // TODO implement via seadsa
+    private val applyAliasInfo: Boolean = true,
 ) : CIRLanguageManager(cp), TaintAnalysisManager {
     private val factTypeChecker = CIRFactTypeChecker(cp)
 
@@ -63,7 +63,6 @@ class CIRAnalysisManager(
         cirDowncast<CIRInst>(entryPointStatement)
         cirDowncast<CApplicationGraph>(graph)
 
-//        TODO
         val aliasAnalysis = if (applyAliasInfo) {
             CIRLocalAliasAnalysis(entryPointStatement, graph, this)
         } else {
