@@ -281,12 +281,6 @@ class CIRErsPersistenceImpl(private var ers: EntityRelationshipStorage, private 
         return read { txn ->
             txn.find(PersistenceEntity.ENTITY_FUNCTION, PersistenceEntity.Function.NAME, symbolName)
                 .filter {
-                    // Only definitions are addressable by symbol name. Forward
-                    // declarations duplicate the symbol across modules and would
-                    // make the resolver ambiguous (and, worse, their lazy
-                    // bytecode lookup falls through to `findFunctionBytecode`,
-                    // which by NAME would return the body of the *real*
-                    // definition from another module — silently mixing modules).
                     it["ownerId"] in classpath.registeredLocationIds &&
                         it.get<FunctionKind>(PersistenceEntity.Function.DEF_OR_DECL) == FunctionKind.DEFINITION
                 }
