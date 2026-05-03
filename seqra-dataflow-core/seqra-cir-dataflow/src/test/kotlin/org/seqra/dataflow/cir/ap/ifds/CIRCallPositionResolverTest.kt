@@ -24,6 +24,10 @@ import org.seqra.dataflow.configuration.core.TaintMethodEntrySink
 import org.seqra.dataflow.configuration.core.TaintMethodSink
 import org.seqra.dataflow.configuration.core.TaintPassThrough
 import org.seqra.dataflow.configuration.core.This
+import org.seqra.cir.graph.CApplicationGraph
+import org.seqra.dataflow.cir.ap.ifds.CIRFactTypeChecker
+import org.seqra.dataflow.cir.ap.ifds.CIRLanguageManager
+import org.seqra.dataflow.cir.ap.ifds.CIRLocalVariableReachability
 import org.seqra.dataflow.cir.ap.ifds.analysis.CIRMethodAnalysisContext
 import org.seqra.dataflow.cir.ap.ifds.analysis.CIRMethodCallFlowFunction
 import org.seqra.dataflow.cir.ap.ifds.analysis.CIRMethodStartFlowFunction
@@ -107,6 +111,19 @@ class CIRCallPositionResolverTest {
         fun register(function: CIRFunction) {
             functions[function.id.id] = function
         }
+    }
+
+    private inner class StubApplicationGraph(
+        override val cp: CIRClasspath,
+    ) : CApplicationGraph {
+        override fun predecessors(node: CIRInst) = emptySequence<CIRInst>()
+        override fun successors(node: CIRInst) = emptySequence<CIRInst>()
+        override fun callees(node: CIRInst) = emptySequence<CIRFunction>()
+        override fun callers(method: CIRFunction) = emptySequence<CIRInst>()
+        override fun entryPoints(method: CIRFunction) = method.flowGraph().entries.asSequence()
+        override fun exitPoints(method: CIRFunction) = method.flowGraph().exits.asSequence()
+        override fun methodOf(node: CIRInst): CIRFunction = node.location.method
+        override fun statementsOf(method: CIRFunction) = method.allInstructions.asSequence()
     }
 
     private fun stubFuncOp(functionTypeValue: MLIRTypeID): CIRFuncOp = CIRFuncOp(
@@ -493,9 +510,13 @@ class CIRCallPositionResolverTest {
             result = null,
             calleeRef = CIRCalleeRef("callee", cp),
         )
+        val lm = CIRLanguageManager(cp)
+        val graph = StubApplicationGraph(cp)
         val context = CIRMethodAnalysisContext(
             MethodEntryPoint(EmptyMethodContext, call),
             CIRFactTypeChecker(cp),
+            CIRLocalVariableReachability(callee, graph, lm),
+            null,
             emptyTaintContext(cp),
         )
         val fact = StubFinalFactAp(AccessPathBase.Argument(0))
@@ -527,9 +548,13 @@ class CIRCallPositionResolverTest {
             allInstructions = emptyList(),
         )
         p0.holder = fn
+        val lm = CIRLanguageManager(cp)
+        val graph = StubApplicationGraph(cp)
         val context = CIRMethodAnalysisContext(
             MethodEntryPoint(EmptyMethodContext, fn.flowGraph().entry),
             CIRFactTypeChecker(cp),
+            CIRLocalVariableReachability(fn, graph, lm),
+            null,
             emptyTaintContext(cp),
         )
         val flow = CIRMethodStartFlowFunction(stubApManager, context)
