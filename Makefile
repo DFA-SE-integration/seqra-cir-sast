@@ -105,7 +105,8 @@ protobuf: docker_check
 cir-tac: docker_check
 	@mkdir -p /tmp/cir-tac-build
 	cmake -GNinja -S $(ROOT)/cir-tac -B /tmp/cir-tac-build \
-		-DCLANGIR_BUILD_DIR=/tmp/llvm-build
+		-DCLANGIR_BUILD_DIR=/tmp/llvm-build \
+		-DSEA_DSA_DIR=$(ROOT)/sea-dsa
 	ninja -C /tmp/cir-tac-build -j4
 
 # Seqra
