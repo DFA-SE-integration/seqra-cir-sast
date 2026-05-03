@@ -198,24 +198,39 @@ class CIRTaintAnalyzer(
             }
         }
 
-        fun loadSingleCirFile(cirFile: Path): LoadedAnalyzer {
+        fun loadSingleCirFile(cirFile: Path): LoadedAnalyzer = loadCirFiles(listOf(cirFile))
+
+        /**
+         * Load one or more `.cir` files into a single classpath / analyzer instance.
+         *
+         * Used for fixtures whose `_bad` entrypoint lives in one file but the
+         * actual source/sink lives in a companion file (Juliet's `_62a.cir` +
+         * `_62b.cir` interfile pattern, and likewise for variants 63/64).
+         * Without the companion file the helper called from the entrypoint is
+         * just a forward declaration → no `malloc`/`free` is visible to IFDS
+         * → the vulnerability is missed.
+         */
+        fun loadCirFiles(cirFiles: List<Path>): LoadedAnalyzer {
+            require(cirFiles.isNotEmpty()) { "loadCirFiles requires at least one .cir file" }
             val workingDir = createTempDirectory("seqra-cir-sast-dataflow-")
-            val copiedCir = workingDir.resolve(cirFile.name)
-            copiedCir.writeBytes(cirFile.toFile().readBytes())
+            val protocirFiles = cirFiles.map { cirFile ->
+                val copiedCir = workingDir.resolve(cirFile.name)
+                copiedCir.writeBytes(cirFile.toFile().readBytes())
 
-            val copiedCirBaseName = copiedCir.name.substringBeforeLast('.')
-            val protocir = workingDir.resolve("$copiedCirBaseName.protocir")
-            generateProtocir(copiedCir, protocir)
+                val copiedCirBaseName = copiedCir.name.substringBeforeLast('.')
+                val protocir = workingDir.resolve("$copiedCirBaseName.protocir")
+                generateProtocir(copiedCir, protocir)
+                protocir.toFile()
+            }
 
-            val protocirFile = protocir.toFile()
             val db = cirDatabase(
                 CIRSettings().apply {
                     persistenceImpl(CIRXodusKvErsSettings)
                     installFeatures(CIRUsages)
                 },
             )
-            db.loadFiles(listOf(protocirFile))
-            val cp = db.classpath(listOf(protocirFile), listOf(CIRLoadStoreFeature))
+            db.loadFiles(protocirFiles)
+            val cp = db.classpath(protocirFiles, listOf(CIRLoadStoreFeature))
 
             val analyzer = CIRTaintAnalyzer(
                 cp = cp,
@@ -251,31 +266,65 @@ class CIRTaintAnalyzer(
                 )
             }
 
+            // Itanium C++ ABI mangled names for the standard de/allocation operators.
+            // We taint Argument(0) of every "release" operator so that any subsequent
+            // use of that pointer is flagged. The matching "acquire" operators are
+            // listed as cleaners of [USE_AFTER_FREE_MARK] on the call result so that
+            // a fresh allocation that happens to reuse a previously-freed SSA name
+            // does not propagate stale taint.
+            val freeLikeNames = listOf(
+                "free",
+                // operator delete(void*)        — single-object delete
+                "_ZdlPv",
+                // operator delete(void*, ulong) — sized single-object delete
+                "_ZdlPvm",
+                // operator delete[](void*)      — array delete
+                "_ZdaPv",
+                // operator delete[](void*, ul.) — sized array delete
+                "_ZdaPvm",
+            )
+            val mallocLikeNames = listOf(
+                "malloc",
+                "calloc",
+                "realloc",
+                // operator new(unsigned long)        — single-object new
+                "_Znwm",
+                // operator new[](unsigned long)      — array new
+                "_Znam",
+                // nothrow / aligned variants
+                "_ZnwmRKSt9nothrow_t",
+                "_ZnamRKSt9nothrow_t",
+            )
+
+            val sourceRules = freeLikeNames.map { name ->
+                SerializedRule.Source(
+                    function = simple(name),
+                    overrides = false,
+                    taint = listOf(
+                        SerializedTaintAssignAction(
+                            kind = USE_AFTER_FREE_MARK,
+                            pos = PositionBaseWithModifiers.BaseOnly(PositionBase.Argument(0)),
+                        ),
+                    ),
+                )
+            }
+
+            val cleanerRules = mallocLikeNames.map { name ->
+                SerializedRule.Cleaner(
+                    function = simple(name),
+                    overrides = false,
+                    cleans = listOf(
+                        SerializedTaintCleanAction(
+                            taintKind = USE_AFTER_FREE_MARK,
+                            pos = PositionBaseWithModifiers.BaseOnly(PositionBase.Result),
+                        ),
+                    ),
+                )
+            }
+
             return SerializedTaintConfig(
-                source = listOf(
-                    SerializedRule.Source(
-                        function = simple("free"),
-                        overrides = false,
-                        taint = listOf(
-                            SerializedTaintAssignAction(
-                                kind = USE_AFTER_FREE_MARK,
-                                pos = PositionBaseWithModifiers.BaseOnly(PositionBase.Argument(0)),
-                            ),
-                        ),
-                    ),
-                ),
-                cleaner = listOf(
-                    SerializedRule.Cleaner(
-                        function = simple("malloc"),
-                        overrides = false,
-                        cleans = listOf(
-                            SerializedTaintCleanAction(
-                                taintKind = USE_AFTER_FREE_MARK,
-                                pos = PositionBaseWithModifiers.BaseOnly(PositionBase.Result),
-                            ),
-                        ),
-                    ),
-                ),
+                source = sourceRules,
+                cleaner = cleanerRules,
                 sink = listOf(
                     SerializedRule.Sink(
                         function = anyFunction,

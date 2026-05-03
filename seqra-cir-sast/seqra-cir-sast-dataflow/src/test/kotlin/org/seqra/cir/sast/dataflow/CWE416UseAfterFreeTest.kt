@@ -13,17 +13,37 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class CWE416UseAfterFreeTest {
-    @ParameterizedTest(name = "{1}")
+    @ParameterizedTest(name = "{2}")
     @MethodSource("cwe416Cases")
-    fun useAfterFreeFixture(fileName: String, entrypoint: String) {
+    fun useAfterFreeFixture(fileName: String, companionFileNames: List<String>, entrypoint: String) {
         assumeTrue(!System.getenv("CIRTAC_COMPILER").isNullOrBlank(), "CIRTAC_COMPILER is required")
 
-        val fixture = repoRoot().resolve(
-            FIXTURES_DIR.resolve(fileName),
+        // The interfile helper for these fixtures cannot be lowered to CIR by
+        // the bundled ClangIR (compiler crashes with
+        //   "Missing visitor for AggExprEmitter Stmt: IntegerLiteral"
+        // on `new TwoIntsClass[100]` / `new twoIntsStruct[100]`). The
+        // entrypoint side compiles fine, but without the helper body the
+        // analyzer cannot see the malloc/free pair, so we cannot meaningfully
+        // assert anything yet. Skip rather than fail — see the TODO in
+        // `interfileCompanions`.
+        // TODO Take branch erichkeane:emitArrayInit (https://github.com/llvm/llvm-project/pull/192666/changes)
+        assumeTrue(
+            fileName !in BLOCKED_BY_CLANGIR_AGGREGATE_INIT,
+            "Blocked by ClangIR codegen bug on `new TwoIntsClass[100]` / " +
+                "`new twoIntsStruct[100]` in companion `_62b.cpp` — companion `.cir` cannot be generated.",
         )
-        assertTrue(fixture.exists(), "Missing CIR fixture: $fixture")
 
-        CIRTaintAnalyzer.loadSingleCirFile(fixture).use { loaded ->
+        val root = repoRoot()
+        val fixture = root.resolve(FIXTURES_DIR.resolve(fileName))
+        assertTrue(fixture.exists(), "Missing CIR fixture: $fixture")
+        val companions = companionFileNames.map { name ->
+            val companion = root.resolve(FIXTURES_DIR.resolve(name))
+            assertTrue(companion.exists(), "Missing CIR companion fixture: $companion")
+            companion
+        }
+        val allFixtures = listOf(fixture) + companions
+
+        CIRTaintAnalyzer.loadCirFiles(allFixtures).use { loaded ->
             val entrypoint = assertNotNull(
                 loaded.analyzer.cp.findFunctionBySymbolName(entrypoint),
             )
@@ -31,12 +51,16 @@ class CWE416UseAfterFreeTest {
             val freeFn = loaded.analyzer.cp.findFunctionBySymbolName("free")
             val mallocFn = loaded.analyzer.cp.findFunctionBySymbolName("malloc")
             val printLineFn = loaded.analyzer.cp.findFunctionBySymbolName("printLine")
-//
+
             val vulnerabilities = loaded.analyzer.analyzeWithIfds(listOf(entrypoint))
 
             val debugMessage = buildString {
                 append("fixture=")
                 append(fileName)
+                if (companionFileNames.isNotEmpty()) {
+                    append(" companions=")
+                    append(companionFileNames)
+                }
                 append(" entrypoint=")
                 append(entrypoint.id)
                 append(" free=")
@@ -57,12 +81,27 @@ class CWE416UseAfterFreeTest {
 
     companion object {
         private val helperOnlySplitFixturePattern = Regex(""".*_(62|63|64)b\.cir$""")
+
+        // Juliet's interfile split: `_<n>a.cir` holds the entrypoint and a forward
+        // declaration of the helper, while `_<n>b.cir` holds the helper body
+        // (which contains the actual malloc / free / new / delete calls). To
+        // detect the use-after-free we must load both files into the same CP.
+        private val interfileEntrypointPattern = Regex("""^(.*)_(62|63|64)a\.cir$""")
         private val functionDefinitionPattern = Regex("""^\s*cir\.func\b.*@([^\s(]+)\([^)]*\).*\{$""", setOf(RegexOption.MULTILINE))
 
         private val FIXTURES_DIR = Path.of(
             "juliet-c",
             "samples",
             "CWE416_Use_After_Free",
+        )
+
+        // Interfile fixtures whose companion `_62b.cir` cannot be generated
+        // because of a ClangIR codegen bug on aggregate-init / non-POD array
+        // construction inside `badSource()`. Re-evaluate (re-run the cir-tac
+        // compiler) once the upstream fix lands.
+        private val BLOCKED_BY_CLANGIR_AGGREGATE_INIT = setOf(
+            "CWE416_Use_After_Free__new_delete_array_class_62a.cir",
+            "CWE416_Use_After_Free__new_delete_array_struct_62a.cir",
         )
 
         @JvmStatic
@@ -80,7 +119,8 @@ class CWE416UseAfterFreeTest {
                         val entrypoint = findBadEntrypoint(path)
                         when {
                             entrypoint != null -> {
-                                Arguments.of(fileName, entrypoint)
+                                val companions = interfileCompanions(path)
+                                Arguments.of(fileName, companions, entrypoint)
                             }
 
                             helperOnlySplitFixturePattern.matches(fileName) -> null
@@ -93,6 +133,14 @@ class CWE416UseAfterFreeTest {
                     .toList()
                     .stream()
             }
+        }
+
+        private fun interfileCompanions(path: Path): List<String> {
+            val match = interfileEntrypointPattern.matchEntire(path.fileName.toString()) ?: return emptyList()
+            val (prefix, variant) = match.destructured
+            val companion = "${prefix}_${variant}b.cir"
+            val companionPath = path.resolveSibling(companion)
+            return if (Files.exists(companionPath)) listOf(companion) else emptyList()
         }
 
         private fun findBadEntrypoint(path: Path): String? {
