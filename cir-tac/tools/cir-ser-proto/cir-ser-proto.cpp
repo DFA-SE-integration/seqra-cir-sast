@@ -15,6 +15,8 @@
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/ErrorHandling.h>
 #include <llvm/Support/raw_ostream.h>
+#include <mlir/Dialect/DLTI/DLTI.h>
+#include <mlir/Dialect/Func/IR/FuncOps.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/Dialect.h>
@@ -27,6 +29,9 @@
 
 #include "llvm/IR/LLVMContext.h"
 
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -36,7 +41,12 @@ using namespace protocir;
 int main(int argc, char *argv[]) {
   mlir::MLIRContext context;
   mlir::DialectRegistry registry;
-  registry.insert<cir::CIRDialect>();
+  // CIRDialect is the primary dialect of the input. The rest are necessary
+  // for parsing modules that carry data-layout / lowering metadata
+  // (`dlti.dl_spec`, `llvm.*` attrs) and for `tryLowerDirectlyFromCIRToLLVMIR`,
+  // which the alias serializer runs to obtain the LLVM IR fed to SeaDsa.
+  registry.insert<cir::CIRDialect, mlir::DLTIDialect, mlir::LLVM::LLVMDialect,
+                  mlir::func::FuncDialect>();
 
   context.appendDialectRegistry(registry);
   context.allowUnregisteredDialects();
@@ -194,12 +204,17 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Write IR to stdout
-  std::string binary;
-  pModule.SerializeToString(&binary);
-  llvm::outs() << binary;
-
-  // Write alias data (Sea-dsa) to the requested file
+  // Build alias data (Sea-dsa) into an in-memory blob *before* writing the
+  // protocir payload to stdout. CIR→LLVM lowering can emit human-readable
+  // diagnostics through `llvm::outs()` (e.g. ABI-type warnings from the
+  // direct-lowering pass); if any of that ends up on stdout it would corrupt
+  // the serialized .protocir on the receiver side.
+  //
+  // `llvm::outs()` is a process-wide singleton bound to STDOUT_FILENO and
+  // calls `::write(STDOUT_FILENO, ...)` at flush time, so it follows whatever
+  // fd 1 currently points to. We rebind fd 1 to /dev/null for the duration of
+  // lowering, then restore it before writing the protobuf payload.
+  std::string aliasBlob;
   if (!aliasOutputPath.empty()) {
     CIRModuleAliasData pAliasData;
     *pAliasData.mutable_module_id() = pModuleID;
@@ -207,24 +222,62 @@ int main(int argc, char *argv[]) {
     llvm::StringMap<FunctionAliasContext> funcCtx;
     AliasSerializer::buildFunctionContexts(*module, funcCtx);
 
-    llvm::LLVMContext llvmCtx;
-    std::unique_ptr<llvm::Module> llvmMod = lowerCirToLlvmIr(*module, llvmCtx);
-    if (llvmMod) {
-      AliasSerializer aliasSerializer(pModuleID);
-      pAliasData =
-          aliasSerializer.serializeModule(*llvmMod, typeCache, funcCtx);
-    } else {
-      llvm::errs() << "warning: failed to lower CIR to LLVM IR; "
-                      "writing empty alias data\n";
+    llvm::outs().flush();
+    int savedStdout = ::dup(STDOUT_FILENO);
+    int devnull = ::open("/dev/null", O_WRONLY);
+    if (savedStdout < 0 || devnull < 0) {
+      llvm::errs() << "error: failed to silence stdout for CIR→LLVM lowering\n";
+      if (savedStdout >= 0) ::close(savedStdout);
+      if (devnull >= 0) ::close(devnull);
+      return 1;
+    }
+    ::dup2(devnull, STDOUT_FILENO);
+    ::close(devnull);
+
+    {
+      llvm::LLVMContext llvmCtx;
+      std::unique_ptr<llvm::Module> llvmMod =
+          lowerCirToLlvmIr(*module, llvmCtx);
+      llvm::outs().flush();
+      if (llvmMod) {
+        AliasSerializer aliasSerializer(pModuleID);
+        pAliasData =
+            aliasSerializer.serializeModule(*llvmMod, typeCache, funcCtx);
+      } else {
+        // The diagnostic itself was redirected to /dev/null above; surface a
+        // single line to stderr so callers know alias data is empty.
+        ::dup2(savedStdout, STDOUT_FILENO);
+        ::close(savedStdout);
+        savedStdout = -1;
+        llvm::errs() << "warning: failed to lower CIR to LLVM IR; "
+                        "writing empty alias data\n";
+      }
     }
 
+    if (savedStdout >= 0) {
+      ::dup2(savedStdout, STDOUT_FILENO);
+      ::close(savedStdout);
+    }
+    pAliasData.SerializeToString(&aliasBlob);
+  }
+
+  // Write protobuf IR to stdout. Done last so that nothing produced by the
+  // lowering pipeline above can race with this binary write.
+  std::string binary;
+  pModule.SerializeToString(&binary);
+  llvm::outs() << binary;
+  llvm::outs().flush();
+
+  // Persist the alias blob next to the requested path.
+  if (!aliasOutputPath.empty()) {
     std::ofstream aliasFile(aliasOutputPath, std::ios::binary | std::ios::trunc);
     if (!aliasFile) {
       llvm::errs() << "error: cannot open alias output file: " << aliasOutputPath
                    << "\n";
       return 1;
     }
-    pAliasData.SerializeToOstream(&aliasFile);
+    aliasFile.write(aliasBlob.data(),
+                    static_cast<std::streamsize>(aliasBlob.size()));
   }
 
   return 0;

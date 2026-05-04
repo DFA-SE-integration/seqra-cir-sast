@@ -52,6 +52,8 @@ include_directories(${Boost_INCLUDE_DIRS})
 set(SEA_DSA_BUILD_TOOLS_TESTS OFF CACHE BOOL "Sea-dsa tools/tests" FORCE)
 add_subdirectory("${SEA_DSA_DIR}" sea-dsa-build EXCLUDE_FROM_ALL)
 
+include_directories(${SEA_DSA_DIR}/include)
+
 add_subdirectory(proto)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

@@ -31,7 +31,7 @@ bool AliasSerializer::cirOpProducesPointerResult(mlir::Operation *op) {
 
 void AliasSerializer::buildFunctionContexts(
     mlir::ModuleOp module, llvm::StringMap<FunctionAliasContext> &out) {
-  for (mlir::Operation &top : module.getRegion(0).getOps()) {
+  for (mlir::Operation &top : module.getBodyRegion().getOps()) {
     auto func = llvm::dyn_cast<cir::FuncOp>(top);
     if (!func)
       continue;
@@ -138,17 +138,33 @@ CIRModuleAliasData AliasSerializer::serializeModule(
       buckets[key].push_back(V);
     };
 
-    for (const auto &kv :
-         llvm::make_range(G->scalar_begin(), G->scalar_end())) {
-      if (!kv.second || kv.second->isNull())
+    // Iterating `G->scalar_begin/end` is not enough: `Graph::mkCell`
+    // calls `stripPointerCasts` on its first argument, so several SSA
+    // values are merged into a single `m_values` entry. Walk the LLVM IR
+    // ourselves and ask sea-dsa for each ptr-typed value's cell -- this
+    // mirrors what `--sea-dsa-aa-eval` does for its pairwise alias()
+    // queries and matches what we tagged with `!seqra.local` during
+    // lowering. CIR `cir.cast bitcast` ops that get lowered to a no-op
+    // (typical in opaque-pointer LLVM) do not appear here, but that is
+    // fine: sea-dsa already treats them as transparent and seqra strips
+    // them via `accessPathBaseOrNull` before consulting the alias data.
+    for (llvm::Argument &A : F.args()) {
+      if (!A.getType()->isPointerTy())
         continue;
-      addToBucket(kv.first, *kv.second);
+      if (!G->hasCell(A))
+        continue;
+      addToBucket(&A, G->getCell(A));
     }
-    for (const auto &kv :
-         llvm::make_range(G->formal_begin(), G->formal_end())) {
-      if (!kv.second || kv.second->isNull())
-        continue;
-      addToBucket(kv.first, *kv.second);
+    for (llvm::BasicBlock &BB : F) {
+      for (llvm::Instruction &I : BB) {
+        if (!I.getType()->isPointerTy())
+          continue;
+        if (!seqraLocalIndexFromInstruction(&I))
+          continue;
+        if (!G->hasCell(I))
+          continue;
+        addToBucket(&I, G->getCell(I));
+      }
     }
 
     CIRFunctionAliasData fnData;
