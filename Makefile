@@ -22,12 +22,8 @@ INSIDE_DOCKER := $(shell echo $$INSIDE_DOCKER)
 
 HOST_ARCH := $(shell uname -m)
 
-ifeq ($(HOST_ARCH), x86_64)
-    CIRTAC_COMPILER := $(MOUNT_ROOT)/cir-tac-ubuntu-x86/cir-ser-proto/cir-ser-proto
-endif
-ifeq ($(HOST_ARCH), arm64)
-    CIRTAC_COMPILER := $(MOUNT_ROOT)/cir-tac-ubuntu-arm64/cir-ser-proto/cir-ser-proto
-endif
+CIRTAC_DIR := $(MOUNT_ROOT)/cir-tac-linux-$(HOST_ARCH)
+CIRTAC_COMPILER := $(CIRTAC_DIR)/cir-ser-proto/cir-ser-proto
 
 BUILD_TESTSUITE 	:= scripts/02_build_testsuite.sh
 
@@ -85,7 +81,7 @@ testsuite: docker_check clangir-link-build
 
 # Link done before $(ROOT)/clangir/llvm/build build with symlink
 clangir-link-build: docker_check
-	ln -s $(ROOT)/clangir/llvm/build /tmp/llvm-build
+	ln -snf $(ROOT)/clangir/llvm/build /tmp/llvm-build
 
 clangir: docker_check
 	@mkdir -p /tmp/llvm-build
@@ -98,6 +94,7 @@ clangir: docker_check
 		-DLLVM_OPTIMIZED_TABLEGEN=ON
 	ninja -C /tmp/llvm-build -j4
 
+# Need to rebuild cir-tac
 # ClangConfig.cmake in:
 # CMake Error at CMakeLists.txt:30 (find_package):
 # Could not find a package configuration file provided by "Protobuf" with any
@@ -107,12 +104,14 @@ protobuf: docker_check
 	cmake --build /tmp/protobuf-build
 	cmake --install /tmp/protobuf-build
 
-cir-tac: docker_check
+cir-tac: docker_check clangir-link-build
 	@mkdir -p /tmp/cir-tac-build
 	cmake -GNinja -S $(ROOT)/cir-tac -B /tmp/cir-tac-build \
 		-DCLANGIR_BUILD_DIR=/tmp/llvm-build \
 		-DSEA_DSA_DIR=$(ROOT)/sea-dsa
 	ninja -C /tmp/cir-tac-build -j4
+	mkdir -p $(CIRTAC_DIR)/cir-ser-proto
+	cp -r /tmp/cir-tac-build/tools/cir-ser-proto/cir-ser-proto /workspace/cir-tac-linux-arm64/cir-ser-proto/cir-ser-proto
 
 # Seqra
 .PHONY: build build-dfa clean test
