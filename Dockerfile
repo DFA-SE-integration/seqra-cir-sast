@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake clang lld make ninja-build \
     openjdk-21-jdk \
     libedit-dev zlib1g-dev \
+    libboost-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
