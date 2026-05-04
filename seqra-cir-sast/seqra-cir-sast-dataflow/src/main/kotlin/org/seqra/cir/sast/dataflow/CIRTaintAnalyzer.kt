@@ -53,6 +53,7 @@ import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.writeBytes
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -354,11 +355,26 @@ class CIRTaintAnalyzer(
                 "Configured CIRTAC_COMPILER is not executable: ${compiler.absolutePath}"
             }
 
-            val process = ProcessBuilder(listOf(compiler.absolutePath, cirFile.absolutePathString()))
+            // Emit SeaDsa-derived alias groups next to the .protocir.
+            // CIRLocation auto-loads `<base>.alias.pb` for the matching protocir module
+            // (see seqra-ir-core-cir/src/main/kotlin/.../sources/CIRLocation.kt).
+            val aliasPb = protocir.resolveSibling("${protocir.nameWithoutExtension}.alias.pb")
+
+            val process = ProcessBuilder(
+                listOf(
+                    compiler.absolutePath,
+                    cirFile.absolutePathString(),
+                    "--emit-alias=${aliasPb.absolutePathString()}",
+                ),
+            )
                 .redirectOutput(protocir.toFile())
                 .start()
             val completed = process.waitFor()
             val stderr = process.errorStream.bufferedReader().readText().trim()
+            if (stderr.isNotBlank()) {
+                System.err.println("[cir-ser-proto stderr for ${cirFile.fileName}]")
+                System.err.println(stderr)
+            }
             check(completed == 0) {
                 buildString {
                     append("Failed to generate protocir for ${cirFile.absolutePathString()}")
