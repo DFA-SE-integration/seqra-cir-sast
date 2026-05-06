@@ -4,6 +4,7 @@ syntax = "proto3";
 package protocir;
 option java_package = "org.seqra.ir.impl.grpc";
 
+import "alias.proto";
 import "attr.proto";
 import "setup.proto";
 import "type.proto";
@@ -36,5 +37,6 @@ message MLIRModule {
   repeated CIRFunction functions = 3;
   repeated CIRGlobal globals = 4;
   repeated MLIRType types = 5;
+  optional CIRModuleAliasData alias_data = 9;
 }
 // clang-format on
