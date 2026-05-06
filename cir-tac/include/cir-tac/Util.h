@@ -48,6 +48,10 @@ private:
 
 class OpCache {
 public:
+  bool contains(mlir::Operation *operation) const {
+    return cache_.find(operation) != cache_.end();
+  }
+
   MLIROpID getMLIROpID(mlir::Operation *operation) {
     if (!cache_.contains(operation)) {
       MLIROpID opID;
