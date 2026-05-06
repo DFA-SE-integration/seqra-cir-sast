@@ -1,6 +1,8 @@
 package org.seqra.ir.impl.sources
 
 import org.seqra.ir.api.cir.CIRBitCodeLocation
+import org.seqra.ir.api.cir.CIRModuleBlob
+import org.seqra.ir.impl.grpc.Model.MLIRModule
 import org.seqra.ir.impl.shaHash
 import java.io.File
 import java.nio.file.Files
@@ -17,8 +19,13 @@ class CIRLocation(private val file: File) : CIRBitCodeLocation {
 
     override fun createRefreshed() = CIRLocation(file)
 
-    override val modules: Map<String, ByteArray>
-        get() = mapOf(file.path to Files.newInputStream(Paths.get(file.path)).readBytes())
+    override val moduleBlobs: Map<String, CIRModuleBlob>
+        get() {
+            val bytes = Files.readAllBytes(Paths.get(file.path))
+            val parsed = MLIRModule.parseFrom(bytes)
+            val aliasBytes = if (parsed.hasAliasData()) parsed.aliasData.toByteArray() else null
+            return mapOf(file.path to CIRModuleBlob(bytes, aliasBytes))
+        }
 
     private val fileChecksum: String
         get() {

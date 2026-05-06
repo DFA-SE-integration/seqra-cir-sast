@@ -31,6 +31,9 @@ interface CIRClasspath : Closeable, CommonProject {
 
     fun getGlobalConstructors(): List<CIRFunctionID>
     fun getGlobalDestructors(): List<CIRFunctionID>
+
+    // Getters for aliases
+    fun findFunctionAliasData(functionID: CIRFunctionID): CIRFunctionAliasData? = null
 }
 
 interface CIRClasspathFeature {

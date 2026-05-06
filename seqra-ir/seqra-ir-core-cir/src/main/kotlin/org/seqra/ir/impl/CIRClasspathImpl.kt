@@ -7,6 +7,7 @@ import org.seqra.ir.api.cir.cfg.CIRFunction
 import org.seqra.ir.api.cir.cfg.CIRFunctionID
 import org.seqra.ir.api.cir.cfg.CIRGlobal
 import org.seqra.ir.api.cir.cfg.CIRGlobalID
+import org.seqra.ir.api.cir.cfg.MLIRModuleID
 import org.seqra.ir.api.cir.cfg.MLIRType
 import org.seqra.ir.api.cir.cfg.MLIRTypeID
 import org.seqra.ir.impl.cfg.builder.buildCIRGlobalID
@@ -17,7 +18,9 @@ import org.seqra.ir.impl.features.CIRFeatureEventImpl
 import org.seqra.ir.impl.features.CIRFeaturesChain
 import org.seqra.ir.impl.grpc.Model
 import org.seqra.ir.impl.grpc.Type
+import org.seqra.ir.impl.alias.CIRAliasDataCodec
 import org.seqra.ir.impl.ir.CIRFunctionImpl
+import java.util.concurrent.ConcurrentHashMap
 
 val logger = object : KLogging() {}.logger
 
@@ -31,6 +34,15 @@ class CIRClasspathImpl(
 
     private val featuresChain = CIRFeaturesChain(features + CIRClasspathFeatureImpl())
     private val functionsBySymbolNameCache = mutableMapOf<String, CIRFunction?>()
+
+    // Per-module decoded alias map; lazy and shared across threads. We cache
+    // at module granularity because `CIRModuleAliasData` is a single blob per
+    // module - decoding once amortizes the cost across all queries against
+    // that module's functions. ConcurrentHashMap is required because the
+    // taint analyzer queries this from many worker threads simultaneously.
+    private val functionAliasByModuleId =
+        ConcurrentHashMap<MLIRModuleID, Map<CIRFunctionID, CIRFunctionAliasData>>()
+    private val aliasDecodeFailedModules = ConcurrentHashMap.newKeySet<MLIRModuleID>()
 
     init {
         assert(registeredLocationIds.isNotEmpty())
@@ -73,6 +85,27 @@ class CIRClasspathImpl(
 
     override fun getGlobalConstructors(): List<CIRFunctionID> = db.persistence.findGlobalCtors(this)
     override fun getGlobalDestructors(): List<CIRFunctionID> = db.persistence.findGlobalDtors(this)
+
+    override fun findFunctionAliasData(functionID: CIRFunctionID): CIRFunctionAliasData? {
+        val moduleId = functionID.moduleID
+        if (moduleId in aliasDecodeFailedModules) return null
+        val byFn = functionAliasByModuleId.computeIfAbsent(moduleId) { id ->
+            val raw = db.persistence.findModuleAliasData(this, id) ?: return@computeIfAbsent emptyMap()
+            try {
+                CIRAliasDataCodec.decodeModule(raw, id)
+            } catch (e: Exception) {
+                // Mark the module as unrecoverable for alias info so we do not
+                // re-attempt the (failing) decode on every query, and so the
+                // cache itself stays consistent (no half-decoded blobs).
+                aliasDecodeFailedModules.add(id)
+                logger.error(e) {
+                    "Failed to parse alias blob for module ${id.id}; alias analysis disabled for this module"
+                }
+                emptyMap()
+            }
+        }
+        return byFn[functionID]
+    }
 
     // Constructors
     private fun newFunction(source: CIRFunctionSource): CIRFunction {
