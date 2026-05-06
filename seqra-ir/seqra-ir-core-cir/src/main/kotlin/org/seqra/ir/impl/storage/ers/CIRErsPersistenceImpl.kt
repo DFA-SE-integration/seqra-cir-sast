@@ -44,15 +44,19 @@ class CIRErsPersistenceImpl(private var ers: EntityRelationshipStorage, private 
         if (modules.isEmpty()) {
             return
         }
-        val allModules = modules.map { (it.node as ModuleIRNode).asModuleInfo() }
         val locationId = location.id
         val moduleEntities = hashMapOf<MLIRModuleID, Entity>()
 
         write { txn ->
-            allModules.forEach { moduleInfo ->
+            modules.forEach { source ->
+                val moduleInfo = (source.node as ModuleIRNode).asModuleInfo()
                 txn.newEntity(PersistenceEntity.ENTITY_MODULE).also { module ->
                     moduleEntities[moduleInfo.id] = module
                     module[PersistenceEntity.Module.ID] = moduleInfo.id.id
+
+                    source.aliasData?.takeIf { it.isNotEmpty() }?.let { blob ->
+                        module.setRawBlob(PersistenceEntity.Module.ALIAS_DATA, blob)
+                    }
 
                     // Set up information about global constructors
                     // TODO: handle all attributes
@@ -144,9 +148,10 @@ class CIRErsPersistenceImpl(private var ers: EntityRelationshipStorage, private 
                     }
                 }
             }
-            allModules.forEach { moduleInfo ->
+            modules.forEach { source ->
+                val moduleInfo = (source.node as ModuleIRNode).asModuleInfo()
                 moduleEntities[moduleInfo.id]?.let { module ->
-                    module["locationId"] = locationId
+                    module[PersistenceEntity.Module.LOCATION_ID] = locationId
                 }
             }
 //            symbolInterner.flush(context)
@@ -207,6 +212,19 @@ class CIRErsPersistenceImpl(private var ers: EntityRelationshipStorage, private 
         }
     }
 
+    override fun findModuleAliasData(classpath: CIRClasspath, moduleId: MLIRModuleID): ByteArray? {
+        return read { txn ->
+            // A module name may legitimately appear in several registered
+            // locations (e.g. linked sub-projects re-exporting the same .cir).
+            // Pick the first such location belonging to the current classpath -
+            // alias data is content-derived from the file, so duplicates are
+            // expected to agree on it.
+            txn.find(PersistenceEntity.ENTITY_MODULE, PersistenceEntity.Module.ID, moduleId.id)
+                .firstOrNull { it[PersistenceEntity.Module.LOCATION_ID] in classpath.registeredLocationIds }
+                ?.getRawBlob(PersistenceEntity.Module.ALIAS_DATA)
+        }
+    }
+
     override fun findLocation(locationId: Long): RegisteredLocation {
         val locationData = read { txn ->
             txn.getEntityOrNull(BytecodeLocationEntity.BYTECODE_LOCATION_ENTITY_TYPE, locationId)
@@ -220,7 +238,8 @@ class CIRErsPersistenceImpl(private var ers: EntityRelationshipStorage, private 
     override fun findModules(classpath: CIRClasspath): List<String> {
         return read { txn ->
             classpath.registeredLocationIds.mapNotNull { id ->
-                val module = txn.find(PersistenceEntity.ENTITY_MODULE, "locationId", id).singleOrNull()
+                val module = txn.find(PersistenceEntity.ENTITY_MODULE, PersistenceEntity.Module.LOCATION_ID, id)
+                    .singleOrNull()
                 module?.get<String>(PersistenceEntity.Module.ID)
             }
         }
@@ -327,8 +346,14 @@ object PersistenceEntity {
 
     object Module {
         const val ID = "nameID"
+        // Foreign key into the locations registry. Note: other entity tables
+        // (Function/Type/Global) historically use "ownerId" for the same role -
+        // for Module the schema settled on "locationId", so all module-level
+        // queries must go through this constant to stay consistent.
+        const val LOCATION_ID = "locationId"
         const val ENTITY_GLOBAL_CTOR = "globalCtor"
         const val ENTITY_GLOBAL_DTOR = "globalDtor"
+        const val ALIAS_DATA = "aliasData"
     }
 
     object Function {

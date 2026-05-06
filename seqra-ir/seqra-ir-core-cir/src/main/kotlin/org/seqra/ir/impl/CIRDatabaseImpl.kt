@@ -113,8 +113,17 @@ class CIRDatabaseImpl(private val settings: CIRSettings, private val sourceLoade
         )
         forEach { location ->
             val sources = arrayListOf<CIRModuleSource>()
-            location.cirLocation?.modules?.forEach { (_, content) ->
-                sources.add(CIRModuleSourceImpl(sourceLoader.loadModuleFromBytes(content), location))
+            val cirLoc = location.cirLocation
+            if (cirLoc != null) {
+                for ((_, blob) in cirLoc.moduleBlobs) {
+                    sources.add(
+                        CIRModuleSourceImpl(
+                            sourceLoader.loadModuleFromBytes(blob.bytes),
+                            location,
+                            blob.aliasBytes,
+                        )
+                    )
+                }
             }
             persistence.persist(location, sources)
             if (sources.isNotEmpty()) {
