@@ -4,6 +4,7 @@ syntax = "proto3";
 package protocir;
 option java_package = "org.jacodb.impl.grpc";
 
+import "alias.proto";
 import "attr.proto";
 import "setup.proto";
 import "type.proto";
@@ -57,5 +58,6 @@ message MLIRModule {
   MLIRLocation loc = 6;
   repeated MLIRRawNamedAttr raw_attrs = 7;
   repeated MLIRModuleOp op_order = 8;
+  optional CIRModuleAliasData alias_data = 9;
 }
 // clang-format on
