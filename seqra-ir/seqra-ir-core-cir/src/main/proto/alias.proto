@@ -1,0 +1,26 @@
+// clang-format off
+syntax = "proto3";
+
+package protocir;
+option java_package = "org.seqra.ir.impl.grpc";
+option java_outer_classname = "CIRAliasProtos";
+
+import "setup.proto";
+
+// A group of values that may alias each other (same DSA node)
+message CIRAliasGroup {
+  repeated MLIRValue members = 1;
+}
+
+// Alias data for a single function
+message CIRFunctionAliasData {
+  CIRFunctionID function = 1;
+  repeated CIRAliasGroup alias_groups = 2;
+}
+
+// Alias data for the whole module (inlined on MLIRModule.alias_data by cir-ser-proto).
+message CIRModuleAliasData {
+  MLIRModuleID module_id = 1;
+  repeated CIRFunctionAliasData functions = 2;
+}
+// clang-format on
