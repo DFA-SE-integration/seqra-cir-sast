@@ -17,7 +17,7 @@ message CIRFunctionAliasData {
   repeated CIRAliasGroup alias_groups = 2;
 }
 
-// Alias data for the whole module — written to a companion .alias.pb file
+// Alias data for the whole module (inlined on MLIRModule.alias_data by cir-ser-proto).
 message CIRModuleAliasData {
   MLIRModuleID module_id = 1;
   repeated CIRFunctionAliasData functions = 2;

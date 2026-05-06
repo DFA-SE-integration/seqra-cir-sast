@@ -1,5 +1,6 @@
 #include "cir-tac/AliasSerializer.h"
 #include "cir-tac/AttrSerializer.h"
+#include "cir-tac/CirToLlvmIr.h"
 #include "cir-tac/OpSerializer.h"
 #include "cir-tac/TypeSerializer.h"
 #include "cir-tac/Util.h"
@@ -9,10 +10,13 @@
 #include <clang/CIR/Dialect/IR/CIRDialect.h>
 #include <clang/CIR/Passes.h>
 #include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/StringMap.h>
 #include <llvm/ADT/TypeSwitch.h>
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/ErrorHandling.h>
 #include <llvm/Support/raw_ostream.h>
+#include <mlir/Dialect/DLTI/DLTI.h>
+#include <mlir/Dialect/Func/IR/FuncOps.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/Dialect.h>
@@ -23,7 +27,11 @@
 #include <mlir/IR/Visitors.h>
 #include <mlir/Parser/Parser.h>
 
-#include <fstream>
+#include "llvm/IR/LLVMContext.h"
+
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <stdexcept>
 #include <string>
 
@@ -32,7 +40,12 @@ using namespace protocir;
 int main(int argc, char *argv[]) {
   mlir::MLIRContext context;
   mlir::DialectRegistry registry;
-  registry.insert<cir::CIRDialect>();
+  // CIRDialect is the primary dialect of the input. The rest are necessary
+  // for parsing modules that carry data-layout / lowering metadata
+  // (`dlti.dl_spec`, `llvm.*` attrs) and for `tryLowerDirectlyFromCIRToLLVMIR`,
+  // which the alias serializer runs to obtain the LLVM IR fed to SeaDsa.
+  registry.insert<cir::CIRDialect, mlir::DLTIDialect, mlir::LLVM::LLVMDialect,
+                  mlir::func::FuncDialect>();
 
   context.appendDialectRegistry(registry);
   context.allowUnregisteredDialects();
@@ -42,16 +55,6 @@ int main(int argc, char *argv[]) {
   }
 
   std::filesystem::path relPath = argv[1];
-
-  // Optional: --emit-alias=<path>
-  std::string aliasOutputPath;
-  for (int i = 2; i < argc; ++i) {
-    std::string arg = argv[i];
-    const std::string prefix = "--emit-alias=";
-    if (arg.rfind(prefix, 0) == 0) {
-      aliasOutputPath = arg.substr(prefix.size());
-    }
-  }
 
   auto absPath = std::filesystem::absolute(relPath);
   if (!std::filesystem::exists(absPath)) {
@@ -73,10 +76,10 @@ int main(int argc, char *argv[]) {
   TypeCache typeCache(pModuleID);
   AttributeSerializer attributeSerializer(pModuleID, typeCache);
 
-  // Alias data (populated per-function if --emit-alias is requested)
-  CIRModuleAliasData pAliasData;
-  *pAliasData.mutable_module_id() = pModuleID;
-  AliasSerializer aliasSerializer(pModuleID);
+  // Per-function pre-encoded alias contexts. Populated below from the same
+  // OpCache/BlockCache/TypeCache the rest of the serializer uses, so that
+  // they survive the destructive CIR→LLVM lowering performed at the end.
+  llvm::StringMap<FunctionAliasContext> funcAliasCtx;
 
   auto &bodyRegion = (*module).getBodyRegion();
 
@@ -139,14 +142,10 @@ int main(int argc, char *argv[]) {
         *pModuleOp.mutable_function() = pFunctionID;
         *pModule.add_op_order() = pModuleOp;
 
-        // Compute and accumulate alias data for this function (same caches)
-        if (!aliasOutputPath.empty()) {
-          auto funcAliasData =
-              aliasSerializer.serializeFunction(cirFunc, opCache, blockCache, typeCache);
-          if (funcAliasData.alias_groups_size() > 0) {
-            *pAliasData.add_functions() = funcAliasData;
-          }
-        }
+        // Stamp `cir.seqra.op_id` and capture MLIRValues after serialization so
+        // OpCache ids match protocir exactly (Sea-dsa maps LLVM !seqra.op).
+        AliasSerializer::stampAndBuildContext(cirFunc, opCache, blockCache,
+                                                typeCache, funcAliasCtx[funcId]);
       } else if (auto cirGlobal = llvm::dyn_cast<cir::GlobalOp>(topOp)) {
         CIRGlobal *pGlobal = pModule.add_globals();
         CIRGlobalID pGlobalID;
@@ -204,20 +203,57 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Write IR to stdout
+  // The CIR side of the serializer is done; Sea-dsa alias groups require the
+  // CIR module to be lowered to LLVM IR in place. After lowering the MLIR
+  // module no longer holds CIR ops — only LLVM dialect remains.
+  //
+  // CIR→LLVM lowering can emit diagnostics through `llvm::outs()`; rebind fd 1
+  // to /dev/null during lowering so stdout stays clean for the binary protobuf.
+  llvm::outs().flush();
+  int savedStdout = ::dup(STDOUT_FILENO);
+  int devnull = ::open("/dev/null", O_WRONLY);
+  if (savedStdout < 0 || devnull < 0) {
+    llvm::errs() << "error: failed to silence stdout for CIR→LLVM lowering\n";
+    if (savedStdout >= 0)
+      ::close(savedStdout);
+    if (devnull >= 0)
+      ::close(devnull);
+    return 1;
+  }
+  ::dup2(devnull, STDOUT_FILENO);
+  ::close(devnull);
+
+  {
+    llvm::LLVMContext llvmCtx;
+    std::unique_ptr<llvm::Module> llvmMod =
+        lowerCirToLlvmIr(*module, llvmCtx);
+    llvm::outs().flush();
+    if (llvmMod) {
+      AliasSerializer aliasSerializer(pModuleID);
+      *pModule.mutable_alias_data() =
+          aliasSerializer.serializeModule(*llvmMod, funcAliasCtx);
+    } else {
+      ::dup2(savedStdout, STDOUT_FILENO);
+      ::close(savedStdout);
+      savedStdout = -1;
+      llvm::errs() << "warning: failed to lower CIR to LLVM IR; alias_data "
+                      "will be empty\n";
+      CIRModuleAliasData emptyAlias;
+      *emptyAlias.mutable_module_id() = pModuleID;
+      *pModule.mutable_alias_data() = std::move(emptyAlias);
+    }
+  }
+
+  if (savedStdout >= 0) {
+    ::dup2(savedStdout, STDOUT_FILENO);
+    ::close(savedStdout);
+  }
+
+  // Binary protobuf to stdout after lowering so diagnostics cannot race.
   std::string binary;
   pModule.SerializeToString(&binary);
   llvm::outs() << binary;
-
-  // Write alias data to the requested file
-  if (!aliasOutputPath.empty()) {
-    std::ofstream aliasFile(aliasOutputPath, std::ios::binary | std::ios::trunc);
-    if (!aliasFile) {
-      llvm::errs() << "error: cannot open alias output file: " << aliasOutputPath << "\n";
-      return 1;
-    }
-    pAliasData.SerializeToOstream(&aliasFile);
-  }
+  llvm::outs().flush();
 
   return 0;
 }

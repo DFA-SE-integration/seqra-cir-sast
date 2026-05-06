@@ -6,59 +6,46 @@
 
 #include <clang/CIR/Dialect/IR/CIRDialect.h>
 #include <llvm/ADT/DenseMap.h>
-#include <mlir/IR/BuiltinOps.h>
-#include <mlir/IR/Value.h>
+#include <llvm/ADT/StringMap.h>
 
 #include <vector>
 
+namespace llvm {
+class Module;
+} // namespace llvm
+
 using namespace protocir;
 
-/**
- * Computes intra-procedural CIR-level alias groups for a module.
- *
- * Algorithm (Variant B — CIR-level, no LLVM IR lowering required):
- *   For each function:
- *     1. Collect all pointer-typed block arguments and op results.
- *     2. Use union-find to group values that are structural aliases:
- *        - `cir.cast` with pointer operand and pointer result: union both.
- *        - `cir.store` / `cir.load` pairs are NOT tracked here (heap aliasing).
- *     3. Export groups with >= 2 members as CIRAliasGroup proto messages.
- *
- * The OpCache and BlockCache passed here MUST be the same instances used during
- * IR serialization so that MLIROpID / MLIRBlockID values are consistent.
- */
+/// Per-function alias context for Sea-dsa: stable mapping from `cir.seqra.op_id`
+/// / LLVM `!seqra.op` to serialized MLIR values.
+///
+/// Populated while the CIR module is alive (`stampAndBuildContext` shares the
+/// same `OpCache` / `BlockCache` / `TypeCache` as `OpSerializer`); CIR→LLVM
+/// lowering may then destroy the CIR module without invalidating these protos.
+struct FunctionAliasContext {
+  llvm::DenseMap<uint64_t, MLIRValue> opIdToResult0;
+
+  std::vector<MLIRValue> entryBlockArgs;
+};
+
 class AliasSerializer {
 public:
-  AliasSerializer(MLIRModuleID moduleID) : moduleID(moduleID) {}
+  explicit AliasSerializer(MLIRModuleID moduleID) : moduleID(moduleID) {}
 
-  /**
-   * Serialize alias data for a single function.
-   * @param func      The CIR function to analyze.
-   * @param opCache   Op cache already populated for this function (same as main serializer).
-   * @param blockCache Block cache already populated for this function.
-   * @param typeCache  Type cache used to serialize MLIRValue type IDs.
-   */
-  CIRFunctionAliasData serializeFunction(cir::FuncOp func,
-                                         const OpCache &opCache,
-                                         const BlockCache &blockCache,
-                                         TypeCache &typeCache);
+  /// Stamp `cir.seqra.op_id` (= serialized `MLIROpID`) on every result-producing
+  /// op in \p func and fill \p out. Must run after `OpSerializer` has walked the
+  /// function so `OpCache` ids match the protobuf exactly.
+  static void stampAndBuildContext(cir::FuncOp func, OpCache &opCache,
+                                   BlockCache &blockCache,
+                                   TypeCache &typeCache,
+                                   FunctionAliasContext &out);
+
+  /// Run Sea-dsa on \p llvmModule and emit alias groups using the
+  /// precomputed contexts. Safe after destructive CIR lowering.
+  CIRModuleAliasData
+  serializeModule(llvm::Module &llvmModule,
+                  const llvm::StringMap<FunctionAliasContext> &funcContexts);
 
 private:
   MLIRModuleID moduleID;
-
-  // Union-Find helpers (backed by a DenseMap; path-compressed)
-  using ValueMap = llvm::DenseMap<mlir::Value, mlir::Value>;
-
-  mlir::Value find(ValueMap &parent, mlir::Value v);
-  void unite(ValueMap &parent, mlir::Value a, mlir::Value b);
-
-  bool isPointerType(mlir::Type type);
-
-  MLIRValue makeOpResultValue(const OpCache &opCache,
-                              TypeCache &typeCache,
-                              mlir::OpResult result);
-
-  MLIRValue makeBlockArgValue(const BlockCache &blockCache,
-                              TypeCache &typeCache,
-                              mlir::BlockArgument arg);
 };

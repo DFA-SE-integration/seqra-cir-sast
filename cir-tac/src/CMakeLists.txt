@@ -1,6 +1,16 @@
 set(LIBS
     MLIRCIR
     MLIRParser
+    MLIRTargetLLVMIRExport
+    MLIRBuiltinToLLVMIRTranslation
+    MLIRLLVMToLLVMIRTranslation
+    MLIRIR
+    clangCIRLoweringDirectToLLVM
+    SeaDsaAnalysis
+    LLVMCore
+    LLVMAnalysis
+    LLVMTransformUtils
+    LLVMSupport
     proto
 )
 
@@ -10,6 +20,7 @@ add_library(protoSerializer
   AttrSerializer.cpp
   OpSerializer.cpp
   AliasSerializer.cpp
+  CirToLlvmIr.cpp
   Deserializer.cpp
   EnumDeserializer.cpp
   AttrDeserializer.cpp
