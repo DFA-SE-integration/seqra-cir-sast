@@ -36,7 +36,13 @@ dependencies {
 }
 
 tasks.withType<Test> {
-    jvmArgs = listOf("-Xmx4g")
+    jvmArgs = listOf(
+        "-Xmx4g",
+        "--add-opens",
+        "java.base/java.nio=ALL-UNNAMED",
+        "--add-opens",
+        "java.base/sun.nio.ch=ALL-UNNAMED",
+        )
 
     listOf("CIRTAC_COMPILER", "SEQRA_CWE416_FIXTURE_FILTER", "CIR_TAINT_DEBUG").forEach { name ->
         System.getenv(name)?.let { environment(name, it) }
