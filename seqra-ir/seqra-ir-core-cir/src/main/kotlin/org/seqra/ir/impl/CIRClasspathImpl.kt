@@ -62,6 +62,10 @@ class CIRClasspathImpl(
             return functionsBySymbolNameCache[symbolName]
         }
 
+        logger.warn {
+            "Find function by symbol name '$symbolName'"
+        }
+
         val sources = db.persistence.findFunctionSourcesBySymbolName(this, symbolName)
         val resolvedSource = selectDefinitionSource(symbolName, sources) ?: return null
         val resolvedFunction = newFunction(resolvedSource)
@@ -160,14 +164,25 @@ class CIRClasspathImpl(
             return null
         }
 
-        val definitionSources = selectPreferredSources(sources)
-            .filter { it.bytecodeNode != null }
+        val preferredSources = selectPreferredSources(sources).toList()
+        val definitionSources = preferredSources.filter { it.bytecodeNode != null }
 
         return when {
             definitionSources.size == 1 -> definitionSources.single()
             definitionSources.size > 1 -> {
                 logAmbiguousFunctionResolution(symbolName, definitionSources)
                 null
+            }
+
+            preferredSources.size == 1 -> preferredSources.single().also {
+                logger.warn {
+                    "No definition for symbol '$symbolName', using declaration ${it.functionID}"
+                }
+            }
+
+            preferredSources.size > 1 -> {
+                logAmbiguousFunctionResolution(symbolName, preferredSources)
+                preferredSources.first()
             }
 
             else -> null
