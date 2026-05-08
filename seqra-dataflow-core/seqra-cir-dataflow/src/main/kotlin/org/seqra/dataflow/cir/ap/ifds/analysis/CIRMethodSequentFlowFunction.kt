@@ -171,6 +171,11 @@ class CIRMethodSequentFlowFunction(
 
     private fun applyUseAfterFreeDereferenceSink(factAp: FinalFactAp, lhv: MLIRValue, rhv: CIRExpr) {
         if (lhv !is MLIROpValue) return
+
+        if (rhv is CIRPtrStrideOpExpr && applyUseAfterFreePtrStrideSink(factAp, rhv)) {
+            return
+        }
+
         val loadAddr = (rhv as? MLIRValueRef)?.value ?: return
         if (!loadAddressAliasesFactBase(loadAddr, factAp.base)) return
 
@@ -179,6 +184,31 @@ class CIRMethodSequentFlowFunction(
             return
         }
 
+        emitUseAfterFreeDereferenceSink(reader, PositionAccess.Simple(factAp.base))
+    }
+
+    /**
+     * Pointer arithmetic (`cir.ptr_stride`) uses an array-element access path; treat it as a dereference-style UAF sink
+     * when the fact carries `use-after-free` at `[base]` (element of base pointer).
+     */
+    private fun applyUseAfterFreePtrStrideSink(factAp: FinalFactAp, rhv: CIRPtrStrideOpExpr): Boolean {
+        val mark = TaintMark(USE_AFTER_FREE_MARK_NAME)
+        val candidates = buildList {
+            add(factAp)
+            analysisContext.aliasAnalysis?.forEachAlias(factAp) { add(it) }
+        }
+        for (candidate in candidates) {
+            if (!loadAddressAliasesFactBase(rhv.base, candidate.base)) continue
+            val reader = FinalFactReader(candidate, apManager)
+            val elemPos = PositionAccess.Complex(PositionAccess.Simple(candidate.base), ElementAccessor)
+            if (!reader.containsPositionWithTaintMark(elemPos, mark)) continue
+            emitUseAfterFreeDereferenceSink(reader, elemPos)
+            return true
+        }
+        return false
+    }
+
+    private fun emitUseAfterFreeDereferenceSink(reader: FinalFactReader, positionAccess: PositionAccess) {
         val rule = TaintMethodSink(
             method = currentInst.location.method,
             condition = ConstantTrue,
@@ -190,7 +220,7 @@ class CIRMethodSequentFlowFunction(
             ),
         )
         val initialFact = reader.createInitialFactWithTaintMark(
-            PositionAccess.Simple(factAp.base),
+            positionAccess,
             TaintMark(USE_AFTER_FREE_MARK_NAME),
         )
         analysisContext.taint.taintSinkTracker.addVulnerability(

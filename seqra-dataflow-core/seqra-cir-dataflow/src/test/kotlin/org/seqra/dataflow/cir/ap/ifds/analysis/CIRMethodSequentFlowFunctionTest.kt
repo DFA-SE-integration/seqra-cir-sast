@@ -2,6 +2,7 @@ package org.seqra.dataflow.cir.ap.ifds.analysis
 
 import org.seqra.dataflow.ap.ifds.AccessPathBase
 import org.seqra.dataflow.ap.ifds.ElementAccessor
+import org.seqra.dataflow.ap.ifds.TaintMarkAccessor
 import org.seqra.dataflow.ap.ifds.EmptyMethodContext
 import org.seqra.dataflow.ap.ifds.ExclusionSet
 import org.seqra.dataflow.ap.ifds.FieldAccessor
@@ -11,6 +12,8 @@ import org.seqra.dataflow.ap.ifds.analysis.MethodSequentFlowFunction.Sequent
 import org.seqra.dataflow.ap.ifds.taint.TaintAnalysisContext
 import org.seqra.dataflow.ap.ifds.taint.TaintAnalysisUnitStorage
 import org.seqra.dataflow.ap.ifds.taint.TaintSinkTracker
+import org.seqra.dataflow.cir.ap.ifds.taint.PositionAccess
+import org.seqra.dataflow.cir.ap.ifds.taint.mkAccessPath
 import org.seqra.dataflow.cir.ap.ifds.CIRFieldTypeEncoding
 import org.seqra.cir.graph.CApplicationGraph
 import org.seqra.dataflow.cir.ap.ifds.CIRFactTypeChecker
@@ -67,6 +70,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class CIRMethodSequentFlowFunctionTest {
     private val moduleId = MLIRModuleID("test-mod")
@@ -198,6 +202,29 @@ class CIRMethodSequentFlowFunctionTest {
             taint = emptyTaintContext(fn.classpath, apManager),
         )
         return apManager to CIRMethodSequentFlowFunction(apManager, context, currentAssign)
+    }
+
+    private fun flowForWithStorage(
+        fn: StubFunction,
+        currentAssign: CIRAssignInst,
+        allInstructions: List<CIRInst>,
+    ): Triple<AutomataApManager, CIRMethodSequentFlowFunction, TaintAnalysisUnitStorage> {
+        val apManager = AutomataApManager()
+        fn.allInstructions = allInstructions
+        val lm = CIRLanguageManager(fn.classpath)
+        val graph = StubApplicationGraph(fn.classpath)
+        val storage = TaintAnalysisUnitStorage(apManager, lm)
+        val context = CIRMethodAnalysisContext(
+            methodEntryPoint = MethodEntryPoint(EmptyMethodContext, currentAssign),
+            factTypeChecker = CIRFactTypeChecker(fn.classpath),
+            localVariableReachability = CIRLocalVariableReachability(fn, graph, lm),
+            aliasAnalysis = null,
+            taint = TaintAnalysisContext(
+                taintConfig = emptyTaintRulesProvider,
+                taintSinkTracker = TaintSinkTracker(storage),
+            ),
+        )
+        return Triple(apManager, CIRMethodSequentFlowFunction(apManager, context, currentAssign), storage)
     }
 
     private fun ptrStrideAssign(
@@ -415,5 +442,80 @@ class CIRMethodSequentFlowFunctionTest {
 
         assertContains(sequents, Sequent.Unchanged)
         assertContains(sequents, Sequent.ZeroToFact(expectedWrittenFact))
+    }
+
+    @Test
+    fun `propagateZeroToFact reports UAF sink on ptr_stride over marked array element`() {
+        val fn = stubFunction()
+        val base = MLIRBlockValue(ptrTy, MLIRBlockID(0), 0L)
+        val stride = MLIRBlockValue(indexTy, MLIRBlockID(0), 1L)
+        val lhv = MLIROpValue(ptrTy, MLIROpID(7), 0L)
+        val assign = ptrStrideAssign(fn, instIndex = 7, lhv = lhv, base = base, stride = stride)
+        val (apManager, flow, storage) = flowForWithStorage(fn, assign, listOf(assign))
+
+        val markedStub = apManager.createFinalAp(AccessPathBase.This, ExclusionSet.Universe)
+            .prependAccessor(TaintMarkAccessor("use-after-free"))
+        val uafFact = mkAccessPath(
+            PositionAccess.Complex(PositionAccess.Simple(AccessPathBase.Argument(0)), ElementAccessor),
+            markedStub,
+            ExclusionSet.Empty,
+        )
+
+        flow.propagateZeroToFact(uafFact)
+
+        val vulns = mutableListOf<TaintSinkTracker.TaintVulnerability>()
+        storage.collectVulnerabilities(vulns)
+        assertEquals(1, vulns.size)
+        val v = vulns.single()
+        assertTrue(v is TaintSinkTracker.TaintVulnerabilityWithFact)
+        val withFact = v as TaintSinkTracker.TaintVulnerabilityWithFact
+        assertEquals("use-after-free-deref", withFact.rule.id)
+        assertEquals(assign, withFact.statement)
+        assertEquals(TaintSinkTracker.VulnerabilityTriggerPosition.BEFORE_INST, withFact.vulnerabilityTriggerPosition)
+        val sinkRule = withFact.rule as TaintMethodSink
+        assertEquals(listOf(416), sinkRule.meta.cwe)
+    }
+
+    @Test
+    fun `propagateZeroToFact does not report ptr_stride UAF when mark is only on pointer not array element`() {
+        val fn = stubFunction()
+        val base = MLIRBlockValue(ptrTy, MLIRBlockID(0), 0L)
+        val stride = MLIRBlockValue(indexTy, MLIRBlockID(0), 1L)
+        val lhv = MLIROpValue(ptrTy, MLIROpID(7), 0L)
+        val assign = ptrStrideAssign(fn, instIndex = 7, lhv = lhv, base = base, stride = stride)
+        val (apManager, flow, storage) = flowForWithStorage(fn, assign, listOf(assign))
+
+        val markedStub = apManager.createFinalAp(AccessPathBase.This, ExclusionSet.Universe)
+            .prependAccessor(TaintMarkAccessor("use-after-free"))
+        val factPointerOnly = mkAccessPath(
+            PositionAccess.Simple(AccessPathBase.Argument(0)),
+            markedStub,
+            ExclusionSet.Empty,
+        )
+
+        flow.propagateZeroToFact(factPointerOnly)
+
+        val vulns = mutableListOf<TaintSinkTracker.TaintVulnerability>()
+        storage.collectVulnerabilities(vulns)
+        assertEquals(0, vulns.size)
+    }
+
+    @Test
+    fun `propagateZeroToFact does not report ptr_stride UAF without use-after-free mark`() {
+        val fn = stubFunction()
+        val base = MLIRBlockValue(ptrTy, MLIRBlockID(0), 0L)
+        val stride = MLIRBlockValue(indexTy, MLIRBlockID(0), 1L)
+        val lhv = MLIROpValue(ptrTy, MLIROpID(7), 0L)
+        val assign = ptrStrideAssign(fn, instIndex = 7, lhv = lhv, base = base, stride = stride)
+        val (apManager, flow, storage) = flowForWithStorage(fn, assign, listOf(assign))
+
+        val factNoMark = apManager.createFinalAp(AccessPathBase.Argument(0), ExclusionSet.Empty)
+            .prependAccessor(ElementAccessor)
+
+        flow.propagateZeroToFact(factNoMark)
+
+        val vulns = mutableListOf<TaintSinkTracker.TaintVulnerability>()
+        storage.collectVulnerabilities(vulns)
+        assertEquals(0, vulns.size)
     }
 }
