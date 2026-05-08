@@ -2,6 +2,7 @@ package org.seqra.dataflow.cir.ap.ifds.taint
 
 import org.seqra.dataflow.ap.ifds.AccessPathBase
 import org.seqra.dataflow.ap.ifds.Accessor
+import org.seqra.dataflow.ap.ifds.ElementAccessor
 import org.seqra.dataflow.ap.ifds.ExclusionSet
 import org.seqra.dataflow.ap.ifds.FinalAccessor
 import org.seqra.dataflow.ap.ifds.TaintMarkAccessor
@@ -67,6 +68,25 @@ class FinalFactReader(
     fun updateRefinement(other: FinalFactReader) {
         refinement = refinement.union(other.refinement)
     }
+
+    /**
+     * Sink rules often use BaseOnly [Argument] positions, while facts from malloc'd arrays keep a leading
+     * [ElementAccessor] ([*]) even after passing through `ptr_stride(..., 0)` into a plain pointer parameter.
+     */
+    override fun containsPositionWithTaintMark(position: PositionAccess, mark: TaintMark): Boolean {
+        if (markMatchesAt(position, mark)) return true
+        if (position is PositionAccess.Simple) {
+            val underElement = PositionAccess.Complex(position, ElementAccessor)
+            if (markMatchesAt(underElement, mark)) return true
+        }
+        return false
+    }
+
+    private fun markMatchesAt(position: PositionAccess, mark: TaintMark): Boolean {
+        val positionWithMark = PositionAccess.Complex(position, TaintMarkAccessor(mark.name))
+        val finalPositionWithMark = PositionAccess.Complex(positionWithMark, FinalAccessor)
+        return containsPosition(finalPositionWithMark)
+    }
 }
 
 class FinalFactReaderWithPrefix(
@@ -80,6 +100,9 @@ class FinalFactReaderWithPrefix(
 
     override fun createInitialFactWithTaintMark(position: PositionAccess, mark: TaintMark): InitialFactAp =
         reader.createInitialFactWithTaintMark(position.withPrefix(prefix), mark)
+
+    override fun containsPositionWithTaintMark(position: PositionAccess, mark: TaintMark): Boolean =
+        reader.containsPositionWithTaintMark(position.withPrefix(prefix), mark)
 }
 
 class InitialFactReader(val fact: InitialFactAp, val apManager: ApManager): FactReader {
@@ -96,5 +119,20 @@ class InitialFactReader(val fact: InitialFactAp, val apManager: ApManager): Fact
     override fun createInitialFactWithTaintMark(position: PositionAccess, mark: TaintMark): InitialFactAp {
         val positionWithMark = PositionAccess.Complex(position, TaintMarkAccessor(mark.name))
         return apManager.mkInitialAccessPath(positionWithMark, ExclusionSet.Universe)
+    }
+
+    override fun containsPositionWithTaintMark(position: PositionAccess, mark: TaintMark): Boolean {
+        if (markMatchesAt(position, mark)) return true
+        if (position is PositionAccess.Simple) {
+            val underElement = PositionAccess.Complex(position, ElementAccessor)
+            if (markMatchesAt(underElement, mark)) return true
+        }
+        return false
+    }
+
+    private fun markMatchesAt(position: PositionAccess, mark: TaintMark): Boolean {
+        val positionWithMark = PositionAccess.Complex(position, TaintMarkAccessor(mark.name))
+        val finalPositionWithMark = PositionAccess.Complex(positionWithMark, FinalAccessor)
+        return containsPosition(finalPositionWithMark)
     }
 }

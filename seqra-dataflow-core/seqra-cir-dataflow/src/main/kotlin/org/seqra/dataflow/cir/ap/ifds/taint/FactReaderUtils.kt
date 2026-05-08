@@ -1,6 +1,7 @@
 package org.seqra.dataflow.cir.ap.ifds.taint
 
 import org.seqra.dataflow.ap.ifds.Accessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.access.FactAp
 import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
@@ -48,11 +49,16 @@ inline fun <F: FactAp, R> readPosition(
     while (accessors.isNotEmpty()) {
         val accessor = accessors.removeLast()
 
-        if (!result.startsWithAccessor(accessor)) {
-            return onMismatch(result, accessor)
+        // Facts bridged from load-address slots into callee parameters carry a leading
+        // [ReferenceAccessor] (*param); sink rules still use BaseOnly positions (no Ref).
+        while (!result.startsWithAccessor(accessor)) {
+            if (!result.startsWithAccessor(ReferenceAccessor)) {
+                return onMismatch(result, accessor)
+            }
+            result = result.readAccessor(ReferenceAccessor) ?: return onMismatch(result, accessor)
         }
 
-        result =  result.readAccessor(accessor) ?: error("Impossible")
+        result = result.readAccessor(accessor) ?: error("Impossible")
     }
 
     return matchedNode(result)
