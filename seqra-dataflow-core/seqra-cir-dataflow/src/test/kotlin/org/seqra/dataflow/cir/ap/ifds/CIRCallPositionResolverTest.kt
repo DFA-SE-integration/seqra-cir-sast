@@ -38,7 +38,9 @@ import org.seqra.ir.api.cir.CIRClasspathFeature
 import org.seqra.ir.api.cir.CIRDatabase
 import org.seqra.ir.api.cir.RegisteredLocation
 import org.seqra.ir.api.cir.cfg.CIRCalleeRef
+import org.seqra.ir.api.cir.cfg.CIRAssignInst
 import org.seqra.ir.api.cir.cfg.CIRCallOpInst
+import org.seqra.ir.api.cir.cfg.CIRConstantOpExpr
 import org.seqra.ir.api.cir.cfg.CIRFuncOp
 import org.seqra.ir.api.cir.cfg.CIRFunction
 import org.seqra.ir.api.cir.cfg.CIRFunctionID
@@ -56,8 +58,10 @@ import org.seqra.ir.api.cir.cfg.CIRVisibilityKind
 import org.seqra.ir.api.cir.cfg.CIRBlockList
 import org.seqra.ir.api.cir.cfg.CIRCallingConv
 import org.seqra.ir.api.cir.cfg.CIRExtraFuncAttributesAttr
+import org.seqra.ir.api.cir.cfg.CIRPtrStrideOpExpr
 import org.seqra.ir.api.cir.cfg.MLIRDictionaryAttr
 import org.seqra.ir.api.cir.cfg.MLIRFlatSymbolRefAttr
+import org.seqra.ir.api.cir.cfg.MLIRIntegerAttr
 import org.seqra.ir.api.cir.cfg.MLIROpID
 import org.seqra.ir.api.cir.cfg.MLIRStringAttr
 import org.seqra.ir.api.cir.cfg.MLIRType
@@ -72,6 +76,7 @@ import org.seqra.ir.api.cir.cfg.MLIROpValue
 import org.seqra.ir.api.common.CommonMethod
 import org.seqra.ir.api.common.cfg.CommonInst
 import org.seqra.ir.impl.cfg.instListOf
+import java.math.BigInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -484,6 +489,104 @@ class CIRCallPositionResolverTest {
 
         assertEquals(listOf<Pair<FinalFactAp, AccessPathBase>>(fact to AccessPathBase.Argument(0)), mapped)
         assertTrue(CIRMethodCallFactMapper.factIsRelevantToMethodCall(null, call, fact))
+    }
+
+    @Test
+    fun `fact mapper treats zero ptr_stride argument as aliasing stride base LocalVar`() {
+        val cp = StubClasspath()
+        cp.register(intTy, CIRSingleType(intTy))
+        val ptrTy = MLIRTypeID(moduleId, "!cir.ptr<struct>")
+        cp.register(ptrTy, CIRSingleType(ptrTy))
+
+        val basePtr = MLIROpValue(ptrTy, MLIROpID(10), 0L)
+        val zeroOp = MLIROpValue(intTy, MLIROpID(11), 0L)
+        val stridedPtr = MLIROpValue(ptrTy, MLIROpID(12), 0L)
+
+        val placeholderFn = StubFunction(
+            id = CIRFunctionID(moduleId, "placeholder"),
+            classpath = cp,
+            parameters = emptyList(),
+            returnType = voidTy,
+            blocks = CIRBlockList(emptyList()),
+            funcOp = stubFuncOp(voidTy),
+            allInstructions = emptyList(),
+        )
+        cp.register(placeholderFn)
+
+        val sinkParam = StubParameter(0, ptrTy)
+        val callerFn = StubFunction(
+            id = CIRFunctionID(moduleId, "caller"),
+            classpath = cp,
+            parameters = emptyList(),
+            returnType = voidTy,
+            blocks = CIRBlockList(emptyList()),
+            funcOp = stubFuncOp(voidTy),
+            allInstructions = listOf(
+                CIRAssignInst(
+                    CIRInstLocation(placeholderFn, 0, MLIRUnknownLoc),
+                    MLIROpID(11),
+                    zeroOp,
+                    CIRConstantOpExpr(MLIRIntegerAttr(null, BigInteger.ZERO), intTy),
+                ),
+                CIRAssignInst(
+                    CIRInstLocation(placeholderFn, 0, MLIRUnknownLoc),
+                    MLIROpID(12),
+                    stridedPtr,
+                    CIRPtrStrideOpExpr(basePtr, zeroOp, ptrTy),
+                ),
+            ),
+        )
+        cp.register(callerFn)
+
+        val sinkCallee = StubFunction(
+            id = CIRFunctionID(moduleId, "sinkFn"),
+            classpath = cp,
+            parameters = listOf(sinkParam),
+            returnType = voidTy,
+            blocks = CIRBlockList(emptyList()),
+            funcOp = stubFuncOp(voidTy),
+            allInstructions = emptyList(),
+        )
+        sinkParam.holder = sinkCallee
+        cp.register(sinkCallee)
+
+        val call = CIRCallOpInst(
+            location = CIRInstLocation(callerFn, 0, MLIRUnknownLoc),
+            id = MLIROpID(20),
+            arg_ops = listOf(stridedPtr),
+            exception = null,
+            callee = MLIRFlatSymbolRefAttr(MLIRStringAttr("sinkFn", null)),
+            callingConv = CIRCallingConv.C,
+            extraAttrs = extraAttrs,
+            result = null,
+            calleeRef = CIRCalleeRef("sinkFn", cp),
+        )
+
+        val factOnBasePointer = StubFinalFactAp(AccessPathBase.LocalVar(10))
+        assertTrue(CIRMethodCallFactMapper.factIsRelevantToMethodCall(null, call, factOnBasePointer, null))
+
+        val mapped = mutableListOf<Pair<FinalFactAp, AccessPathBase>>()
+        CIRMethodCallFactMapper.mapMethodCallToStartFlowFact(
+            sinkCallee,
+            call,
+            factOnBasePointer,
+            object : FactTypeChecker {
+                override fun filterFactByLocalType(
+                    actualType: org.seqra.ir.api.common.CommonType?,
+                    factAp: FinalFactAp,
+                ): FinalFactAp = factAp
+
+                override fun accessPathFilter(accessPath: List<Accessor>): FactTypeChecker.FactApFilter =
+                    FactTypeChecker.AlwaysAcceptFilter
+            },
+        ) { mappedFact, startFactBase ->
+            mapped += mappedFact to startFactBase
+        }
+
+        assertEquals(
+            listOf<Pair<FinalFactAp, AccessPathBase>>(factOnBasePointer to AccessPathBase.Argument(0)),
+            mapped,
+        )
     }
 
     @Test
