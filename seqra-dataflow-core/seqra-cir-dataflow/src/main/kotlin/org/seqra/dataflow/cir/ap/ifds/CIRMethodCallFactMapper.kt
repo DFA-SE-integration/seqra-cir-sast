@@ -75,7 +75,6 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
         checker: FactTypeChecker,
         onMappedFact: (FinalFactAp, AccessPathBase) -> Unit
     ) = mapMethodCallToStartFlowFact(
-        callee = callee,
         callExpr = callExpr,
         factAp = factAp,
         checkFactType = { type, f -> checker.filterFactByLocalType(type, f) },
@@ -99,7 +98,6 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
         fact: InitialFactAp,
         onMappedFact: (InitialFactAp, AccessPathBase) -> Unit
     ) = mapMethodCallToStartFlowFact(
-        callee = callee,
         callExpr = callExpr,
         factAp = fact,
         checkFactType = { _, f -> f },
@@ -113,7 +111,18 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
     ): Boolean {
         cirDowncast<MLIRValue?>(returnValue)
         cirDowncast<CIRDirectCall>(callExpr)
-        return factIsRelevantToMethodCall(returnValue, callExpr, factAp.base)
+        return factIsRelevantToMethodCall(returnValue, callExpr, factAp.base, null)
+    }
+
+    fun factIsRelevantToMethodCall(
+        returnValue: CommonValue?,
+        callExpr: CommonCallExpr,
+        factAp: FactAp,
+        aa: CIRLocalAliasAnalysis?
+    ): Boolean {
+        cirDowncast<MLIRValue?>(returnValue)
+        cirDowncast<CIRDirectCall>(callExpr)
+        return factIsRelevantToMethodCall(returnValue, callExpr, factAp.base, aa)
     }
 
     override fun isValidMethodExitFact(factAp: FactAp): Boolean =
@@ -170,7 +179,6 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
     }
 
     private inline fun <F : FactAp> mapMethodCallToStartFlowFact(
-        callee: CIRFunction,
         callExpr: CIRDirectCall,
         factAp: F,
         checkFactType: (MLIRType, F) -> F?,
@@ -196,15 +204,23 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
     private fun factIsRelevantToMethodCall(
         returnValue: MLIRValue?,
         callExpr: CIRDirectCall,
-        factBase: AccessPathBase
+        factBase: AccessPathBase,
+        aa: CIRLocalAliasAnalysis?
     ): Boolean {
         if (factBase is AccessPathBase.ClassStatic) {
+            return true
+        }
+        if (aa?.aliasGroupContainsClassStatic(factBase) == true) {
             return true
         }
 
         for (arg in callExpr.arg_ops) {
             val argBase = accessPathBase(arg)
             if (argBase == factBase) {
+                return true
+            }
+
+            if (argBase != null && aa?.basesAlias(argBase, factBase) == true) {
                 return true
             }
         }
@@ -214,10 +230,19 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
             if (retValBase == factBase) {
                 return true
             }
+            if (retValBase != null && aa?.basesAlias(retValBase, factBase) == true) {
+                return true
+            }
         }
 
         return false
     }
+
+    private fun CIRLocalAliasAnalysis.aliasGroupContainsClassStatic(base: AccessPathBase): Boolean =
+        findAliases(base)?.any { it.base is AccessPathBase.ClassStatic } == true
+
+    private fun CIRLocalAliasAnalysis.basesAlias(a: AccessPathBase, b: AccessPathBase): Boolean =
+        findAliases(a)?.any { it.base == b } == true
 
     /* */
 

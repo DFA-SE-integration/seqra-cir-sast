@@ -59,7 +59,7 @@ class CIRMethodCallPrecondition(
             results.add(PreconditionFactsForInitialFact(fact, it))
         }
 
-        analysisContext.aliasAnalysis?.forEachPossibleAliasAtStatement(statement, fact) { aliasedFact ->
+        analysisContext.aliasAnalysis?.forEachAlias(fact) { aliasedFact ->
             preconditionForFact(aliasedFact)?.let {
                 results.add(PreconditionFactsForInitialFact(aliasedFact, it))
             }
@@ -73,7 +73,7 @@ class CIRMethodCallPrecondition(
     }
 
     private fun preconditionForFact(fact: InitialFactAp): List<CallPreconditionFact>? {
-        if (!CIRMethodCallFactMapper.factIsRelevantToMethodCall(returnValue, callExpr, fact)) {
+        if (!CIRMethodCallFactMapper.factIsRelevantToMethodCall(returnValue, callExpr, fact, analysisContext.aliasAnalysis)) {
             return null
         }
 
@@ -88,8 +88,21 @@ class CIRMethodCallPrecondition(
 
         val callee = method
         if (callee != null) {
-            CIRMethodCallFactMapper.mapMethodCallToStartFlowFact(callee, callExpr, fact) { callerFact, startFactBase ->
-                preconditions.preconditionForFact(callerFact, startFactBase)
+            val mappedArgIndices = mutableSetOf<Int>()
+
+            fun mapAndCollect(f: InitialFactAp) {
+                CIRMethodCallFactMapper.mapMethodCallToStartFlowFact(callee, callExpr, f) { callerFact, startFactBase ->
+                    val argIdx = (startFactBase as? AccessPathBase.Argument)?.idx
+                    if (argIdx != null && !mappedArgIndices.add(argIdx)) {
+                        return@mapMethodCallToStartFlowFact
+                    }
+                    preconditions.preconditionForFact(callerFact, startFactBase)
+                }
+            }
+
+            mapAndCollect(fact)
+            analysisContext.aliasAnalysis?.forEachAlias(fact) { aliasedFact ->
+                mapAndCollect(aliasedFact)
             }
         }
 
