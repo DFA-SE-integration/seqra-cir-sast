@@ -12,6 +12,7 @@ import org.seqra.dataflow.ap.ifds.FactTypeChecker.FactApFilter
 import org.seqra.dataflow.ap.ifds.FactTypeChecker.FilterResult
 import org.seqra.dataflow.ap.ifds.FieldAccessor
 import org.seqra.dataflow.ap.ifds.FinalAccessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.TaintMarkAccessor
 import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.dataflow.jvm.util.JIRHierarchyInfo
@@ -66,7 +67,7 @@ class JIRFactTypeChecker(private val cp: JIRClasspath) : FactTypeChecker {
 
         private fun checkAccessor(accessor: Accessor): FilterResult {
             when (accessor) {
-                is TaintMarkAccessor, FinalAccessor, AnyAccessor -> return FilterResult.Accept
+                is TaintMarkAccessor, FinalAccessor, AnyAccessor, ReferenceAccessor -> return FilterResult.Accept
                 is FieldAccessor -> {
                     if (actualType !is JIRRefType) return FilterResult.Reject
                     val factType = fieldClassType(accessor) ?: return FilterResult.Accept
@@ -121,7 +122,7 @@ class JIRFactTypeChecker(private val cp: JIRClasspath) : FactTypeChecker {
                 accessorActualType(prevAccessors)?.ifArrayGetElementType
             }
 
-            is TaintMarkAccessor, FinalAccessor, AnyAccessor -> null
+            is TaintMarkAccessor, FinalAccessor, AnyAccessor, ReferenceAccessor -> null
         }
     }
 

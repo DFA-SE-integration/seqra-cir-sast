@@ -42,7 +42,7 @@ sealed class Accessor : Comparable<Accessor> {
         }
 
         return when (this) {
-            ElementAccessor, FinalAccessor, AnyAccessor -> 0 // Definitely equal
+            ElementAccessor, FinalAccessor, AnyAccessor, ReferenceAccessor -> 0 // Definitely equal
             is FieldAccessor -> this.compareToFieldAccessor(other as FieldAccessor)
             is TaintMarkAccessor -> this.compareToTaintMarkAccessor(other as TaintMarkAccessor)
         }
@@ -110,6 +110,14 @@ data object AnyAccessor : Accessor() {
     override val accessorClassId: Int  = 4
 
     fun containsAccessor(accessor: Accessor): Boolean = accessor is FieldAccessor || accessor is ElementAccessor
+}
+
+/** Pointer dereference / load-from-address (distinct from [ElementAccessor] array element). */
+data object ReferenceAccessor : Accessor() {
+    override fun toSuffix(): String = ".&"
+    override fun toString(): String = "&"
+
+    override val accessorClassId: Int = 5
 }
 
 inline fun <T : Any> tryAnyAccessorOrNull(accessor: Accessor, body: () -> T?): T? {

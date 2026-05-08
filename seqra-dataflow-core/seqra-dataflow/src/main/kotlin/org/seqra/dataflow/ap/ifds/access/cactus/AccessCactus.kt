@@ -9,6 +9,7 @@ import org.seqra.dataflow.ap.ifds.ExclusionSet
 import org.seqra.dataflow.ap.ifds.FactTypeChecker
 import org.seqra.dataflow.ap.ifds.FieldAccessor
 import org.seqra.dataflow.ap.ifds.FinalAccessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.TaintMarkAccessor
 import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
@@ -1157,6 +1158,7 @@ class AccessCactus(
                     is TaintMarkAccessor -> error("Unexpected TaintMarkAccessor")
                     FinalAccessor -> error("Unexpected FinalAccessor")
                     AnyAccessor -> low === AnyAccessor
+                    ReferenceAccessor -> low === ReferenceAccessor
                 }
             }
 
