@@ -7,6 +7,7 @@ import org.seqra.dataflow.ap.ifds.ElementAccessor
 import org.seqra.dataflow.ap.ifds.ExclusionSet
 import org.seqra.dataflow.ap.ifds.FieldAccessor
 import org.seqra.dataflow.ap.ifds.FinalAccessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.TaintMarkAccessor
 import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
@@ -241,6 +242,7 @@ class AccessPath(
             is FieldAccessor -> AccessNode(accessor, limitFieldAccess(accessor))
             is TaintMarkAccessor -> AccessNode(accessor, this)
             AnyAccessor -> this // todo: All accessors are not supported in tree base ap
+            ReferenceAccessor -> AccessNode(accessor, this)
         }
 
         private fun limitElementAccess(limit: Int): AccessNode? {

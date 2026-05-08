@@ -10,6 +10,7 @@ import org.seqra.dataflow.ap.ifds.FactTypeChecker.FactApFilter
 import org.seqra.dataflow.ap.ifds.FactTypeChecker.FilterResult
 import org.seqra.dataflow.ap.ifds.FieldAccessor
 import org.seqra.dataflow.ap.ifds.FinalAccessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.TaintMarkAccessor
 import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.ir.api.cir.CIRClasspath
@@ -74,7 +75,7 @@ class CIRFactTypeChecker(private val cp: CIRClasspath) : FactTypeChecker {
                 accessorActualType(prevAccessors)?.elementAccessorType()
             }
 
-            is TaintMarkAccessor, FinalAccessor, AnyAccessor -> null
+            is TaintMarkAccessor, FinalAccessor, AnyAccessor, ReferenceAccessor -> null
         }
     }
 
@@ -125,7 +126,7 @@ class CIRFactTypeChecker(private val cp: CIRClasspath) : FactTypeChecker {
 
         private fun checkAccessor(accessor: Accessor): FilterResult {
             when (accessor) {
-                is TaintMarkAccessor, FinalAccessor, AnyAccessor -> return FilterResult.Accept
+                is TaintMarkAccessor, FinalAccessor, AnyAccessor, ReferenceAccessor -> return FilterResult.Accept
                 is FieldAccessor -> {
 //                    https://llvm.github.io/clangir/Dialect/ops.html
 //                    cir.get_member (::cir::GetMemberOp)

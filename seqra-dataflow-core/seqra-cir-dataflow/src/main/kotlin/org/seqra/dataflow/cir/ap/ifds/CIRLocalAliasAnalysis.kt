@@ -1,6 +1,7 @@
 package org.seqra.dataflow.cir.ap.ifds
 
 import org.seqra.dataflow.ap.ifds.AccessPathBase
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils.mkArrayAccess
 import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils.mkBaseAccess
 import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils.mkFieldAccess
@@ -53,12 +54,30 @@ class CIRLocalAliasAnalysis(
 
     private val derivedByCanonical: Map<AccessPathBase, Set<Access>> = buildDerivedByCanonical()
 
+    /**
+     * Canonical base of a loaded SSA value → canonical base of the address operand
+     * (`lhv = MLIRValueRef(addr)`), excluding union with plain intra-cell alias groups.
+     */
+    private val derefAddrByLoadedBase: Map<AccessPathBase, AccessPathBase> = buildDerefLinks()
+
     private val aliasGroupByBase: Map<AccessPathBase, Set<Access>> =
         mergeAccessGroupLists(buildSeaDsaAliasGroups() + buildFallbackSameLoadAddressGroups())
 
     // --- public API ---
 
     fun findAliases(base: AccessPathBase): Set<Access>? = aliasGroupByBase[base]
+
+    /**
+     * [Access] entries `addrPeer` + [ReferenceAccessor] for loads whose result base aliases [base]
+     * after transparent cast canonicalization (e.g. loaded `var(N)` from `arg(0)`'s slot).
+     */
+    fun derefAliasesOf(base: AccessPathBase): List<Access> {
+        val loadedCanon = canonicalLoadedBaseForDerefLookup(base)
+        val addrCanon = derefAddrByLoadedBase[loadedCanon] ?: return emptyList()
+        val peerBases = findAliases(addrCanon)?.mapNotNull { it.base }.orEmpty()
+        val peers = (peerBases + addrCanon).distinct()
+        return peers.map { Access(it, ReferenceAccessor) }
+    }
 
     /**
      * True iff both values canonicalize to the same [AccessPathBase], or `b`'s
@@ -109,6 +128,38 @@ class CIRLocalAliasAnalysis(
             .filter { it.size >= 2 }
             .map { bases -> bases.map { Access(it, null) }.toSet() }
     }
+
+    /**
+     * `loadedCanon -> addrCanon` for assignments `lhv = MLIRValueRef(addr)` with pointer-like bases.
+     * First mapping wins on collision.
+     */
+    private fun buildDerefLinks(): Map<AccessPathBase, AccessPathBase> {
+        val out = LinkedHashMap<AccessPathBase, AccessPathBase>()
+        for (inst in function.allInstructions.filterIsInstance<CIRAssignInst>()) {
+            val rhv = inst.rhv
+            if (rhv !is MLIRValueRef) continue
+            val lhv = inst.lhv as? MLIROpValue ?: continue
+            val loadedCanon = canonicalBaseThroughTransparentCasts(lhv) ?: continue
+            val addrCanon = canonicalBaseThroughTransparentCasts(rhv.value) ?: continue
+            if (!isPointerLikeCanonicalBase(loadedCanon)) continue
+            if (!isPointerLikeCanonicalBase(addrCanon)) continue
+            if (loadedCanon !in out) {
+                out[loadedCanon] = addrCanon
+            }
+        }
+        return out
+    }
+
+    /** Canonical SSA base for a [AccessPathBase.LocalVar] load/cast result (same as alias keys). */
+    private fun canonicalLoadedBaseForDerefLookup(base: AccessPathBase): AccessPathBase =
+        when (base) {
+            is AccessPathBase.LocalVar -> {
+                val assign = instById[base.idx.toLong()] as? CIRAssignInst ?: return base
+                val lhv = assign.lhv as? MLIROpValue ?: return base
+                canonicalBaseThroughTransparentCasts(lhv) ?: base
+            }
+            else -> base
+        }
 
     // --- merging ---
 
