@@ -30,6 +30,7 @@ import org.seqra.ir.api.cir.cfg.CIRReturnOpInst
 import org.seqra.ir.api.cir.cfg.CIRThrowOpInst
 import org.seqra.ir.api.cir.cfg.MLIROpValue
 import org.seqra.ir.api.cir.cfg.MLIRValue
+import org.seqra.ir.api.cir.cfg.MLIRValueRef
 import org.seqra.ir.api.common.CommonType
 
 class CIRMethodSequentFlowFunction(
@@ -108,16 +109,28 @@ class CIRMethodSequentFlowFunction(
             is CIRReturnOpInst -> {
                 unchanged()
 
-                val access = if (currentInst.input.isEmpty())
-                    null else accessPathBase(currentInst.input.single())
+                val retInput = currentInst.input.singleOrNull()
+                val access = retInput?.let { accessPathBase(it) }
+                var propagated = false
                 if (access == factAp.base) {
                     val resultFact = factAp.rebase(AccessPathBase.Return)
                     propagateFact(resultFact)
 
                     applyMethodExitSinkRules(AccessPathBase.Return, resultFact)
+                    propagated = true
                 } else {
-                    applyMethodExitSinkRules(AccessPathBase.Return, factAp)
+                    analysisContext.aliasAnalysis?.forEachAlias(factAp) { aliased ->
+                        if (aliased.base == access) {
+                            val resultFact = aliased.rebase(AccessPathBase.Return)
+                            propagateFact(resultFact)
+                            applyMethodExitSinkRules(AccessPathBase.Return, resultFact)
+                            propagated = true
+                        }
+                    }
                 }
+
+                if (!propagated)
+                    applyMethodExitSinkRules(AccessPathBase.Return, factAp)
             }
 
             is CIRThrowOpInst -> {
@@ -182,8 +195,8 @@ class CIRMethodSequentFlowFunction(
     }
 
     private fun resolveExprAccess(expr: CIRExpr): MethodFlowFunctionUtils.Access? = when (expr) {
-        // Propagate fact through static
-        // TODO check for kind of cast, potentially source of false positive
+        // Propagate through cast src unconditionally; [CIRLocalAliasAnalysis] instead treats only
+        // pointer-transparent cast kinds as equivalent for alias queries — different policy by design.
         is CIRCastOpExpr -> mkBaseAccess(expr.src)
         // Propagate fact through array access
         is CIRPtrStrideOpExpr -> mkArrayAccess(expr.base)

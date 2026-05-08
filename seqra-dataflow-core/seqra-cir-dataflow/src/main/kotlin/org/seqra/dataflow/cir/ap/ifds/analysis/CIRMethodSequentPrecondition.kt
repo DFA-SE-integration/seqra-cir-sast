@@ -31,7 +31,7 @@ class CIRMethodSequentPrecondition(
 
         results.unconditionalSourcesPrecondition(fact)
 
-        analysisContext.aliasAnalysis?.forEachPossibleAliasAtStatement(currentInst, fact) { aliasedFact ->
+        analysisContext.aliasAnalysis?.forEachAlias(fact) { aliasedFact ->
             preconditionForFact(aliasedFact)?.let {
                 results += PreconditionFactsForInitialFact(aliasedFact, it)
             }
@@ -175,8 +175,7 @@ class CIRMethodSequentPrecondition(
     }
 
     private fun resolveExprAccess(expr: CIRExpr): MethodFlowFunctionUtils.Access? = when (expr) {
-        // Propagate fact through static
-        // TODO check for kind of cast, potentially source of false positive
+        // Propagate through cast src unconditionally; see [CIRLocalAliasAnalysis] for cast-kind filtering on aliases.
         is CIRCastOpExpr -> mkBaseAccess(expr.src)
         // Propagate fact through array access
         is CIRPtrStrideOpExpr -> mkArrayAccess(expr.base)
