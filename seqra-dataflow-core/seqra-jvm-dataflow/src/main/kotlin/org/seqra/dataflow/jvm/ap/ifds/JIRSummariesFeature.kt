@@ -19,6 +19,7 @@ import org.seqra.dataflow.ap.ifds.AnyAccessor
 import org.seqra.dataflow.ap.ifds.ElementAccessor
 import org.seqra.dataflow.ap.ifds.FieldAccessor
 import org.seqra.dataflow.ap.ifds.FinalAccessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.TaintMarkAccessor
 import org.seqra.dataflow.ap.ifds.access.ApMode
 import java.util.concurrent.ConcurrentHashMap
@@ -156,6 +157,7 @@ class JIRSummariesFeature(
             ANY_ACCESSOR_ID -> AnyAccessor
             FINAL_ACCESSOR_ID -> FinalAccessor
             ELEMENT_ACCESSOR_ID -> ElementAccessor
+            REFERENCE_ACCESSOR_ID -> ReferenceAccessor
             else -> {
                 idToAccessorCache.computeIfAbsent(id) {
                     val (classNameId, fieldNameId, fieldTypeId, taintMarkId) = jIRdb.persistence.read { context ->
@@ -193,6 +195,7 @@ class JIRSummariesFeature(
             AnyAccessor -> ANY_ACCESSOR_ID
             ElementAccessor -> ELEMENT_ACCESSOR_ID
             FinalAccessor -> FINAL_ACCESSOR_ID
+            ReferenceAccessor -> REFERENCE_ACCESSOR_ID
 
             is FieldAccessor -> accessorToIdCache.computeIfAbsent(accessor) {
                 val classNameId = accessor.className.asSymbolId(interner)
@@ -333,6 +336,7 @@ class JIRSummariesFeature(
         private const val ANY_ACCESSOR_ID = 0L
         private const val FINAL_ACCESSOR_ID = 1L
         private const val ELEMENT_ACCESSOR_ID = 2L
-        private const val MAX_RESERVED_ACCESSOR_ID = 2L
+        private const val REFERENCE_ACCESSOR_ID = 3L
+        private const val MAX_RESERVED_ACCESSOR_ID = REFERENCE_ACCESSOR_ID
     }
 }
