@@ -3,6 +3,7 @@ package org.seqra.dataflow.cir.ap.ifds.analysis
 import org.seqra.dataflow.ap.ifds.AccessPathBase
 import org.seqra.dataflow.ap.ifds.Accessor
 import org.seqra.dataflow.ap.ifds.ElementAccessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.access.ApManager
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
 import org.seqra.dataflow.ap.ifds.trace.MethodSequentPrecondition
@@ -24,19 +25,30 @@ class CIRMethodSequentPrecondition(
         fact: InitialFactAp
     ): SequentPrecondition {
         val results = mutableListOf<SequentPreconditionFacts>()
+        val seen = hashSetOf<InitialFactAp>()
 
-        preconditionForFact(fact)?.let {
-            results += PreconditionFactsForInitialFact(fact, it)
+        fun tryFact(f: InitialFactAp) {
+            if (!seen.add(f)) return
+            preconditionForFact(f)?.let {
+                results += PreconditionFactsForInitialFact(f, it)
+            }
+            results.unconditionalSourcesPrecondition(f)
         }
 
-        results.unconditionalSourcesPrecondition(fact)
+        tryFact(fact)
 
-        analysisContext.aliasAnalysis?.forEachPossibleAliasAtStatement(currentInst, fact) { aliasedFact ->
-            preconditionForFact(aliasedFact)?.let {
-                results += PreconditionFactsForInitialFact(aliasedFact, it)
-            }
+        // Mirror MethodTraceResolver.traceResolutionTargetPatterns: the IFDS forward index can carry
+        // facts shaped with or without a leading [ReferenceAccessor] / [ElementAccessor] (deref bridge
+        // / element fallback). Widening here lets the backward sequent recognise the `.&`-variant of
+        // a slot fact (`var(p).&!mark`) when the trace edge carries the original sink/target shape
+        // (`var(p)!mark`), so [containsEntryEdge] strict match against the index actually succeeds.
+        runCatching { fact.prependAccessor(ReferenceAccessor) }.getOrNull()?.let(::tryFact)
+        fact.readAccessor(ReferenceAccessor)?.let(::tryFact)
+        runCatching { fact.prependAccessor(ElementAccessor) }.getOrNull()?.let(::tryFact)
+        fact.readAccessor(ElementAccessor)?.let(::tryFact)
 
-            results.unconditionalSourcesPrecondition(aliasedFact)
+        analysisContext.aliasAnalysis?.forEachAlias(fact) { aliasedFact ->
+            tryFact(aliasedFact)
         }
 
         return if (results.isEmpty()) {
@@ -91,8 +103,14 @@ class CIRMethodSequentPrecondition(
         val assignToAccess = resolveValueAccess(assignTo)
 
         return when {
+            // TODO
+            // Compound element/field copy: `*A.acc = *B.acc` (e.g. `reversedString[j] = aString[i-j-1]`
+            // after CIRLoadStoreFeature — both sides resolve to `Access(base, ElementAccessor)`).
+            // Precondition decomposition would need a synthetic temp; for now skip rather than throw
+            // — the trace will miss the byte-copy edge but won't crash trace resolution.
+            assignFromAccess?.accessor != null && assignToAccess.accessor != null -> null
+
             assignFromAccess?.accessor != null -> {
-                check(assignToAccess.accessor == null) { "Complex assignment: $assignTo = $assignFrom" }
                 fieldRead(
                     assignToAccess.base, assignFromAccess.base, assignFromAccess.accessor, fact
                 )
@@ -175,8 +193,7 @@ class CIRMethodSequentPrecondition(
     }
 
     private fun resolveExprAccess(expr: CIRExpr): MethodFlowFunctionUtils.Access? = when (expr) {
-        // Propagate fact through static
-        // TODO check for kind of cast, potentially source of false positive
+        // Propagate through cast src unconditionally; see [CIRLocalAliasAnalysis] for cast-kind filtering on aliases.
         is CIRCastOpExpr -> mkBaseAccess(expr.src)
         // Propagate fact through array access
         is CIRPtrStrideOpExpr -> mkArrayAccess(expr.base)
@@ -191,6 +208,7 @@ class CIRMethodSequentPrecondition(
     }
 
     private fun resolveValueAccess(value: MLIRValue): MethodFlowFunctionUtils.Access = when (value) {
+        is MLIRValueRef -> resolveValueAccess(value.value)
         is MLIROpValue -> currentInst.method.assignInstByLhv[value]
             ?.takeIf { it.location.index < currentInst.location.index }
             ?.rhv

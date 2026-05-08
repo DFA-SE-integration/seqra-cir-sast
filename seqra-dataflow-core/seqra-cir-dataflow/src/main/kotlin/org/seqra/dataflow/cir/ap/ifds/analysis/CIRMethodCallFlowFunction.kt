@@ -159,7 +159,10 @@ class CIRMethodCallFlowFunction(
             startFactBase: AccessPathBase,
         ) -> Unit,
     ) {
-        if (!CIRMethodCallFactMapper.factIsRelevantToMethodCall(returnValue, callExpr, factAp)) {
+        val aa = analysisContext.aliasAnalysis
+        val relevant =
+            CIRMethodCallFactMapper.factIsRelevantToMethodCall(returnValue, callExpr, factAp, aa)
+        if (!relevant) {
             skipCall()
             return
         }
@@ -196,6 +199,7 @@ class CIRMethodCallFlowFunction(
             directCall,
             factAp,
             factTypeChecker,
+            analysisContext.aliasAnalysis,
         ) { callerFact, startFactBase ->
             applyPassRulesOrCallToStart(
                 conditionRewriter,
@@ -310,7 +314,8 @@ class CIRMethodCallFlowFunction(
                 simplified.isTrue -> emitSinkEvaluation(rule, emptyList(), factReader)
                 else -> {
                     val evaluator = CIRFactAwareConditionEvaluator(conditionFactReaders)
-                    if (!evaluator.evalWithAssumptionsCheck(simplified.expr)) continue
+                    val ok = evaluator.evalWithAssumptionsCheck(simplified.expr)
+                    if (!ok) continue
                     emitSinkEvaluation(rule, evaluator.facts(), factReader)
                 }
             }
@@ -403,7 +408,13 @@ class CIRMethodCallFlowFunction(
     ) {
         for (action in rule.actionsAfter) {
             sourceEvaluator.evaluate(rule, action).onSome { facts ->
-                facts.forEach { it.mapExitToReturnFact()?.let(createFinalFact) }
+                facts.forEach { factAfterSource ->
+                    val mappedFact = factAfterSource.mapExitToReturnFact() ?: return@forEach
+                    createFinalFact(mappedFact)
+                    analysisContext.aliasAnalysis?.forEachAliasAtStatement(statement, mappedFact) { aliased ->
+                        createFinalFact(aliased)
+                    }
+                }
             }
         }
     }
@@ -418,14 +429,28 @@ class CIRMethodCallFlowFunction(
 
     private fun FinalFactReader.toConditionFactReaders(): List<FinalFactReader> {
         val calleeFn = resolvedCallee() ?: return emptyList()
+        val mappedArgIndices = mutableSetOf<Int>()
         val conditionFactReaders = mutableListOf<FinalFactReader>()
-        CIRMethodCallFactMapper.mapMethodCallToStartFlowFact(
-            calleeFn,
-            directCall,
-            factAp,
-            factTypeChecker,
-        ) { callerFact, startFactBase ->
-            conditionFactReaders += FinalFactReader(callerFact.rebase(startFactBase), apManager)
+
+        fun mapAndCollect(fact: FinalFactAp) {
+            CIRMethodCallFactMapper.mapMethodCallToStartFlowFact(
+                calleeFn,
+                directCall,
+                fact,
+                factTypeChecker,
+                analysisContext.aliasAnalysis,
+            ) { callerFact, startFactBase ->
+                val argIdx = (startFactBase as? AccessPathBase.Argument)?.idx
+                if (argIdx != null && !mappedArgIndices.add(argIdx)) {
+                    return@mapMethodCallToStartFlowFact
+                }
+                conditionFactReaders += FinalFactReader(callerFact.rebase(startFactBase), apManager)
+            }
+        }
+
+        mapAndCollect(factAp)
+        analysisContext.aliasAnalysis?.forEachAlias(factAp) { aliasedFact ->
+            mapAndCollect(aliasedFact)
         }
         return conditionFactReaders
     }

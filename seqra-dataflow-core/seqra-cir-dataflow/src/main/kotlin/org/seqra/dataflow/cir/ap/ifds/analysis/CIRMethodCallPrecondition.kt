@@ -1,8 +1,10 @@
 package org.seqra.dataflow.cir.ap.ifds.analysis
 
 import org.seqra.dataflow.ap.ifds.AccessPathBase
+import org.seqra.dataflow.ap.ifds.ElementAccessor
 import org.seqra.dataflow.ap.ifds.ExclusionSet
 import org.seqra.dataflow.ap.ifds.FinalAccessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.TaintMarkAccessor
 import org.seqra.dataflow.ap.ifds.access.ApManager
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
@@ -32,8 +34,11 @@ import org.seqra.dataflow.configuration.core.CopyAllMarks
 import org.seqra.dataflow.configuration.core.CopyMark
 import org.seqra.dataflow.configuration.core.TaintMark
 import org.seqra.dataflow.util.cartesianProductMapTo
+import org.seqra.ir.api.cir.cfg.CIRCallOpInst
 import org.seqra.ir.api.cir.cfg.CIRDirectCall
 import org.seqra.ir.api.cir.cfg.CIRInst
+import org.seqra.ir.api.cir.cfg.CIRTryCallOpInst
+import org.seqra.ir.api.cir.cfg.MLIROpValue
 import org.seqra.ir.api.cir.cfg.MLIRValue
 import org.seqra.util.Maybe
 import org.seqra.util.maybeFlatMap
@@ -47,22 +52,47 @@ class CIRMethodCallPrecondition(
 ) : MethodCallPrecondition {
     private val methodCallFactMapper: MethodCallFactMapper get() = analysisContext.methodCallFactMapper
 
-    private val cIRValueResolver = CallPositionToCIRValueResolver(callExpr, returnValue)
+    // For CIR a [CIRCallOpInst] / [CIRTryCallOpInst] is not a [CommonAssignInst], so the generic
+    // trace-builder / IFDS callsite extraction `(statement as? CommonAssignInst)?.lhv` always
+    // returns null and we lose the call's implicit result. Mirror the fallback that
+    // [CallPositionToCIRValueResolver] uses for `Position.Result` so backward precondition
+    // mapping recognises facts based on the call's return value (e.g. `var(callId)!mark`).
+    private val effectiveReturnValue: MLIRValue? = returnValue ?: when (callExpr) {
+        is CIRCallOpInst -> callExpr.result?.let { MLIROpValue(it, callExpr.id, 0L) }
+        is CIRTryCallOpInst -> callExpr.result?.let { MLIROpValue(it, callExpr.id, 0L) }
+        else -> null
+    }
+
+    private val cIRValueResolver = CallPositionToCIRValueResolver(callExpr, effectiveReturnValue)
     private val method = callExpr.calleeRef?.function
 
     private val taintConfig get() = analysisContext.taint.taintConfig as CIRTaintRulesProvider
 
     override fun factPrecondition(fact: InitialFactAp): CallPrecondition {
         val results = mutableListOf<PreconditionFactsForInitialFact>()
+        val seen = hashSetOf<InitialFactAp>()
 
-        preconditionForFact(fact)?.let {
-            results.add(PreconditionFactsForInitialFact(fact, it))
+        fun tryFact(f: InitialFactAp) {
+            if (!seen.add(f)) return
+            preconditionForFact(f)?.let {
+                results.add(PreconditionFactsForInitialFact(f, it))
+            }
         }
 
-        analysisContext.aliasAnalysis?.forEachPossibleAliasAtStatement(statement, fact) { aliasedFact ->
-            preconditionForFact(aliasedFact)?.let {
-                results.add(PreconditionFactsForInitialFact(aliasedFact, it))
-            }
+        tryFact(fact)
+
+        // Mirror MethodTraceResolver.traceResolutionTargetPatterns: forward IFDS / sinks at the same
+        // SSA base may shape the access path with or without a leading [ReferenceAccessor] / [ElementAccessor]
+        // (deref bridge / element fallback). Try those variants here so the backward precondition
+        // recognises e.g. `free(load(slot))` whose IFDS index keeps `slot.&!mark` while the trace edge
+        // carries the original sink fact `slot!mark` without the leading `.&`.
+        runCatching { fact.prependAccessor(ReferenceAccessor) }.getOrNull()?.let(::tryFact)
+        fact.readAccessor(ReferenceAccessor)?.let(::tryFact)
+        runCatching { fact.prependAccessor(ElementAccessor) }.getOrNull()?.let(::tryFact)
+        fact.readAccessor(ElementAccessor)?.let(::tryFact)
+
+        analysisContext.aliasAnalysis?.forEachAlias(fact) { aliasedFact ->
+            tryFact(aliasedFact)
         }
 
         return if (results.isEmpty()) {
@@ -73,23 +103,44 @@ class CIRMethodCallPrecondition(
     }
 
     private fun preconditionForFact(fact: InitialFactAp): List<CallPreconditionFact>? {
-        if (!CIRMethodCallFactMapper.factIsRelevantToMethodCall(returnValue, callExpr, fact)) {
+        if (!CIRMethodCallFactMapper.factIsRelevantToMethodCall(effectiveReturnValue, callExpr, fact, analysisContext.aliasAnalysis)) {
             return null
         }
 
         val preconditions = mutableListOf<CallPreconditionFact>()
+        var mappingsFired = 0
 
-        if (returnValue != null) {
-            val returnValueBase = MethodFlowFunctionUtils.accessPathBase(returnValue)
+        if (effectiveReturnValue != null) {
+            val returnValueBase = MethodFlowFunctionUtils.accessPathBase(effectiveReturnValue)
             if (returnValueBase == fact.base) {
                 preconditions.preconditionForFact(fact, AccessPathBase.Return)
+                mappingsFired++
             }
         }
 
         val callee = method
         if (callee != null) {
-            CIRMethodCallFactMapper.mapMethodCallToStartFlowFact(callee, callExpr, fact) { callerFact, startFactBase ->
-                preconditions.preconditionForFact(callerFact, startFactBase)
+            val mappedArgIndices = mutableSetOf<Int>()
+
+            fun mapAndCollect(f: InitialFactAp) {
+                CIRMethodCallFactMapper.mapMethodCallToStartFlowFact(
+                    callee,
+                    callExpr,
+                    f,
+                    analysisContext.aliasAnalysis,
+                ) { callerFact, startFactBase ->
+                    val argIdx = (startFactBase as? AccessPathBase.Argument)?.idx
+                    if (argIdx != null && !mappedArgIndices.add(argIdx)) {
+                        return@mapMethodCallToStartFlowFact
+                    }
+                    mappingsFired++
+                    preconditions.preconditionForFact(callerFact, startFactBase)
+                }
+            }
+
+            mapAndCollect(fact)
+            analysisContext.aliasAnalysis?.forEachAlias(fact) { aliasedFact ->
+                mapAndCollect(aliasedFact)
             }
         }
 
@@ -239,9 +290,8 @@ class CIRMethodCallPrecondition(
         }
     }
 
-    private fun ContainsMark.preconditionFact(): InitialFactAp {
-        return createPositionWithTaintMark(position.resolveAp(), mark)
-    }
+    private fun ContainsMark.preconditionPositionAccessCandidates(): List<PositionAccess> =
+        cirMirrorPreconditionPositionAccessCandidates()
 
     private fun createPositionWithTaintMark(position: PositionAccess, mark: TaintMark): InitialFactAp {
         val positionWithMark = PositionAccess.Complex(position, TaintMarkAccessor(mark.name))
@@ -262,9 +312,14 @@ class CIRMethodCallPrecondition(
 
     private fun CIRMarkAwareConditionExpr.preconditionDnf(): List<PreconditionCube> = when (this) {
         is CIRMarkAwareConditionExpr.Literal -> {
-            val preconditionFact = condition.preconditionFact()
-            val mappedFacts = methodCallFactMapper.mapMethodExitToReturnFlowFact(statement, preconditionFact)
-            mappedFacts.map { PreconditionCube(setOf(it)) }
+            buildList {
+                for (pos in condition.preconditionPositionAccessCandidates()) {
+                    val pre = createPositionWithTaintMark(pos, condition.mark)
+                    for (mapped in methodCallFactMapper.mapMethodExitToReturnFlowFact(statement, pre)) {
+                        add(PreconditionCube(setOf(mapped)))
+                    }
+                }
+            }
         }
 
         is CIRMarkAwareConditionExpr.Or -> args.flatMap { it.preconditionDnf() }
@@ -278,5 +333,21 @@ class CIRMethodCallPrecondition(
             }
             result
         }
+    }
+}
+
+/**
+ * Positions that forward [FinalFactReader.containsPositionWithTaintMark] and the call-to-start
+ * deref bridge (leading [ReferenceAccessor]) may match for a [ContainsMark] literal; exposed for tests.
+ */
+internal fun ContainsMark.cirMirrorPreconditionPositionAccessCandidates(): List<PositionAccess> {
+    val resolved = position.resolveAp()
+    return when (resolved) {
+        is PositionAccess.Simple -> listOf(
+            resolved,
+            PositionAccess.Complex(resolved, ElementAccessor),
+            PositionAccess.Complex(resolved, ReferenceAccessor),
+        )
+        else -> listOf(resolved)
     }
 }

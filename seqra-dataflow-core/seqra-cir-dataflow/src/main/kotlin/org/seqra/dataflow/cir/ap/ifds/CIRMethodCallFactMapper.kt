@@ -1,6 +1,8 @@
 package org.seqra.dataflow.cir.ap.ifds
 
 import org.seqra.dataflow.ap.ifds.AccessPathBase
+import org.seqra.dataflow.ap.ifds.Accessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.FactTypeChecker
 import org.seqra.dataflow.ap.ifds.analysis.MethodCallFactMapper
 import org.seqra.dataflow.ap.ifds.access.FactAp
@@ -65,22 +67,39 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
     ) {
         cirDowncast<CIRFunction>(callee)
         cirDowncast<CIRDirectCall>(callExpr)
-        return mapMethodCallToStartFlowFact(callee, callExpr, factAp, checker, onMappedFact)
+        mapMethodCallToStartFlowFactImpl(
+            callExpr = callExpr,
+            factAp = factAp,
+            checkFactType = { type, f -> checker.filterFactByLocalType(type, f) },
+            aa = null,
+            prependAccessor = { f, acc -> f.prependAccessor(acc) },
+            onMappedFact = onMappedFact,
+        )
     }
 
-    private fun mapMethodCallToStartFlowFact(
-        callee: CIRFunction,
-        callExpr: CIRDirectCall,
+    /**
+     * Same as [mapMethodCallToStartFlowFact] but uses [aa] so facts on a loaded pointer can map to
+     * [AccessPathBase.Argument] with [ReferenceAccessor] when the call passes the load address (deref bridge).
+     */
+    fun mapMethodCallToStartFlowFact(
+        callee: CommonMethod,
+        callExpr: CommonCallExpr,
         factAp: FinalFactAp,
         checker: FactTypeChecker,
-        onMappedFact: (FinalFactAp, AccessPathBase) -> Unit
-    ) = mapMethodCallToStartFlowFact(
-        callee = callee,
-        callExpr = callExpr,
-        factAp = factAp,
-        checkFactType = { type, f -> checker.filterFactByLocalType(type, f) },
-        onMappedFact = onMappedFact
-    )
+        aa: CIRLocalAliasAnalysis?,
+        onMappedFact: (FinalFactAp, AccessPathBase) -> Unit,
+    ) {
+        cirDowncast<CIRFunction>(callee)
+        cirDowncast<CIRDirectCall>(callExpr)
+        mapMethodCallToStartFlowFactImpl(
+            callExpr = callExpr,
+            factAp = factAp,
+            checkFactType = { type, f -> checker.filterFactByLocalType(type, f) },
+            aa = aa,
+            prependAccessor = { f, acc -> f.prependAccessor(acc) },
+            onMappedFact = onMappedFact,
+        )
+    }
 
     override fun mapMethodCallToStartFlowFact(
         callee: CommonMethod,
@@ -90,21 +109,34 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
     ) {
         cirDowncast<CIRFunction>(callee)
         cirDowncast<CIRDirectCall>(callExpr)
-        return mapMethodCallToStartFlowFact(callee, callExpr, fact, onMappedFact)
+        mapMethodCallToStartFlowFactImpl(
+            callExpr = callExpr,
+            factAp = fact,
+            checkFactType = { _, f -> f },
+            aa = null,
+            prependAccessor = { f, acc -> f.prependAccessor(acc) },
+            onMappedFact = onMappedFact,
+        )
     }
 
-    private fun mapMethodCallToStartFlowFact(
-        callee: CIRFunction,
-        callExpr: CIRDirectCall,
+    fun mapMethodCallToStartFlowFact(
+        callee: CommonMethod,
+        callExpr: CommonCallExpr,
         fact: InitialFactAp,
-        onMappedFact: (InitialFactAp, AccessPathBase) -> Unit
-    ) = mapMethodCallToStartFlowFact(
-        callee = callee,
-        callExpr = callExpr,
-        factAp = fact,
-        checkFactType = { _, f -> f },
-        onMappedFact = onMappedFact
-    )
+        aa: CIRLocalAliasAnalysis?,
+        onMappedFact: (InitialFactAp, AccessPathBase) -> Unit,
+    ) {
+        cirDowncast<CIRFunction>(callee)
+        cirDowncast<CIRDirectCall>(callExpr)
+        mapMethodCallToStartFlowFactImpl(
+            callExpr = callExpr,
+            factAp = fact,
+            checkFactType = { _, f -> f },
+            aa = aa,
+            prependAccessor = { f, acc -> f.prependAccessor(acc) },
+            onMappedFact = onMappedFact,
+        )
+    }
 
     override fun factIsRelevantToMethodCall(
         returnValue: CommonValue?,
@@ -113,7 +145,18 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
     ): Boolean {
         cirDowncast<MLIRValue?>(returnValue)
         cirDowncast<CIRDirectCall>(callExpr)
-        return factIsRelevantToMethodCall(returnValue, callExpr, factAp.base)
+        return factIsRelevantToMethodCall(returnValue, callExpr, factAp.base, null)
+    }
+
+    fun factIsRelevantToMethodCall(
+        returnValue: CommonValue?,
+        callExpr: CommonCallExpr,
+        factAp: FactAp,
+        aa: CIRLocalAliasAnalysis?
+    ): Boolean {
+        cirDowncast<MLIRValue?>(returnValue)
+        cirDowncast<CIRDirectCall>(callExpr)
+        return factIsRelevantToMethodCall(returnValue, callExpr, factAp.base, aa)
     }
 
     override fun isValidMethodExitFact(factAp: FactAp): Boolean =
@@ -150,17 +193,41 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
                 val newBase = accessPathBase(argExpr) ?: return null
                 if (newBase is AccessPathBase.Constant) return null
 
-                val checkedFact = callStatement.argType(base.idx)?.let { checkFactType(it, factAp) } ?: return null
+                val stripped = factAp.startsWithAccessor(ReferenceAccessor)
+                val factForExit: F =
+                    if (stripped) {
+                        @Suppress("UNCHECKED_CAST")
+                        when (factAp) {
+                            is InitialFactAp ->
+                                factAp.readAccessor(ReferenceAccessor) as? F ?: return null
+
+                            is FinalFactAp ->
+                                factAp.readAccessor(ReferenceAccessor) as? F ?: return null
+
+                            else -> return null
+                        }
+                    } else {
+                        factAp
+                    }
+
+                val checkedFact =
+                    callStatement.argType(base.idx)?.let { checkFactType(it, factForExit) } ?: return null
                 rebaseFact(checkedFact, newBase)
             }
 
             AccessPathBase.Return -> {
-                val returnValue = callStatement.resultValueOrNull() ?: return null
-                val newBase = accessPathBase(returnValue) ?: return null
-                if (newBase is AccessPathBase.Constant) return null
-
-                val checkedFact = callStatement.resultType()?.let { checkFactType(it, factAp) } ?: return null
-                rebaseFact(checkedFact, newBase)
+                val returnValue = callStatement.resultValueOrNull()
+                val newBase = returnValue?.let { accessPathBase(it) }
+                val resultType = callStatement.resultType()
+                val checkedFact = resultType?.let { checkFactType(it, factAp) }
+                val finalResult: F? = when {
+                    returnValue == null -> null
+                    newBase == null || newBase is AccessPathBase.Constant -> null
+                    checkedFact == null -> null
+                    else -> rebaseFact(checkedFact, newBase)
+                }
+                
+                finalResult
             }
 
             AccessPathBase.This,
@@ -169,11 +236,12 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
         }
     }
 
-    private inline fun <F : FactAp> mapMethodCallToStartFlowFact(
-        callee: CIRFunction,
+    private inline fun <F : FactAp> mapMethodCallToStartFlowFactImpl(
         callExpr: CIRDirectCall,
         factAp: F,
         checkFactType: (MLIRType, F) -> F?,
+        aa: CIRLocalAliasAnalysis?,
+        prependAccessor: (F, Accessor) -> F,
         onMappedFact: (F, AccessPathBase) -> Unit,
     ) {
         val factBase = factAp.base
@@ -183,41 +251,89 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
         }
 
         for ((i, arg) in callExpr.arg_ops.withIndex()) {
-            val argBase = accessPathBase(arg)
-            if (argBase == factBase) {
-                val checkedFact = callExpr.argType(i)?.let { checkFactType(it, factAp) }
-                if (checkedFact != null) {
-                    onMappedFact(checkedFact, AccessPathBase.Argument(i))
+            val argBase = accessPathBaseForCallArg(aa, arg) ?: continue
+            val argMlirType = callExpr.argType(i)
+            val checkedFact = argMlirType?.let { checkFactType(it, factAp) }
+            val factOk = checkedFact ?: continue
+            when {
+                argBase == factBase ->
+                    onMappedFact(factOk, AccessPathBase.Argument(i))
+
+                // Forward deref bridge: factBase is loaded from argBase's slot (or a derivation
+                // ancestor). Prepend [ReferenceAccessor] so the fact maps to `Argument(i).[Ref]`.
+                // NOTE: must be checked BEFORE any must-alias direct-map to avoid losing the
+                // `*slot` vs `slot` distinction — SeaDSA cells often union a slot with the value
+                // loaded from it, and they need different mapping shapes.
+                aa != null && aa.loadedFromSlot(factBase, argBase) ->
+                    onMappedFact(
+                        prependAccessor(factOk, ReferenceAccessor),
+                        AccessPathBase.Argument(i),
+                    )
+
+                // Reverse deref bridge: argBase is loaded from factBase (`free(load(slot))`).
+                // The fact's leading [ReferenceAccessor] represents "value at slot" which equals the
+                // loaded value passed as Argument(i). Strip the leading `.&` and map to Argument(i).
+                aa != null && aa.loadedFromSlot(argBase, factBase) && factOk.startsWithAccessor(ReferenceAccessor) -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val stripped: F? = when (factOk) {
+                        is InitialFactAp -> factOk.readAccessor(ReferenceAccessor) as? F
+                        is FinalFactAp -> factOk.readAccessor(ReferenceAccessor) as? F
+                        else -> null
+                    }
+                    if (stripped != null) {
+                        onMappedFact(stripped, AccessPathBase.Argument(i))
+                    }
                 }
+
+                MethodFlowFunctionUtils.zeroStridePtrStrideRhsBase(callExpr.location.method, arg) == factBase ->
+                    onMappedFact(factOk, AccessPathBase.Argument(i))
             }
         }
     }
 
+    private fun accessPathBaseForCallArg(aa: CIRLocalAliasAnalysis?, arg: MLIRValue): AccessPathBase? =
+        aa?.canonicalAccessPathBase(arg) ?: accessPathBase(arg)
+
     private fun factIsRelevantToMethodCall(
         returnValue: MLIRValue?,
         callExpr: CIRDirectCall,
-        factBase: AccessPathBase
+        factBase: AccessPathBase,
+        aa: CIRLocalAliasAnalysis?
     ): Boolean {
-        if (factBase is AccessPathBase.ClassStatic) {
-            return true
+        if (factBase is AccessPathBase.ClassStatic) return true
+        if (aa?.aliasGroupContainsClassStatic(factBase) == true) return true
+
+        // Per-operand relevance: forward direction asks "is the fact derived from a load of arg
+        // (or alias / cast / ptr_stride chain)?", reverse direction asks the symmetric question
+        // (matters for backward trace resolution — `free(load(slot))` style: the call is relevant
+        // to slot-based facts so the precondition isn't collapsed to [CallPrecondition.Unchanged]).
+        // [pointerDerivedFromSameLoadedSlotAsAddress] in the new alias graph subsumes both the
+        // must-alias and direct-deref cases (its pointedByOf closure includes derivation chains).
+        fun operandIsRelevant(opBase: AccessPathBase): Boolean {
+            if (opBase == factBase) return true
+            if (aa == null) return false
+            return aa.pointerDerivedFromSameLoadedSlotAsAddress(factBase, opBase) ||
+                aa.pointerDerivedFromSameLoadedSlotAsAddress(opBase, factBase)
         }
 
         for (arg in callExpr.arg_ops) {
-            val argBase = accessPathBase(arg)
-            if (argBase == factBase) {
+            val argBase = accessPathBaseForCallArg(aa, arg) ?: continue
+            if (operandIsRelevant(argBase)) return true
+            if (MethodFlowFunctionUtils.zeroStridePtrStrideRhsBase(callExpr.location.method, arg) == factBase) {
                 return true
             }
         }
 
         if (returnValue != null) {
-            val retValBase = accessPathBase(returnValue)
-            if (retValBase == factBase) {
-                return true
-            }
+            val retValBase = accessPathBaseForCallArg(aa, returnValue)
+            if (retValBase != null && operandIsRelevant(retValBase)) return true
         }
 
         return false
     }
+
+    private fun CIRLocalAliasAnalysis.aliasGroupContainsClassStatic(base: AccessPathBase): Boolean =
+        findAliases(base)?.any { it.base is AccessPathBase.ClassStatic } == true
 
     /* */
 
