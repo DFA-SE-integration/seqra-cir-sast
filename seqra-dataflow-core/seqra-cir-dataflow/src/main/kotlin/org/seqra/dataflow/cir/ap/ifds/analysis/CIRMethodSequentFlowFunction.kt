@@ -8,6 +8,12 @@ import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
 import org.seqra.dataflow.ap.ifds.analysis.MethodSequentFlowFunction
 import org.seqra.dataflow.ap.ifds.analysis.MethodSequentFlowFunction.Sequent
+import org.seqra.dataflow.ap.ifds.taint.TaintSinkTracker
+import org.seqra.dataflow.configuration.CommonTaintConfigurationSinkMeta
+import org.seqra.dataflow.configuration.core.ConstantTrue
+import org.seqra.dataflow.configuration.core.TaintMark
+import org.seqra.dataflow.configuration.core.TaintMethodSink
+import org.seqra.dataflow.configuration.core.TaintSinkMeta
 import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils
 import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils.accessPathBase
 import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils.clearField
@@ -19,6 +25,8 @@ import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils.mkBaseAccess
 import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils.mkFieldAccess
 import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils.readFieldTo
 import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils.writeToField
+import org.seqra.dataflow.cir.ap.ifds.taint.FinalFactReader
+import org.seqra.dataflow.cir.ap.ifds.taint.PositionAccess
 import org.seqra.ir.api.cir.cfg.CIRAssignInst
 import org.seqra.ir.api.cir.cfg.CIRCastOpExpr
 import org.seqra.ir.api.cir.cfg.CIRDynamicCastOpExpr
@@ -39,6 +47,13 @@ class CIRMethodSequentFlowFunction(
     private val currentInst: CIRInst,
 ) : MethodSequentFlowFunction {
     private val factTypeChecker get() = analysisContext.factTypeChecker
+
+    companion object {
+        /** Must match built-in UAF mark in [org.seqra.cir.sast.dataflow.CIRTaintAnalyzer]. */
+        private const val USE_AFTER_FREE_MARK_NAME = "use-after-free"
+
+        private const val USE_AFTER_FREE_DEREF_SINK_ID = "use-after-free-deref"
+    }
 
     override fun propagateZeroToZero(): Set<Sequent> = buildSet {
         add(Sequent.ZeroToZero)
@@ -101,6 +116,7 @@ class CIRMethodSequentFlowFunction(
     ) {
         when (currentInst) {
             is CIRAssignInst -> {
+                applyUseAfterFreeDereferenceSink(factAp, currentInst.lhv, currentInst.rhv)
                 sequentFlowAssign(
                     currentInst.rhv, currentInst.lhv, factAp,
                     unchanged, propagateFact, propagateFactWithAccessorExclude)
@@ -151,6 +167,48 @@ class CIRMethodSequentFlowFunction(
                 unchanged()
             }
         }
+    }
+
+    private fun applyUseAfterFreeDereferenceSink(factAp: FinalFactAp, lhv: MLIRValue, rhv: CIRExpr) {
+        if (lhv !is MLIROpValue) return
+        val loadAddr = (rhv as? MLIRValueRef)?.value ?: return
+        if (!loadAddressAliasesFactBase(loadAddr, factAp.base)) return
+
+        val reader = FinalFactReader(factAp, apManager)
+        if (!reader.containsPositionWithTaintMark(PositionAccess.Simple(factAp.base), TaintMark(USE_AFTER_FREE_MARK_NAME))) {
+            return
+        }
+
+        val rule = TaintMethodSink(
+            method = currentInst.location.method,
+            condition = ConstantTrue,
+            id = USE_AFTER_FREE_DEREF_SINK_ID,
+            meta = TaintSinkMeta(
+                message = "Freed value is dereferenced after free",
+                severity = CommonTaintConfigurationSinkMeta.Severity.Error,
+                cwe = listOf(416),
+            ),
+        )
+        val initialFact = reader.createInitialFactWithTaintMark(
+            PositionAccess.Simple(factAp.base),
+            TaintMark(USE_AFTER_FREE_MARK_NAME),
+        )
+        analysisContext.taint.taintSinkTracker.addVulnerability(
+            analysisContext.methodEntryPoint,
+            setOf(initialFact),
+            currentInst,
+            rule,
+            vulnerabilityTriggerPosition = TaintSinkTracker.VulnerabilityTriggerPosition.BEFORE_INST,
+        )
+    }
+
+    private fun loadAddressAliasesFactBase(loadAddress: MLIRValue, factBase: AccessPathBase): Boolean {
+        val loadBase = accessPathBase(loadAddress) ?: return false
+        if (loadBase == factBase) return true
+        val aa = analysisContext.aliasAnalysis ?: return false
+        if (aa.findAliases(factBase)?.any { it.base == loadBase } == true) return true
+        if (aa.findAliases(loadBase)?.any { it.base == factBase } == true) return true
+        return false
     }
 
     private fun sequentFlowAssign(
@@ -211,6 +269,8 @@ class CIRMethodSequentFlowFunction(
     }
 
     private fun resolveValueAccess(value: MLIRValue): MethodFlowFunctionUtils.Access = when (value) {
+        // Lowered store/load uses MLIRValueRef(lhs); recurse so assignInstByLhv resolves through ptr_stride/get_member.
+        is MLIRValueRef -> resolveValueAccess(value.value)
         is MLIROpValue -> currentInst.method.assignInstByLhv[value]
             ?.takeIf { it.location.index < currentInst.location.index }
             ?.rhv
