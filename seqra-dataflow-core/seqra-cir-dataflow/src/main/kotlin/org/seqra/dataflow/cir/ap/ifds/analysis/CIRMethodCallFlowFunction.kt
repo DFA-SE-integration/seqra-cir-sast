@@ -23,6 +23,7 @@ import org.seqra.dataflow.cir.ap.ifds.CIRFactAwareConditionEvaluator
 import org.seqra.dataflow.cir.ap.ifds.CIRMarkAwareConditionRewriter
 import org.seqra.dataflow.cir.ap.ifds.CIRMethodPositionBaseTypeResolver
 import org.seqra.dataflow.cir.ap.ifds.CIRMethodCallFactMapper
+import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils
 import org.seqra.dataflow.cir.ap.ifds.CIRSimpleFactAwareConditionEvaluator
 import org.seqra.dataflow.cir.ap.ifds.TaintConfigUtils.applyCleaner
 import org.seqra.dataflow.cir.ap.ifds.TaintConfigUtils.applyPassThrough
@@ -38,6 +39,7 @@ import org.seqra.dataflow.cir.ap.ifds.taint.TaintSourceActionEvaluator
 import org.seqra.ir.api.cir.cfg.CIRDirectCall
 import org.seqra.ir.api.cir.cfg.CIRFunction
 import org.seqra.ir.api.cir.cfg.CIRInst
+import org.seqra.ir.api.cir.cfg.MLIROpValue
 import org.seqra.ir.api.cir.cfg.MLIRValue
 import org.seqra.ir.api.common.cfg.CommonCallExpr
 import org.seqra.util.onSome
@@ -403,7 +405,13 @@ class CIRMethodCallFlowFunction(
     ) {
         for (action in rule.actionsAfter) {
             sourceEvaluator.evaluate(rule, action).onSome { facts ->
-                facts.forEach { it.mapExitToReturnFact()?.let(createFinalFact) }
+                facts.forEach { factAfterSource ->
+                    val mappedFact = factAfterSource.mapExitToReturnFact() ?: return@forEach
+                    createFinalFact(mappedFact)
+                    analysisContext.aliasAnalysis?.forEachAliasAtStatement(statement, mappedFact) { aliased ->
+                        createFinalFact(aliased)
+                    }
+                }
             }
         }
     }
@@ -468,4 +476,5 @@ class CIRMethodCallFlowFunction(
             body(aliased)
         }
     }
+
 }
