@@ -1,16 +1,22 @@
 package org.seqra.dataflow.cir.ap.ifds
 
+import java.math.BigInteger
 import org.seqra.dataflow.ap.ifds.AccessPathBase
 import org.seqra.dataflow.ap.ifds.Accessor
 import org.seqra.dataflow.ap.ifds.ElementAccessor
 import org.seqra.dataflow.ap.ifds.FieldAccessor
 import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
+import org.seqra.ir.api.cir.cfg.CIRAssignInst
+import org.seqra.ir.api.cir.cfg.CIRConstantOpExpr
+import org.seqra.ir.api.cir.cfg.CIRFunction
 import org.seqra.ir.api.cir.cfg.MLIRBlockValue
+import org.seqra.ir.api.cir.cfg.MLIRIntegerAttr
 import org.seqra.ir.api.cir.cfg.MLIROpValue
 import org.seqra.ir.api.cir.cfg.MLIRTypeID
 import org.seqra.ir.api.cir.cfg.MLIRValue
 import org.seqra.ir.api.cir.cfg.MLIRValueRef
+import org.seqra.ir.api.cir.cfg.CIRPtrStrideOpExpr
 
 object MethodFlowFunctionUtils {
     data class Access(val base: AccessPathBase?, val accessor: Accessor?)
@@ -58,5 +64,35 @@ object MethodFlowFunctionUtils {
             is MLIRBlockValue -> AccessPathBase.Argument(value.argIndex.toInt())
             is MLIROpValue -> AccessPathBase.LocalVar(value.opIndex.id.toInt())
             else -> null
+        }
+
+    /**
+     * If [value] is the SSA result of `lhv = cir.ptr_stride(base, stride)` in [function] with a
+     * constant integer zero [stride], returns [accessPathBase] of [CIRPtrStrideOpExpr.base];
+     * otherwise null. Used so marks on the stride base reach calls that pass the strided SSA.
+     */
+    fun zeroStridePtrStrideRhsBase(function: CIRFunction, value: MLIRValue): AccessPathBase? {
+        val op = value as? MLIROpValue ?: return null
+        val assign =
+            function.allInstructions.asSequence()
+                .filterIsInstance<CIRAssignInst>()
+                .firstOrNull { (it.lhv as? MLIROpValue)?.opIndex?.id == op.opIndex.id }
+                ?: return null
+        val rhv = assign.rhv as? CIRPtrStrideOpExpr ?: return null
+        if (!mlirValueIsConstantZeroInteger(function, rhv.stride)) return null
+        return accessPathBase(rhv.base)
+    }
+
+    private fun mlirValueIsConstantZeroInteger(function: CIRFunction, value: MLIRValue): Boolean =
+        when (value) {
+            is MLIROpValue -> {
+                val a =
+                    function.allInstructions.asSequence()
+                        .filterIsInstance<CIRAssignInst>()
+                        .firstOrNull { (it.lhv as? MLIROpValue)?.opIndex?.id == value.opIndex.id }
+                (a?.rhv as? CIRConstantOpExpr)?.value?.let { it as? MLIRIntegerAttr }?.value == BigInteger.ZERO
+            }
+            is MLIRValueRef -> mlirValueIsConstantZeroInteger(function, value.value)
+            else -> false
         }
 }

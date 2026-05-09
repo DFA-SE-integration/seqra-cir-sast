@@ -1,6 +1,8 @@
 package org.seqra.dataflow.cir.ap.ifds
 
 import org.seqra.dataflow.ap.ifds.AccessPathBase
+import org.seqra.dataflow.ap.ifds.Accessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.FactTypeChecker
 import org.seqra.dataflow.ap.ifds.analysis.MethodCallFactMapper
 import org.seqra.dataflow.ap.ifds.access.FactAp
@@ -18,6 +20,10 @@ import org.seqra.ir.api.common.cfg.CommonInst
 import org.seqra.ir.api.common.cfg.CommonValue
 
 object CIRMethodCallFactMapper : MethodCallFactMapper {
+    // TODO: symmetric deref bridge for mapMethodExitToReturnFlowFact — when factAp.base is Argument(i)
+    // with leading ReferenceAccessor (from call-to-start deref bridge), strip ReferenceAccessor and map
+    // back to the caller's loaded SSA for that argument expression.
+
     override fun mapMethodExitToReturnFlowFact(
         callStatement: CommonInst,
         factAp: FinalFactAp,
@@ -65,21 +71,39 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
     ) {
         cirDowncast<CIRFunction>(callee)
         cirDowncast<CIRDirectCall>(callExpr)
-        return mapMethodCallToStartFlowFact(callee, callExpr, factAp, checker, onMappedFact)
+        mapMethodCallToStartFlowFactImpl(
+            callExpr = callExpr,
+            factAp = factAp,
+            checkFactType = { type, f -> checker.filterFactByLocalType(type, f) },
+            aa = null,
+            prependAccessor = { f, acc -> f.prependAccessor(acc) },
+            onMappedFact = onMappedFact,
+        )
     }
 
-    private fun mapMethodCallToStartFlowFact(
-        callee: CIRFunction,
-        callExpr: CIRDirectCall,
+    /**
+     * Same as [mapMethodCallToStartFlowFact] but uses [aa] so facts on a loaded pointer can map to
+     * [AccessPathBase.Argument] with [ReferenceAccessor] when the call passes the load address (deref bridge).
+     */
+    fun mapMethodCallToStartFlowFact(
+        callee: CommonMethod,
+        callExpr: CommonCallExpr,
         factAp: FinalFactAp,
         checker: FactTypeChecker,
-        onMappedFact: (FinalFactAp, AccessPathBase) -> Unit
-    ) = mapMethodCallToStartFlowFact(
-        callExpr = callExpr,
-        factAp = factAp,
-        checkFactType = { type, f -> checker.filterFactByLocalType(type, f) },
-        onMappedFact = onMappedFact
-    )
+        aa: CIRLocalAliasAnalysis?,
+        onMappedFact: (FinalFactAp, AccessPathBase) -> Unit,
+    ) {
+        cirDowncast<CIRFunction>(callee)
+        cirDowncast<CIRDirectCall>(callExpr)
+        mapMethodCallToStartFlowFactImpl(
+            callExpr = callExpr,
+            factAp = factAp,
+            checkFactType = { type, f -> checker.filterFactByLocalType(type, f) },
+            aa = aa,
+            prependAccessor = { f, acc -> f.prependAccessor(acc) },
+            onMappedFact = onMappedFact,
+        )
+    }
 
     override fun mapMethodCallToStartFlowFact(
         callee: CommonMethod,
@@ -89,20 +113,34 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
     ) {
         cirDowncast<CIRFunction>(callee)
         cirDowncast<CIRDirectCall>(callExpr)
-        return mapMethodCallToStartFlowFact(callee, callExpr, fact, onMappedFact)
+        mapMethodCallToStartFlowFactImpl(
+            callExpr = callExpr,
+            factAp = fact,
+            checkFactType = { _, f -> f },
+            aa = null,
+            prependAccessor = { f, acc -> f.prependAccessor(acc) },
+            onMappedFact = onMappedFact,
+        )
     }
 
-    private fun mapMethodCallToStartFlowFact(
-        callee: CIRFunction,
-        callExpr: CIRDirectCall,
+    fun mapMethodCallToStartFlowFact(
+        callee: CommonMethod,
+        callExpr: CommonCallExpr,
         fact: InitialFactAp,
-        onMappedFact: (InitialFactAp, AccessPathBase) -> Unit
-    ) = mapMethodCallToStartFlowFact(
-        callExpr = callExpr,
-        factAp = fact,
-        checkFactType = { _, f -> f },
-        onMappedFact = onMappedFact
-    )
+        aa: CIRLocalAliasAnalysis?,
+        onMappedFact: (InitialFactAp, AccessPathBase) -> Unit,
+    ) {
+        cirDowncast<CIRFunction>(callee)
+        cirDowncast<CIRDirectCall>(callExpr)
+        mapMethodCallToStartFlowFactImpl(
+            callExpr = callExpr,
+            factAp = fact,
+            checkFactType = { _, f -> f },
+            aa = aa,
+            prependAccessor = { f, acc -> f.prependAccessor(acc) },
+            onMappedFact = onMappedFact,
+        )
+    }
 
     override fun factIsRelevantToMethodCall(
         returnValue: CommonValue?,
@@ -178,10 +216,12 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
         }
     }
 
-    private inline fun <F : FactAp> mapMethodCallToStartFlowFact(
+    private inline fun <F : FactAp> mapMethodCallToStartFlowFactImpl(
         callExpr: CIRDirectCall,
         factAp: F,
         checkFactType: (MLIRType, F) -> F?,
+        aa: CIRLocalAliasAnalysis?,
+        prependAccessor: (F, Accessor) -> F,
         onMappedFact: (F, AccessPathBase) -> Unit,
     ) {
         val factBase = factAp.base
@@ -191,15 +231,34 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
         }
 
         for ((i, arg) in callExpr.arg_ops.withIndex()) {
-            val argBase = accessPathBase(arg)
-            if (argBase == factBase) {
-                val checkedFact = callExpr.argType(i)?.let { checkFactType(it, factAp) }
-                if (checkedFact != null) {
-                    onMappedFact(checkedFact, AccessPathBase.Argument(i))
-                }
+            val argBase = accessPathBaseForCallArg(aa, arg) ?: continue
+            val argMlirType = callExpr.argType(i)
+            val checkedFact = argMlirType?.let { checkFactType(it, factAp) }
+            val factOk = checkedFact ?: continue
+            when {
+                argBase == factBase ->
+                    onMappedFact(factOk, AccessPathBase.Argument(i))
+
+                aa != null && aa.derefAlias(factBase, argBase) ->
+                    onMappedFact(
+                        prependAccessor(factOk, ReferenceAccessor),
+                        AccessPathBase.Argument(i),
+                    )
+
+                aa != null && aa.pointerDerivedFromSameLoadedSlotAsAddress(factBase, argBase) ->
+                    onMappedFact(
+                        prependAccessor(factOk, ReferenceAccessor),
+                        AccessPathBase.Argument(i),
+                    )
+
+                MethodFlowFunctionUtils.zeroStridePtrStrideRhsBase(callExpr.location.method, arg) == factBase ->
+                    onMappedFact(factOk, AccessPathBase.Argument(i))
             }
         }
     }
+
+    private fun accessPathBaseForCallArg(aa: CIRLocalAliasAnalysis?, arg: MLIRValue): AccessPathBase? =
+        aa?.canonicalAccessPathBase(arg) ?: accessPathBase(arg)
 
     private fun factIsRelevantToMethodCall(
         returnValue: MLIRValue?,
@@ -215,22 +274,35 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
         }
 
         for (arg in callExpr.arg_ops) {
-            val argBase = accessPathBase(arg)
+            val argBase = accessPathBaseForCallArg(aa, arg) ?: continue
             if (argBase == factBase) {
                 return true
             }
 
-            if (argBase != null && aa?.basesAlias(argBase, factBase) == true) {
+            if (aa?.basesAliasSymmetric(argBase, factBase) == true) {
+                return true
+            }
+
+            if (aa?.derefAlias(factBase, argBase) == true) {
+                return true
+            }
+            if (aa?.pointerDerivedFromSameLoadedSlotAsAddress(factBase, argBase) == true) {
+                return true
+            }
+            if (MethodFlowFunctionUtils.zeroStridePtrStrideRhsBase(callExpr.location.method, arg) == factBase) {
                 return true
             }
         }
 
         if (returnValue != null) {
-            val retValBase = accessPathBase(returnValue)
+            val retValBase = accessPathBaseForCallArg(aa, returnValue)
             if (retValBase == factBase) {
                 return true
             }
-            if (retValBase != null && aa?.basesAlias(retValBase, factBase) == true) {
+            if (retValBase != null && aa?.basesAliasSymmetric(retValBase, factBase) == true) {
+                return true
+            }
+            if (retValBase != null && aa?.derefAlias(factBase, retValBase) == true) {
                 return true
             }
         }
@@ -243,6 +315,16 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
 
     private fun CIRLocalAliasAnalysis.basesAlias(a: AccessPathBase, b: AccessPathBase): Boolean =
         findAliases(a)?.any { it.base == b } == true
+
+    private fun CIRLocalAliasAnalysis.basesAliasSymmetric(a: AccessPathBase, b: AccessPathBase): Boolean =
+        basesAlias(a, b) || basesAlias(b, a)
+
+    /** True iff [loadedValueBase] is loaded from address [slotOrAliasBase] (via [derefAddrByLoadedBase] + alias of addr). */
+    private fun CIRLocalAliasAnalysis.derefAlias(loadedValueBase: AccessPathBase, slotOrAliasBase: AccessPathBase): Boolean =
+        derefAliasesOf(loadedValueBase).any { acc ->
+            val b = acc.base ?: return@any false
+            b == slotOrAliasBase || basesAliasSymmetric(b, slotOrAliasBase)
+        }
 
     /* */
 
