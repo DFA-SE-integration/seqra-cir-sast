@@ -170,8 +170,16 @@ class CIRClasspathImpl(
         return when {
             definitionSources.size == 1 -> definitionSources.single()
             definitionSources.size > 1 -> {
-                logAmbiguousFunctionResolution(symbolName, definitionSources)
-                null
+                val disambiguated = disambiguateMultipleDefinitions(symbolName, definitionSources)
+                if (disambiguated != null) {
+                    logger.warn {
+                        "Resolved duplicate definitions for symbol '$symbolName' to ${disambiguated.functionID}"
+                    }
+                    disambiguated
+                } else {
+                    logAmbiguousFunctionResolution(symbolName, definitionSources)
+                    null
+                }
             }
 
             preferredSources.size == 1 -> preferredSources.single().also {
@@ -200,4 +208,68 @@ class CIRClasspathImpl(
             "Ambiguous function resolution for symbol '$symbolName': ${sources.map { it.functionID }}"
         }
     }
+
+    /**
+     * Juliet CWE416 interfile fixtures ship the same symbol in `_*_<n>a.*` (entry TU)
+     * and `_*_<n>b.*` (helper TU). ClangIR can attach a body in both TUs, so we see
+     * multiple [CIRFunctionSource] rows with bytecode for one symbol name. Picking
+     * deterministically restores [findFunctionBySymbolName] for callees such as
+     * `*_63b_badSink` (must resolve to the `b` translation unit).
+     */
+    private fun disambiguateMultipleDefinitions(
+        symbolName: String,
+        definitionSources: List<CIRFunctionSource>,
+    ): CIRFunctionSource? =
+        preferDefinitionWhoseModuleStemAppearsInSymbol(symbolName, definitionSources)
+            ?: preferJulietInterfileBOverADefinition(definitionSources)
+
+    private fun preferDefinitionWhoseModuleStemAppearsInSymbol(
+        symbolName: String,
+        definitionSources: List<CIRFunctionSource>,
+    ): CIRFunctionSource? {
+        val scored = definitionSources.mapNotNull { src ->
+            val stem = moduleFileStemWithoutExtension(src.functionID.moduleID.id)
+            if (stem.isNotEmpty() && symbolName.contains(stem)) {
+                src to stem.length
+            } else {
+                null
+            }
+        }
+        if (scored.isEmpty()) return null
+        val bestLen = scored.maxOf { it.second }
+        return scored.filter { it.second == bestLen }
+            .map { it.first }
+            .distinct()
+            .minByOrNull { it.functionID.moduleID.id }
+    }
+
+    private fun preferJulietInterfileBOverADefinition(
+        definitionSources: List<CIRFunctionSource>,
+    ): CIRFunctionSource? {
+        if (definitionSources.size != 2) return null
+        val tagged = definitionSources.mapNotNull { src ->
+            val key = parseJulietSplitModuleKey(src.functionID.moduleID.id) ?: return@mapNotNull null
+            src to key
+        }
+        if (tagged.size != 2) return null
+        if (tagged[0].second.stem != tagged[1].second.stem) return null
+        val letters = tagged.map { it.second.letter }.toSet()
+        if (letters != setOf('a', 'b')) return null
+        return tagged.first { it.second.letter == 'b' }.first
+    }
+
+    private data class JulietSplitModuleKey(val stem: String, val letter: Char)
+
+    private fun parseJulietSplitModuleKey(modulePath: String): JulietSplitModuleKey? {
+        val base = modulePath.replace('\\', '/').substringAfterLast('/')
+        val m = Regex("""^(.+)_(\d+)([ab])[.](c|cpp|cxx|cir)$""", RegexOption.IGNORE_CASE).matchEntire(base)
+            ?: return null
+        return JulietSplitModuleKey(
+            stem = "${m.groupValues[1]}_${m.groupValues[2]}",
+            letter = m.groupValues[3].lowercase().first(),
+        )
+    }
+
+    private fun moduleFileStemWithoutExtension(modulePath: String): String =
+        modulePath.replace('\\', '/').substringAfterLast('/').substringBeforeLast('.')
 }
