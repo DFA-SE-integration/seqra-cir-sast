@@ -103,8 +103,14 @@ class CIRLocalAliasAnalysis(
             val members = HashSet<Access>()
             for (member in group.members) {
                 val canonical = canonicalBaseThroughTransparentCasts(member) ?: continue
+                if (!isPointerLikeCanonicalBase(canonical)) continue
                 members += Access(canonical, null)
-                members += derivedByCanonical[canonical].orEmpty()
+                for (d in derivedByCanonical[canonical].orEmpty()) {
+                    val b = d.base ?: continue
+                    if (isPointerLikeCanonicalBase(b)) {
+                        members += d
+                    }
+                }
             }
             members.takeIf { it.isNotEmpty() }?.toSet()
         }
@@ -122,6 +128,8 @@ class CIRLocalAliasAnalysis(
             if (inst.lhv !is MLIROpValue) continue
             val loadedBase = MethodFlowFunctionUtils.accessPathBase(inst.lhv) ?: continue
             val addrCanon = canonicalBaseThroughTransparentCasts(rhv.value) ?: continue
+            if (!isPointerLikeCanonicalBase(loadedBase)) continue
+            if (!isPointerLikeCanonicalBase(addrCanon)) continue
             addrKeyToLoadedBases.getOrPut(addrCanon) { mutableSetOf() }.add(loadedBase)
         }
         return addrKeyToLoadedBases.values
@@ -308,5 +316,36 @@ class CIRLocalAliasAnalysis(
     private fun CIRDynamicCastKind.isTransparentForAlias(): Boolean = when (this) {
         CIRDynamicCastKind.Ptr -> true
         else -> false
+    }
+
+    /**
+     * SeaDSA may place unrelated SSA (e.g. `!u64i` size operands of `operator delete`)
+     * in the same cell as a pointer. IFDS alias expansion must not merge those with
+     * pointer bases, or taint/UAF facts attach to the wrong access path.
+     */
+    private fun isPointerLikeCanonicalBase(base: AccessPathBase): Boolean =
+        when (base) {
+            is AccessPathBase.Constant -> false
+            is AccessPathBase.LocalVar -> {
+                val assign = instById[base.idx.toLong()] as? CIRAssignInst ?: return false
+                val lhv = assign.lhv as? MLIROpValue ?: return false
+                mlirTypeIdLooksLikePointer(lhv.type)
+            }
+
+            is AccessPathBase.Argument -> {
+                val param = function.parameters.getOrNull(base.idx) ?: return true
+                mlirTypeIdLooksLikePointer(param.type)
+            }
+
+            AccessPathBase.This,
+            AccessPathBase.Exception,
+            AccessPathBase.Return,
+            is AccessPathBase.ClassStatic,
+            -> true
+        }
+
+    private fun mlirTypeIdLooksLikePointer(type: MLIRTypeID): Boolean {
+        val id = type.id
+        return id.startsWith("!cir.ptr") || id.startsWith("!llvm.ptr")
     }
 }

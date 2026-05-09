@@ -3,6 +3,7 @@ package org.seqra.dataflow.cir.ap.ifds.analysis
 import org.seqra.dataflow.ap.ifds.AccessPathBase
 import org.seqra.dataflow.ap.ifds.Accessor
 import org.seqra.dataflow.ap.ifds.ElementAccessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.access.ApManager
 import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
@@ -180,11 +181,24 @@ class CIRMethodSequentFlowFunction(
         if (!loadAddressAliasesFactBase(loadAddr, factAp.base)) return
 
         val reader = FinalFactReader(factAp, apManager)
-        if (!reader.containsPositionWithTaintMark(PositionAccess.Simple(factAp.base), TaintMark(USE_AFTER_FREE_MARK_NAME))) {
+        val mark = TaintMark(USE_AFTER_FREE_MARK_NAME)
+        val markAtSimpleBase =
+            reader.containsPositionWithTaintMark(PositionAccess.Simple(factAp.base), mark)
+        val markUnderRef = reader.containsPositionWithTaintMark(
+            PositionAccess.Complex(PositionAccess.Simple(factAp.base), ReferenceAccessor),
+            mark,
+        )
+        if (!markAtSimpleBase && !markUnderRef) {
             return
         }
 
-        emitUseAfterFreeDereferenceSink(reader, PositionAccess.Simple(factAp.base))
+        val positionForSink =
+            if (markUnderRef && !markAtSimpleBase) {
+                PositionAccess.Complex(PositionAccess.Simple(factAp.base), ReferenceAccessor)
+            } else {
+                PositionAccess.Simple(factAp.base)
+            }
+        emitUseAfterFreeDereferenceSink(reader, positionForSink)
     }
 
     /**
