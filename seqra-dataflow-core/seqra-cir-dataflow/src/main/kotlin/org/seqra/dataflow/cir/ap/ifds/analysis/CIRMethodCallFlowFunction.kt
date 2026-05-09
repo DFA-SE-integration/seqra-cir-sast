@@ -23,7 +23,6 @@ import org.seqra.dataflow.cir.ap.ifds.CIRFactAwareConditionEvaluator
 import org.seqra.dataflow.cir.ap.ifds.CIRMarkAwareConditionRewriter
 import org.seqra.dataflow.cir.ap.ifds.CIRMethodPositionBaseTypeResolver
 import org.seqra.dataflow.cir.ap.ifds.CIRMethodCallFactMapper
-import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils
 import org.seqra.dataflow.cir.ap.ifds.CIRSimpleFactAwareConditionEvaluator
 import org.seqra.dataflow.cir.ap.ifds.TaintConfigUtils.applyCleaner
 import org.seqra.dataflow.cir.ap.ifds.TaintConfigUtils.applyPassThrough
@@ -39,7 +38,6 @@ import org.seqra.dataflow.cir.ap.ifds.taint.TaintSourceActionEvaluator
 import org.seqra.ir.api.cir.cfg.CIRDirectCall
 import org.seqra.ir.api.cir.cfg.CIRFunction
 import org.seqra.ir.api.cir.cfg.CIRInst
-import org.seqra.ir.api.cir.cfg.MLIROpValue
 import org.seqra.ir.api.cir.cfg.MLIRValue
 import org.seqra.ir.api.common.cfg.CommonCallExpr
 import org.seqra.util.onSome
@@ -161,7 +159,10 @@ class CIRMethodCallFlowFunction(
             startFactBase: AccessPathBase,
         ) -> Unit,
     ) {
-        if (!CIRMethodCallFactMapper.factIsRelevantToMethodCall(returnValue, callExpr, factAp, analysisContext.aliasAnalysis)) {
+        val aa = analysisContext.aliasAnalysis
+        val relevant =
+            CIRMethodCallFactMapper.factIsRelevantToMethodCall(returnValue, callExpr, factAp, aa)
+        if (!relevant) {
             skipCall()
             return
         }
@@ -198,6 +199,7 @@ class CIRMethodCallFlowFunction(
             directCall,
             factAp,
             factTypeChecker,
+            analysisContext.aliasAnalysis,
         ) { callerFact, startFactBase ->
             applyPassRulesOrCallToStart(
                 conditionRewriter,
@@ -312,7 +314,8 @@ class CIRMethodCallFlowFunction(
                 simplified.isTrue -> emitSinkEvaluation(rule, emptyList(), factReader)
                 else -> {
                     val evaluator = CIRFactAwareConditionEvaluator(conditionFactReaders)
-                    if (!evaluator.evalWithAssumptionsCheck(simplified.expr)) continue
+                    val ok = evaluator.evalWithAssumptionsCheck(simplified.expr)
+                    if (!ok) continue
                     emitSinkEvaluation(rule, evaluator.facts(), factReader)
                 }
             }
@@ -435,6 +438,7 @@ class CIRMethodCallFlowFunction(
                 directCall,
                 fact,
                 factTypeChecker,
+                analysisContext.aliasAnalysis,
             ) { callerFact, startFactBase ->
                 val argIdx = (startFactBase as? AccessPathBase.Argument)?.idx
                 if (argIdx != null && !mappedArgIndices.add(argIdx)) {
@@ -476,5 +480,4 @@ class CIRMethodCallFlowFunction(
             body(aliased)
         }
     }
-
 }

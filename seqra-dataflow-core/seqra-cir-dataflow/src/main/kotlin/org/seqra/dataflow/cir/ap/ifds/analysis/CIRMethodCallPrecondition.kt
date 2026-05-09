@@ -91,7 +91,12 @@ class CIRMethodCallPrecondition(
             val mappedArgIndices = mutableSetOf<Int>()
 
             fun mapAndCollect(f: InitialFactAp) {
-                CIRMethodCallFactMapper.mapMethodCallToStartFlowFact(callee, callExpr, f) { callerFact, startFactBase ->
+                CIRMethodCallFactMapper.mapMethodCallToStartFlowFact(
+                    callee,
+                    callExpr,
+                    f,
+                    analysisContext.aliasAnalysis,
+                ) { callerFact, startFactBase ->
                     val argIdx = (startFactBase as? AccessPathBase.Argument)?.idx
                     if (argIdx != null && !mappedArgIndices.add(argIdx)) {
                         return@mapMethodCallToStartFlowFact

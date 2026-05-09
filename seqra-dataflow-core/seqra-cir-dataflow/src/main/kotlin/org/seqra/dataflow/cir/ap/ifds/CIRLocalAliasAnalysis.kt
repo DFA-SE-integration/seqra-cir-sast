@@ -1,5 +1,6 @@
 package org.seqra.dataflow.cir.ap.ifds
 
+import java.util.ArrayDeque
 import org.seqra.dataflow.ap.ifds.AccessPathBase
 import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.cir.ap.ifds.MethodFlowFunctionUtils.mkArrayAccess
@@ -91,6 +92,71 @@ class CIRLocalAliasAnalysis(
         return group.any { it.base == baseB }
     }
 
+    /** SSA base after stripping transparent casts (same normalization as [buildDerefLinks] address keys). */
+    fun canonicalAccessPathBase(value: MLIRValue): AccessPathBase? =
+        canonicalBaseThroughTransparentCasts(value)
+
+    /**
+     * True if [pointerFactBase] equals or backward `ptr_stride`s to some SSA that appears as the lhs of a
+     * load-from-slot in [derefAddrByLoadedBase] whose address canonicalizes to [slotAddressBase] (or an alias).
+     * Bridges loop interior pointers vs the plain `load` used before `free` on the same alloca slot.
+     */
+    fun pointerDerivedFromSameLoadedSlotAsAddress(pointerFactBase: AccessPathBase, slotAddressBase: AccessPathBase): Boolean {
+        val slotPeers = LinkedHashSet<AccessPathBase>()
+        slotPeers.add(slotAddressBase)
+        findAliases(slotAddressBase)?.mapNotNullTo(slotPeers) { it.base }
+
+        val loadedFromSlot = HashSet<AccessPathBase>()
+        for ((loadedCanon, addrCanon) in derefAddrByLoadedBase) {
+            if (slotPeers.any { sp -> addrCanon == sp || basesAliasSymmetricInternal(addrCanon, sp) }) {
+                loadedFromSlot.add(loadedCanon)
+            }
+        }
+        if (loadedFromSlot.isEmpty()) return false
+
+        val reachable = backwardReachableThroughDerivedPointers(pointerFactBase)
+        return reachable.any { r ->
+            loadedFromSlot.any { l -> r == l || basesAliasSymmetricInternal(r, l) }
+        }
+    }
+
+    /**
+     * SSA defs reachable by walking assigning expressions backward: `ptr_stride` base,
+     * `get_member` aggregate pointer, and transparent pointer casts — so facts on field /
+     * cast-wrapped pointers still connect to the same `load(alloca)` as the loop array pointer.
+     */
+    private fun backwardReachableThroughDerivedPointers(start: AccessPathBase): Set<AccessPathBase> {
+        val result = LinkedHashSet<AccessPathBase>()
+        val queue = ArrayDeque<AccessPathBase>()
+        queue.add(start)
+        queue.add(canonicalLoadedBaseForDerefLookup(start))
+        while (queue.isNotEmpty()) {
+            val cur = queue.removeFirst()
+            if (!result.add(cur)) continue
+            val lv = cur as? AccessPathBase.LocalVar ?: continue
+            val assign = instById[lv.idx.toLong()] as? CIRAssignInst ?: continue
+            val rhv = assign.rhv
+            when (rhv) {
+                is CIRPtrStrideOpExpr ->
+                    MethodFlowFunctionUtils.accessPathBase(rhv.base)?.let { queue.add(it) }
+
+                is CIRGetMemberOpExpr ->
+                    MethodFlowFunctionUtils.accessPathBase(rhv.addr)?.let { queue.add(it) }
+
+                else -> {
+                    val castSrc = transparentAliasCastSource(rhv)
+                    if (castSrc != null) {
+                        MethodFlowFunctionUtils.accessPathBase(castSrc)?.let { queue.add(it) }
+                    }
+                }
+            }
+        }
+        return result
+    }
+
+    private fun basesAliasSymmetricInternal(a: AccessPathBase, b: AccessPathBase): Boolean =
+        findAliases(a)?.any { it.base == b } == true || findAliases(b)?.any { it.base == a } == true
+
     // --- SeaDSA and fallback group extraction ---
 
     /**
@@ -132,6 +198,14 @@ class CIRLocalAliasAnalysis(
             if (!isPointerLikeCanonicalBase(addrCanon)) continue
             addrKeyToLoadedBases.getOrPut(addrCanon) { mutableSetOf() }.add(loadedBase)
         }
+        for (inst in function.allInstructions.filterIsInstance<CIRLoadOpInst>()) {
+            val loadedOp = MLIROpValue(inst.result, inst.id, 0L)
+            val loadedBase = canonicalBaseThroughTransparentCasts(loadedOp) ?: continue
+            val addrCanon = canonicalBaseThroughTransparentCasts(inst.addr) ?: continue
+            if (!isPointerLikeCanonicalBase(loadedBase)) continue
+            if (!isPointerLikeCanonicalBase(addrCanon)) continue
+            addrKeyToLoadedBases.getOrPut(addrCanon) { mutableSetOf() }.add(loadedBase)
+        }
         return addrKeyToLoadedBases.values
             .filter { it.size >= 2 }
             .map { bases -> bases.map { Access(it, null) }.toSet() }
@@ -155,6 +229,16 @@ class CIRLocalAliasAnalysis(
                 out[loadedCanon] = addrCanon
             }
         }
+        for (inst in function.allInstructions.filterIsInstance<CIRLoadOpInst>()) {
+            val loadedOp = MLIROpValue(inst.result, inst.id, 0L)
+            val loadedCanon = canonicalBaseThroughTransparentCasts(loadedOp) ?: continue
+            val addrCanon = canonicalBaseThroughTransparentCasts(inst.addr) ?: continue
+            if (!isPointerLikeCanonicalBase(loadedCanon)) continue
+            if (!isPointerLikeCanonicalBase(addrCanon)) continue
+            if (loadedCanon !in out) {
+                out[loadedCanon] = addrCanon
+            }
+        }
         return out
     }
 
@@ -162,9 +246,16 @@ class CIRLocalAliasAnalysis(
     private fun canonicalLoadedBaseForDerefLookup(base: AccessPathBase): AccessPathBase =
         when (base) {
             is AccessPathBase.LocalVar -> {
-                val assign = instById[base.idx.toLong()] as? CIRAssignInst ?: return base
-                val lhv = assign.lhv as? MLIROpValue ?: return base
-                canonicalBaseThroughTransparentCasts(lhv) ?: base
+                when (val def = instById[base.idx.toLong()]) {
+                    is CIRAssignInst -> {
+                        val lhv = def.lhv as? MLIROpValue ?: return base
+                        canonicalBaseThroughTransparentCasts(lhv) ?: base
+                    }
+                    is CIRLoadOpInst ->
+                        canonicalBaseThroughTransparentCasts(MLIROpValue(def.result, def.id, 0L)) ?: base
+
+                    else -> base
+                }
             }
             else -> base
         }
@@ -327,9 +418,15 @@ class CIRLocalAliasAnalysis(
         when (base) {
             is AccessPathBase.Constant -> false
             is AccessPathBase.LocalVar -> {
-                val assign = instById[base.idx.toLong()] as? CIRAssignInst ?: return false
-                val lhv = assign.lhv as? MLIROpValue ?: return false
-                mlirTypeIdLooksLikePointer(lhv.type)
+                when (val def = instById[base.idx.toLong()]) {
+                    is CIRAssignInst -> {
+                        val lhv = def.lhv as? MLIROpValue ?: return false
+                        mlirTypeIdLooksLikePointer(lhv.type)
+                    }
+                    is CIRAllocaOpInst -> mlirTypeIdLooksLikePointer(def.addr)
+                    is CIRLoadOpInst -> mlirTypeIdLooksLikePointer(def.result)
+                    else -> false
+                }
             }
 
             is AccessPathBase.Argument -> {
