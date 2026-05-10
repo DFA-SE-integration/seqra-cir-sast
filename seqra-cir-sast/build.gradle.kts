@@ -27,6 +27,7 @@ dependencies {
 
     implementation("org.seqra.seqra-dataflow-core:seqra-cir-dataflow:${cirDataflowVersion}")
     implementation(project(":seqra-cir-sast-dataflow"))
+    implementation(project(":seqra-cir-sast-se"))
 
     implementation(seqra_ir_api_cir)
     implementation(seqra_ir_core_cir)
