@@ -1,0 +1,35 @@
+package org.seqra.cir.sast
+
+import org.seqra.cir.sast.dataflow.CIRTaintAnalyzer
+import org.seqra.cir.sast.se.klee.KleeCirSeAnalyzer
+import org.seqra.dataflow.ap.ifds.trace.VulnerabilityWithTrace
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.use
+
+object CIRProjectAnalyzer {
+    private val julietInterfileSplitEntryPattern = Regex("""^(.*)_(62|63|64)a\.cir$""")
+
+    /** Juliet `_Na.cir` + `_Nb.cir` split: load companion so IFDS sees malloc/free bodies. */
+    private fun julietInterfileCompanionCir(main: Path): List<Path> {
+        val name = main.fileName.toString()
+        val m = julietInterfileSplitEntryPattern.matchEntire(name) ?: return emptyList()
+        val companion = main.resolveSibling("${m.groupValues[1]}_${m.groupValues[2]}b.cir")
+        return if (Files.exists(companion)) listOf(companion) else emptyList()
+    }
+
+    fun analyze(cirFixture: Path, entrypoint: String): List<VulnerabilityWithTrace> {
+        val cirPaths = buildList {
+            add(cirFixture)
+            addAll(julietInterfileCompanionCir(cirFixture))
+        }
+        CIRTaintAnalyzer.loadCirFiles(cirPaths).use { loaded ->
+            val entryFn = loaded.analyzer.cp.findFunctionBySymbolName(entrypoint)
+                ?: throw RuntimeException("Missing entrypoint $entrypoint in $cirFixture")
+
+            return loaded.analyzer.analyzeWithIfds(listOf(entryFn)).filter { trace ->
+                KleeCirSeAnalyzer.verifyTrace(trace, cirFixture)
+            }.toList()
+        }
+    }
+}
