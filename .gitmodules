@@ -9,3 +9,6 @@
 [submodule "Test-Suite"]
 	path = Test-Suite
 	url = git@github.com:DFA-SE-integration/Test-Suite.git
+[submodule "klee"]
+	path = klee
+	url = git@github.com:klee/klee.git
