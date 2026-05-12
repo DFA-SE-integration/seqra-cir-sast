@@ -7,6 +7,7 @@ val cirDataflowVersion = rootProperties.getProperty("seqraBuildVersion")
 
 plugins {
     id("kotlin-conventions")
+    id("com.google.protobuf") version "0.9.4"
 }
 
 dependencies {
@@ -14,6 +15,17 @@ dependencies {
     implementation("org.seqra.seqra-dataflow-core:seqra-dataflow:${cirDataflowVersion}")
 
     implementation(KotlinDependency.Libs.kotlin_logging)
+
+    implementation("com.google.protobuf:protobuf-java:4.28.3")
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:4.28.3"
+    }
+    generateProtoTasks {
+        ofSourceSet("main")
+    }
 }
 
 tasks.withType<Test> {
