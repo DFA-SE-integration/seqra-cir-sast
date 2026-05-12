@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package trace;
+
+option java_package = "org.seqra.cir.sast.dataflow.proto.trace";
+option java_multiple_files = true;
+
+import "common.proto";
+import "method.proto";
+
+// Inter-procedural graph (TraceResolver.Trace)
+message EntryPointTraceNode {
+  CIRFunctionID method = 1;
+}
+
+message CallTraceNode {
+  MLIROpID statement = 1; // call site
+  CIRFunctionID method = 2;
+}
+
+message SimpleTraceNode {
+  MLIROpID statement = 1;
+  CIRFunctionID method = 2;
+}
+
+message FullTraceNode {
+  CIRFunctionID method = 1;
+  trace.method.FullTrace trace = 2;
+}
+
+// InterProceduralSummaryTraceNode (Kotlin SourceToSinkTraceNode variant) is
+// intentionally omitted: cir-klee TraceGuidePass works with FullTrace-bearing
+// nodes only.
+message SourceToSinkTraceNode {
+  oneof value {
+      SimpleTraceNode simple = 1;
+      FullTraceNode full = 2;
+  }
+}
+
+message TraceNode {
+  oneof value {
+    EntryPointTraceNode entry = 1;
+    CallTraceNode call = 2;
+    SimpleTraceNode simple = 3;
+    FullTraceNode full = 4;
+  }
+}
+
+message EntryPointToStartTrace {
+  // Small hack for current task (UAF samples only with 1 bad/good entrypoint)
+  EntryPointTraceNode entry_point = 1;
+
+  map<uint32, TraceNode> id_to_trace_node = 2;
+
+  message TraceNodeIds { repeated uint32 ids = 1; }
+  map<uint32, TraceNodeIds> successors = 3;
+}
+
+message InterProceduralCall {
+  enum CallKind {
+    CALL_KIND_UNSPECIFIED = 0;
+    CALL_KIND_CALL_TO_SOURCE = 1;
+    CALL_KIND_CALL_TO_SINK = 2;
+  }
+  CallKind kind = 1;
+  MLIROpID statement = 2;
+  // Tag 3 was MethodTraceResolver.SummaryTrace; intentionally omitted along
+  // with InterProceduralSummaryTraceNode. Kotlin InterProceduralCall-s that
+  // differ only by `summary` collapse into one entry on the wire.
+  reserved 3;
+  reserved "summary";
+  // Only FullTrace-bearing nodes by design (Summary nodes are dropped).
+  FullTraceNode node = 4;
+}
+
+message SourceToSinkTrace {
+  repeated SourceToSinkTraceNode start_nodes = 1;
+  repeated SourceToSinkTraceNode sink_nodes = 2;
+
+  message InterProceduralCallSet { repeated InterProceduralCall calls = 1; }
+  map<uint32, InterProceduralCallSet> successors = 3;
+}
+
+message Trace {
+  string entry_point_name = 1; // Hint for klee
+  EntryPointToStartTrace entry_point_to_start = 2;
+  SourceToSinkTrace source_to_sink_trace = 3;
+}
