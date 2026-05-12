@@ -46,7 +46,7 @@ interface CIRFunction : CommonMethod {
     fun <T> withIRNode(body: (ByteArray?) -> T): T
 
     override val name: String
-        get() = id.id
+        get() = info.symName.value
 
     override val parameters: List<CIRFunctionParameter>
     override val returnType: MLIRTypeID
