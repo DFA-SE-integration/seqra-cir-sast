@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package trace;
+
+option java_package = "org.seqra.cir.sast.dataflow.proto.trace";
+option java_multiple_files = true;
+
+message MLIRModuleID {
+  string id = 1;
+}
+
+message CIRFunctionID {
+  MLIRModuleID module_id = 1;
+  string id = 2;
+}
+
+message MLIROpID {
+  CIRFunctionID fun_id = 1;
+  uint64 id = 2;
+}
