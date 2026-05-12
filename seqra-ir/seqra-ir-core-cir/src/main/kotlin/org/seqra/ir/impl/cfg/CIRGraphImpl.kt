@@ -130,6 +130,29 @@ class CIRGraphImpl(
                             connectBlockSuccessor(current, current.dest, predecessorsPreparingMap, successorsPreparingMap)
                         }
 
+                        /** cir.call (::cir::CallOp)
+                         * Direct/undirect call to a function that is within the same symbol scope as the call
+                         *
+                         * // Direct call
+                         * %2 = cir.call @my_add(%0, %1) : (f32, f32) -> f32
+                         * // Indirect call
+                         * %20 = cir.call %18(%17)
+                         *
+                         * TODO
+                         * // Call that might throw
+                         * cir.call exception @my_div() -> () cleanup {
+                         *   // call dtor...
+                         * }
+                         */
+                        is CIRCallOpInst -> {
+                            current.resolveDirectCall(function.classpath)
+                                .filter { it.blocks.blocks.isNotEmpty() }
+                                .forEach { c ->
+                                    connectBlockSuccessor(current, c.blocks.blocks[0].id, predecessorsPreparingMap, successorsPreparingMap)
+                                }
+
+                        }
+
                         /** cir.brcond (::cir::BrCondOp)
                          * The cir.brcond %cond, ^bb0, ^bb1 branches to ‘bb0’ block in case %cond evaluates to true,
                          * otherwise it branches to ‘bb1’
