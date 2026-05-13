@@ -54,6 +54,7 @@ Where `PATH_TO_CLANGIR_BUILD` is the path to your clangir build directory (e.g.,
 ### Tools
 - `tools/cir-ser-proto/` - Serialization tool for CIR Protocol Buffers
   - Provides functionality for serializing CIR modules to Protocol Buffer format
+- `tools/cir-klee/` - CIR → LLVM IR for KLEE
 
 ## Generated Files
 
