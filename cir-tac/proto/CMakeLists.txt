@@ -24,3 +24,20 @@ target_link_libraries(
     proto PRIVATE
     protobuf::libprotobuf
 )
+
+set(TRACE_PROTO_SRC
+    trace/ap.proto
+    trace/common.proto
+    trace/fact.proto
+    trace/method.proto
+    trace/trace.proto
+)
+
+add_library(trace_proto OBJECT ${TRACE_PROTO_SRC})
+protobuf_generate(
+    TARGET trace_proto
+    IMPORT_DIRS trace
+    PROTOS
+    ${TRACE_PROTO_SRC}
+)
+target_link_libraries(trace_proto PRIVATE protobuf::libprotobuf)
