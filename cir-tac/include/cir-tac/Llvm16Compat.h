@@ -9,8 +9,15 @@ namespace llvm {
 class Module;
 }
 
-/// Strip attributes introduced after LLVM 16 (nofpclass, initializes,
-/// dead_on_unwind). Optionally set default target triple if missing.
+/// Transform \p M so its printed LLVM IR is acceptable to LLVM 16's assembler / bitcode reader
+/// (e.g. `llvm-as-16`). Strips attributes introduced after LLVM 16 where they appear on functions,
+/// parameters, return values, and call sites: \c nofpclass, \c initializes, \c dead_on_unwind.
+///
+/// When adding support for more LLVM 17–20-only keywords, run the corpus diagnostic first
+/// (\c scripts/diag_llvm16_keywords.sh + \c cir-llvm16-dump); extend stripping only for tokens
+/// that appear in lowered IR. See \c cir-tac/README-llvm16.md.
+///
+/// If \p M has no target triple, sets <tt>x86_64-unknown-linux-gnu</tt>.
 bool prepareLlvmModuleForLlvm16(llvm::Module &M);
 
 /// Run external \p llvm-as (e.g. llvm-as-16) on \p llPath → \p bcOutPath.

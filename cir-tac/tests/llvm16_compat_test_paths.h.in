@@ -1,0 +1,2 @@
+#pragma once
+#define CWE416_SAMPLES_DIR "@CWE416_SAMPLES_DIR@"

@@ -46,6 +46,7 @@ help:
 	@echo "  make clangir				- build clangir submodule"
 	@echo "  make protobuf				- build protobuf"
 	@echo "  make cir-tac				- build cir-tac"
+	@echo "  make test-llvm16			- gtest: CWE416 .cir lower + strip + llvm-as (Docker)"
 	@echo ""
 	@echo "Seqra:"
 	@echo "  make clean		- clean seqra modules + .m2 repo packages (Gradle)"
@@ -82,7 +83,7 @@ docker-shell:
 		-w $(MOUNT_ROOT) "$(DOCKER_IMAGE)"
 
 # cir-tac
-.PHONY: clangir-link-build clangir protobuf cir-tac testsuite
+.PHONY: clangir-link-build clangir protobuf cir-tac testsuite test-llvm16
 
 testsuite: docker_check clangir-link-build
 	bash "$(BUILD_TESTSUITE)"
@@ -126,10 +127,17 @@ cir-tac: docker_check clangir-link-build
 		-DCLANGIR_BUILD_DIR=/tmp/llvm-build \
 		-DSEA_DSA_DIR=$(ROOT)/sea-dsa
 	ninja -C /tmp/cir-tac-build -j4
-	mkdir -p $(CIRTAC_DIR)/cir-klee
-	cp /tmp/cir-tac-build/tools/cir-klee/cir-klee $(CIRTAC_DIR)/cir-klee/cir-klee
+	if [[ -f /tmp/cir-tac-build/tools/cir-klee/cir-klee ]]; then \
+		mkdir -p $(CIRTAC_DIR)/cir-klee && \
+		cp /tmp/cir-tac-build/tools/cir-klee/cir-klee $(CIRTAC_DIR)/cir-klee/cir-klee; \
+	fi
 	mkdir -p $(CIRTAC_DIR)/cir-ser-proto
 	cp -r /tmp/cir-tac-build/tools/cir-ser-proto/cir-ser-proto $(CIRTAC_DIR)/cir-ser-proto/cir-ser-proto
+	mkdir -p $(CIRTAC_DIR)/cir-llvm16-dump
+	cp /tmp/cir-tac-build/tools/cir-llvm16-dump/cir-llvm16-dump $(CIRTAC_DIR)/cir-llvm16-dump/cir-llvm16-dump
+
+test-llvm16: docker_check cir-tac
+	cd /tmp/cir-tac-build && ctest --output-on-failure -R llvm16_compat_test
 
 # Seqra
 .PHONY: build build-dfa clean test test-alias test-se

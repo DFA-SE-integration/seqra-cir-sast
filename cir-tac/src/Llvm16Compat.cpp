@@ -15,8 +15,10 @@
 
 using namespace llvm;
 
-/// Drop attributes LLVM 16's bitcode reader does not understand (added in
-/// later LLVM versions).
+/// Strips LLVM IR attribute kinds that LLVM 16's text parser / bitcode reader rejects.
+///
+/// Extend this only when \c scripts/diag_llvm16_keywords.sh (over \c CWE416_Use_After_Free .cir)
+/// or another corpus reports new keywords in lowered IR. See README-llvm16.md.
 static void stripAttrsTooNewForLlvm16(Module &M) {
   for (Function &F : M) {
     if (F.hasRetAttribute(Attribute::NoFPClass))

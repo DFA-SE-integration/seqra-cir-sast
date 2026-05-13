@@ -63,3 +63,18 @@ include_directories(include)
 
 add_subdirectory(src)
 add_subdirectory(tools)
+
+include(CTest)
+option(CIR_TAC_BUILD_TESTS "Build llvm16 / gtest integration tests" ON)
+if (CIR_TAC_BUILD_TESTS AND BUILD_TESTING)
+  include(FetchContent)
+  FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.14.0
+    GIT_SHALLOW TRUE)
+  # For MSVC shared CRT; ignored elsewhere.
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(googletest)
+  add_subdirectory(tests)
+endif()
