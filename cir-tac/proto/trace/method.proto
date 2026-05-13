@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package trace.method;
+
+option java_package = "org.seqra.cir.sast.dataflow.proto.trace.method";
+option java_multiple_files = true;
+
+import "fact.proto";
+import "common.proto";
+
+// Intra-procedural FullTrace (MethodTraceResolver.FullTrace)
+message FullTrace {
+  CIRFunctionID method = 1;
+  uint32 start_entry_id = 2;
+  uint32 final_entry_id = 3;
+  enum TraceKind {
+    TRACE_KIND_UNSPECIFIED = 0;
+    TRACE_KIND_TRACE_TO_FACT = 1;
+    TRACE_KIND_TRACE_TO_FACT_AFTER_STATEMENT = 2;
+    TRACE_KIND_SUMMARY = 3;
+  }
+  TraceKind trace_kind = 4;
+
+  map<uint32, TraceEntry> id_to_trace_entry = 5;
+
+  message TraceEntryIds { repeated uint32 ids = 1; }
+  map<uint32, TraceEntryIds> successors = 6;
+}
+
+// Intra-procedural SummaryTrace (MethodTraceResolver.SummaryTrace): final entry only.
+message SummaryTrace {
+  CIRFunctionID method = 1;
+  uint32 final_entry_id = 2;
+  FullTrace.TraceKind trace_kind = 3;
+  map<uint32, TraceEntry> id_to_trace_entry = 4;
+}
+
+message TraceEdge {
+  oneof value {
+    SourceTraceEdge source_trace_edge = 1;
+    MethodTraceEdge method_trace_edge = 2;
+  }
+}
+
+message SourceTraceEdge {
+  FactAp fact = 1;
+}
+
+message MethodTraceEdge {
+  FactAp initial_fact = 1;
+  FactAp fact = 2;
+}
+
+//Omitted (not relevant now)
+//message MethodTraceNDEdge { }
+
+message TraceEntry {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_ACTION = 1;
+    KIND_UNCHANGED = 2;
+    KIND_FINAL = 3;
+    KIND_METHOD_ENTRY = 4;
+    KIND_SOURCE_START = 5;
+  }
+  Kind kind = 1;
+  MLIROpID statement = 2;
+  repeated TraceEdge edges = 3;
+}

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package trace;
+
+option java_package = "org.seqra.cir.sast.dataflow.proto.trace";
+option java_multiple_files = true;
+
+import "ap.proto";
+
+//Work with TreeApManager in CIRTaintAnalyzer
+//InitialFactAp -> AccessPath
+//FinalFactAp -> AccessTree
+message FactAp {
+  // AccessPathBase
+  ap.APBase base = 1;
+  // List<Accessor>
+  repeated ap.APAccessor accessors = 2;
+}
