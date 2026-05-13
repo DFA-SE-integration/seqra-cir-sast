@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libboost-dev \
     && rm -rf /var/lib/apt/lists/*
 
+COPY scripts/install_llvm16.sh /tmp/install_llvm16.sh
+RUN bash /tmp/install_llvm16.sh && rm /tmp/install_llvm16.sh
+
 WORKDIR /workspace
 
 CMD ["/bin/bash", "-l"]
