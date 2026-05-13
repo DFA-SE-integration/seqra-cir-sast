@@ -27,4 +27,8 @@ add_library(protoSerializer
   OpDeserializer.cpp
 )
 
+# Lowering llvm20 -> llvm16 (klee)
+add_library(llvm16_compat STATIC Llvm16Compat.cpp)
+
 target_link_libraries(protoSerializer ${LIBS})
+target_link_libraries(llvm16_compat ${LIBS})
