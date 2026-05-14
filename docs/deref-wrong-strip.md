@@ -133,4 +133,51 @@ aa != null && aa.derefAlias(argBase, factBase) && factOk.startsWithAccessor(Refe
 - `[EP] startNodes>0`, `entryPointNodes>0` — entry-point trace соберётся корректно.
 - `[EP] synthetic fallback fired` должен пропасть для всех 8 `*_bad` кейсов.
 
-Если synthetic fallback пропадёт — переходим к h3-remove-fallback и тестам.
+## Прогон 3 — A+B+C+инструменты [CE/PE/CP]: synthetic fallback пропал у большинства кейсов, но 8 ещё остаются
+
+Лог `seqra-trace.log` (~30k строк, 16:49 UTC):
+
+- `[EP] startNodes=1, visitedEp=1, entryPointNodes=1` теперь стало нормой. Большинство `*_bad` кейсов трасса собирается.
+- Осталось 8 кейсов с `[EP] synthetic fallback fired`:
+  - `_17_bad` (loop control flow, char)
+  - `_433badEv` (C++ mangled, char)
+  - `_623badEv` (C++ mangled, char)
+  - `int64_t_01_bad`, `int64_t_02_bad`, `int64_t_03_bad`
+- Анализ `[CE] reject` для оставшихся показывает 2 разных pattern'а:
+
+### Паттерн 1: индекс хранит более глубокую форму, чем widening даёт
+`int64_t_01_bad`: query = `var(52)[*]!mark`, IFDS sample = `var(52).&[*]!mark`. Variant widening C даёт `var(52)[*]!mark`, `var(52).&[*]!mark`, `var(52)[*][*]!mark`, `var(52)!mark` — всё депт-1 от query. Но `containsEntryEdge` сейчас делает `statementFact.contains(entryEdge.fact)` (а не через `traceResolutionMatchFact`), поэтому даже когда варианты есть в widening C, `containsEntryEdge` тестирует только сырой `entryEdge.fact`.
+
+### Паттерн 2: индекс хранит более простую форму, чем query
+`_433badEv` / `_623badEv`: query = `var(4).&!mark`, IFDS sample = `var(4)!mark`. Тоже мимо `.contains` — `var(4)!mark` не содержит путь `var(4).&!mark` (это другой access-path).
+
+### Паттерн 3: индекс полностью пуст на entry-стейтменте (только `_17_bad`)
+`indexSize=0 sample=null` на `BrOp(id=71)` (после printLine, в loop-control). Сюда trace builder доходит через sequent-Unchanged ветку (BrOp = sequent с unchanged precondition), который не валидирует факт через индекс при создании entry. → "ghost entry". Fix D не помогает; нужно отдельное решение (валидировать факт-existence на Unchanged-sequent шаге).
+
+## Применённые фиксы (раунд 3)
+
+### D. `containsEntryEdge` использует `traceResolutionMatchFact` (depth-1 widening)
+
+Файл: `seqra-dataflow-core/seqra-dataflow/src/main/kotlin/org/seqra/dataflow/ap/ifds/trace/MethodTraceResolver.kt`
+
+Замена:
+```kotlin
+val ok = entryFacts.any { statementFact -> statementFact.contains(entryEdge.fact) }
+```
+на
+```kotlin
+val ok = entryFacts.any { statementFact -> traceResolutionMatchFact(statementFact, entryEdge.fact) }
+```
+
+`traceResolutionMatchFact` уже используется в `resolveIntraProceduralTraceEdge.matchFact` и пробует `traceResolutionTargetPatterns` (5 вариантов: target, prepend(.&), read(.&), prepend([]), read([])). Это точно та же ширина, которую использует sink-search, поэтому `containsEntryEdge` теперь толерантен к тому же набору shape-mismatch'ов.
+
+Покрывает паттерны 1 и 2:
+- `int64_t_01_bad`: query `var(52)[*]!mark` → widening `[var(52)[*]!mark, var(52).&[*]!mark, var(52)[*][*]!mark, var(52)!mark]`. Среди них `var(52).&[*]!mark` совпадает с IFDS-sample. Match!
+- `_433badEv`: query `var(4).&!mark` → widening `[var(4).&!mark, var(4).&.&!mark, var(4)!mark, var(4).&[*]!mark]`. Среди них `var(4)!mark` совпадает с IFDS-sample. Match!
+
+## Что ожидать в следующем прогоне (раунд 4)
+
+- `[CE] reject` count должен ещё сильно упасть (закроется паттерн 1 и 2).
+- Кейсы `int64_t_01_bad/02/03`, `_433badEv`, `_623badEv` должны собрать `startNodes>=1` и не firit'ь synthetic fallback.
+- Останется только `_17_bad` (loop control + ghost entry на BrOp). Если только он один — переходим к h-fix-loop-ghost (валидация Unchanged-sequent предка через индекс) или принимаем pragmatic solution (оставить fallback только для loop-cases). 
+- Если synthetic fallback пропадёт у всех 8 — переходим к h3-remove-fallback и тестам.

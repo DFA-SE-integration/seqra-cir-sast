@@ -1441,7 +1441,7 @@ class MethodTraceResolver(
         when (entryEdge) {
             is TraceEdge.SourceTraceEdge -> {
                 val entryFacts = edges.allZeroToFactFactsAtStatement(entryStatement, entryEdge.fact)
-                val ok = entryFacts.any { statementFact -> statementFact.contains(entryEdge.fact) }
+                val ok = entryFacts.any { statementFact -> traceResolutionMatchFact(statementFact, entryEdge.fact) }
                 if (SEQRA_TRACE_DEBUG && !ok) {
                     val sample = entryFacts.firstOrNull()
                     System.err.println(
@@ -1454,7 +1454,7 @@ class MethodTraceResolver(
 
             is TraceEdge.MethodTraceEdge -> {
                 val entryFacts = edges.allFactToFactFactsAtStatement(entryStatement, entryEdge.initialFact, entryEdge.fact)
-                val ok = entryFacts.any { statementFact -> statementFact.contains(entryEdge.fact) }
+                val ok = entryFacts.any { statementFact -> traceResolutionMatchFact(statementFact, entryEdge.fact) }
                 if (SEQRA_TRACE_DEBUG && !ok) {
                     val sample = entryFacts.firstOrNull()
                     System.err.println(
@@ -1467,7 +1467,7 @@ class MethodTraceResolver(
 
             is TraceEdge.MethodTraceNDEdge -> {
                 val entryFacts = edges.allNDFactToFactFactsAtStatement(entryStatement, entryEdge.initialFacts, entryEdge.fact)
-                val ok = entryFacts.any { statementFact -> statementFact.contains(entryEdge.fact) }
+                val ok = entryFacts.any { statementFact -> traceResolutionMatchFact(statementFact, entryEdge.fact) }
                 if (SEQRA_TRACE_DEBUG && !ok) {
                     val sample = entryFacts.firstOrNull()
                     System.err.println(
