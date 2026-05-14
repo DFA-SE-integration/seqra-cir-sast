@@ -12,6 +12,8 @@ import org.seqra.ir.api.common.cfg.CommonAssignInst
 import org.seqra.ir.api.common.cfg.CommonInst
 import org.seqra.ir.api.common.cfg.CommonValue
 
+private val SEQRA_TRACE_DEBUG: Boolean = System.getenv("SEQRA_TRACE_DEBUG") != null
+
 abstract class MethodAnalyzerEdgeSearcher(
     private val edges: MethodAnalyzerEdges,
     private val apManager: ApManager,
@@ -50,18 +52,36 @@ abstract class MethodAnalyzerEdgeSearcher(
         storedFact: InitialFactAp,
         matchingInitialFacts: HashSet<Set<InitialFactAp>>,
     ) {
+        if (SEQRA_TRACE_DEBUG) {
+            System.err.println("[ES] storedFact=$storedFact stmt=$stmt")
+        }
         for (p in traceTargetPatternVariants(storedFact)) {
-            if (edges.allZeroToFactFactsAtStatement(stmt, p).any { matchFact(it, p) }) {
+            val z2f = edges.allZeroToFactFactsAtStatement(stmt, p)
+            val f2f = edges.allFactToFactFactsAtStatement(stmt, p)
+            val nd2f = edges.allNDFactToFactFactsAtStatement(stmt, p)
+
+            if (SEQRA_TRACE_DEBUG) {
+                val z2fMatch = z2f.count { matchFact(it, p) }
+                val f2fMatch = f2f.count { (_, finalFact) -> matchFact(finalFact, p) }
+                val ndMatch = nd2f.count { (_, finalFact) -> matchFact(finalFact, p) }
+                System.err.println(
+                    "[ES]   variant=$p z2f=${z2f.size}(match=$z2fMatch)" +
+                            " f2f=${f2f.size}(match=$f2fMatch)" +
+                            " nd=${nd2f.size}(match=$ndMatch)"
+                )
+            }
+
+            if (z2f.any { matchFact(it, p) }) {
                 matchingInitialFacts.add(emptySet())
             }
 
-            edges.allFactToFactFactsAtStatement(stmt, p).forEach { (initialFact, finalFact) ->
+            f2f.forEach { (initialFact, finalFact) ->
                 if (matchFact(finalFact, p)) {
                     matchingInitialFacts.add(setOf(initialFact))
                 }
             }
 
-            edges.allNDFactToFactFactsAtStatement(stmt, p).forEach { (initialFacts, finalFact) ->
+            nd2f.forEach { (initialFacts, finalFact) ->
                 if (matchFact(finalFact, p)) {
                     matchingInitialFacts.add(initialFacts)
                 }

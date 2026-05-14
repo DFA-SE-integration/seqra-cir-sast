@@ -40,6 +40,8 @@ import org.seqra.ir.api.cir.cfg.MLIRValue
 import org.seqra.util.Maybe
 import org.seqra.util.maybeFlatMap
 
+private val SEQRA_TRACE_DEBUG: Boolean = System.getenv("SEQRA_TRACE_DEBUG") != null
+
 class CIRMethodCallPrecondition(
     private val apManager: ApManager,
     private val analysisContext: CIRMethodAnalysisContext,
@@ -102,6 +104,12 @@ class CIRMethodCallPrecondition(
                     val argIdx = (startFactBase as? AccessPathBase.Argument)?.idx
                     if (argIdx != null && !mappedArgIndices.add(argIdx)) {
                         return@mapMethodCallToStartFlowFact
+                    }
+                    if (SEQRA_TRACE_DEBUG && callerFact !== f) {
+                        System.err.println(
+                            "[CP] forward-bridge fired backward: orig=$f -> callerFact=$callerFact" +
+                                    " startFactBase=$startFactBase stmt=$statement callee=$callee"
+                        )
                     }
                     preconditions.preconditionForFact(callerFact, startFactBase)
                 }

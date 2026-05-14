@@ -56,6 +56,8 @@ import java.util.BitSet
 import java.util.LinkedList
 import java.util.Objects
 
+private val SEQRA_TRACE_DEBUG: Boolean = System.getenv("SEQRA_TRACE_DEBUG") != null
+
 class MethodTraceResolver(
     private val runner: AnalysisRunner,
     private val analysisContext: MethodAnalysisContext,
@@ -391,6 +393,32 @@ class MethodTraceResolver(
         }
 
         val matchingInitialFacts = searcher.searchInitialFacts(statement, fact, includeStatement)
+
+        if (SEQRA_TRACE_DEBUG && matchingInitialFacts.isEmpty()) {
+            val variants = traceResolutionTargetPatterns(fact)
+            System.err.println(
+                "[TR] empty trace-edge: method=${methodEntryPoint.method}" +
+                        ", statement=$statement, includeStatement=$includeStatement" +
+                        ", fact=$fact, variants=${variants.size}"
+            )
+            variants.forEachIndexed { i, p ->
+                val z2f = edges.allZeroToFactFactsAtStatement(statement, p)
+                val f2f = edges.allFactToFactFactsAtStatement(statement, p)
+                val nd2f = edges.allNDFactToFactFactsAtStatement(statement, p)
+                System.err.println(
+                    "[TR]   variant[$i]=$p z2f=${z2f.size} f2f=${f2f.size} nd=${nd2f.size}"
+                )
+                if (z2f.isNotEmpty()) {
+                    System.err.println("[TR]     z2f.sample=${z2f.take(3)}")
+                }
+                if (f2f.isNotEmpty()) {
+                    System.err.println("[TR]     f2f.sample=${f2f.take(3)}")
+                }
+                if (nd2f.isNotEmpty()) {
+                    System.err.println("[TR]     nd.sample=${nd2f.take(3)}")
+                }
+            }
+        }
 
         return matchingInitialFacts.map { initialFacts ->
             when (initialFacts.size) {

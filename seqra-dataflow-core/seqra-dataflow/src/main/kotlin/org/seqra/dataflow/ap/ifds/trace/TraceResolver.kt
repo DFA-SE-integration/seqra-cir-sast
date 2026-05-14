@@ -12,6 +12,8 @@ import org.seqra.dataflow.ap.ifds.trace.MethodTraceResolver.TraceEntryAction
 import org.seqra.ir.api.common.CommonMethod
 import org.seqra.ir.api.common.cfg.CommonInst
 
+private val SEQRA_TRACE_DEBUG: Boolean = System.getenv("SEQRA_TRACE_DEBUG") != null
+
 class TraceResolver(
     private val entryPointMethods: Set<CommonMethod>,
     private val manager: TaintAnalysisUnitRunnerManager,
@@ -335,6 +337,12 @@ class TraceResolver(
          * If [startNodes] is empty (degenerate interprocedural graph), this produces an empty [EntryPointToStartTrace.entryPoints].
          */
         fun build(startNodes: Set<SourceToSinkTraceNode>): EntryPointToStartTrace {
+            if (SEQRA_TRACE_DEBUG) {
+                System.err.println(
+                    "[EP] build: startNodes=${startNodes.size}" +
+                            " entryPointMethods=${entryPointMethods.size}"
+                )
+            }
             val unprocessedMethods = mutableListOf<Pair<MethodEntryPoint, TraceNode>>()
             startNodes.mapTo(unprocessedMethods) { it.methodEntryPoint to it }
 
@@ -358,6 +366,13 @@ class TraceResolver(
                 }
             }
 
+            if (SEQRA_TRACE_DEBUG) {
+                System.err.println(
+                    "[EP] walk-done: visitedEp=${visitedEp.size}" +
+                            " entryPointNodes=${entryPointNodes.size}"
+                )
+            }
+
             // When backward search never reaches an analyzed entry method, or there are no start
             // nodes (e.g. empty full-trace expansion), still emit a stable entry-point node whenever
             // we know the analyzed entry methods so downstream serializers / KLEE have a root.
@@ -370,6 +385,12 @@ class TraceResolver(
                 val succ = nodeSuccessors.getOrPut(epNode, ::hashSetOf)
                 for (start in startNodes) {
                     succ.add(start)
+                }
+                if (SEQRA_TRACE_DEBUG) {
+                    System.err.println(
+                        "[EP] synthetic fallback fired, representative=$representativeMethod" +
+                                " startNodesLinked=${startNodes.size}"
+                    )
                 }
             }
 

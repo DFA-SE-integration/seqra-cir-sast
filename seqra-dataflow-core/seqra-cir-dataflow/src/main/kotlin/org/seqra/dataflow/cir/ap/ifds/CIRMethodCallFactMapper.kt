@@ -19,6 +19,8 @@ import org.seqra.ir.api.common.cfg.CommonCallExpr
 import org.seqra.ir.api.common.cfg.CommonInst
 import org.seqra.ir.api.common.cfg.CommonValue
 
+private val SEQRA_TRACE_DEBUG: Boolean = System.getenv("SEQRA_TRACE_DEBUG") != null
+
 object CIRMethodCallFactMapper : MethodCallFactMapper {
     override fun mapMethodExitToReturnFlowFact(
         callStatement: CommonInst,
@@ -193,8 +195,9 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
                 val newBase = accessPathBase(argExpr) ?: return null
                 if (newBase is AccessPathBase.Constant) return null
 
+                val stripped = factAp.startsWithAccessor(ReferenceAccessor)
                 val factForExit: F =
-                    if (factAp.startsWithAccessor(ReferenceAccessor)) {
+                    if (stripped) {
                         @Suppress("UNCHECKED_CAST")
                         when (factAp) {
                             is InitialFactAp ->
@@ -211,7 +214,15 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
 
                 val checkedFact =
                     callStatement.argType(base.idx)?.let { checkFactType(it, factForExit) } ?: return null
-                rebaseFact(checkedFact, newBase)
+                val result = rebaseFact(checkedFact, newBase)
+                if (SEQRA_TRACE_DEBUG && stripped) {
+                    System.err.println(
+                        "[MX] strip: callStatement=$callStatement argIdx=${base.idx}" +
+                                " factAp=$factAp factForExit=$factForExit" +
+                                " argExpr=$argExpr newBase=$newBase result=$result"
+                    )
+                }
+                result
             }
 
             AccessPathBase.Return -> {
