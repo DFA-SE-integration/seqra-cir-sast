@@ -915,6 +915,34 @@ class MethodTraceResolver(
 
     private fun TraceBuilder.addPredecessorAction(entry: TraceEntry, action: TraceEntry.Action) {
         val startOrAction = tryCreateSourceStart(action) ?: action
+        // #region agent log
+        run {
+            val isStart = startOrAction is TraceEntry.SourceStartEntry
+            val primary = action.primaryAction
+            val primaryKind = primary?.let { it::class.java.simpleName } ?: "null"
+            val nonSourceOther = action.otherActions.count { it !is SourceOtherAction }
+            val rejectReason: String = when {
+                action.unchanged.isNotEmpty() -> "unchanged-non-empty(${action.unchanged.size})"
+                primary != null && primary !is TraceEntryAction.SourcePrimaryAction -> "primary-not-source($primaryKind)"
+                nonSourceOther > 0 -> "non-source-other($nonSourceOther/${action.otherActions.size})"
+                else -> "accepted"
+            }
+            TraceResolverDebugLog.log(
+                hypothesisId = "T6",
+                message = if (isStart) "predecessor-action-source-start" else "predecessor-action-non-source",
+                data = mapOf<String, Any?>(
+                    "method" to methodEntryPoint.toString().take(120),
+                    "actionStmt" to action.statement.toString().take(160),
+                    "entryStmt" to entry.statement.toString().take(160),
+                    "primaryKind" to primaryKind,
+                    "unchangedSize" to action.unchanged.size,
+                    "otherActionsSize" to action.otherActions.size,
+                    "nonSourceOther" to nonSourceOther,
+                    "rejectReason" to rejectReason,
+                ),
+            )
+        }
+        // #endregion
         addPredecessor(entry, startOrAction)
     }
 
