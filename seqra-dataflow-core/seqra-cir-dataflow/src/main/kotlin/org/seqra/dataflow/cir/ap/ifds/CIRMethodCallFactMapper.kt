@@ -269,6 +269,22 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
                         AccessPathBase.Argument(i),
                     )
 
+                // Reverse deref bridge: argBase is loaded from factBase (`free(load(slot))`).
+                // The fact's leading [ReferenceAccessor] represents "value at slot" which equals the
+                // loaded value passed as Argument(i). Strip the leading `.&` and map to Argument(i).
+                // Mirrors the forward bridge above (factBase loaded from argBase => prepend `.&`).
+                aa != null && aa.derefAlias(argBase, factBase) && factOk.startsWithAccessor(ReferenceAccessor) -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val stripped: F? = when (factOk) {
+                        is InitialFactAp -> factOk.readAccessor(ReferenceAccessor) as? F
+                        is FinalFactAp -> factOk.readAccessor(ReferenceAccessor) as? F
+                        else -> null
+                    }
+                    if (stripped != null) {
+                        onMappedFact(stripped, AccessPathBase.Argument(i))
+                    }
+                }
+
                 aa != null && aa.pointerDerivedFromSameLoadedSlotAsAddress(factBase, argBase) ->
                     onMappedFact(
                         prependAccessor(factOk, ReferenceAccessor),

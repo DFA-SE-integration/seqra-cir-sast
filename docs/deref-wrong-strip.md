@@ -61,3 +61,76 @@ mapMethodCallToStartFlowFact — обратная ветвь (derefAlias(argBase
 [ES] должен показать новый storedFact=var(0)!mark.$.*/* со z2fMatch≥1 для варианта var(0).&!mark.$.*/*.
 [EP] synthetic fallback fired — на этом коммите ещё может остаться, потому что отсутствие fallback полагается также на H5/H1; но startNodes должно стать >0, и visitedEp>0, что означает, что путь до entry-point достроился через Precond/CallToStart.
 Если после прогона [EP] synthetic fallback пропадёт сам по себе для всех 8 кейсов — переходим к удалению fallback'а (h3-remove-fallback). Если не пропадёт — посмотрим новый лог: симптом сместится либо в H5 (propagateCall пропускает Call2Start при матче source-правила), либо в H4 (вариация target-pattern'ов). Жду новый seqra-trace.log после ребилда.
+
+## Прогон 2 — relevance-fix недостаточно
+
+После применения relevance-fix-а получили:
+- `[TR] empty trace-edge` исчез — поиск находит `Z2F`.
+- `[ES] z2f=1(match=1)` для `.&`-variant — совпадает с индексом.
+- НО `[EP] startNodes=0` остался для всех 8 кейсов, synthetic fallback по-прежнему срабатывает.
+
+Добавил [CE]/[PE]/[CP] инструменты:
+- `[CE] reject src stmt=id=42 fact=var(0)!mark.$.*/* sample=var(0).&!mark.$` — `containsEntryEdge` строгий по форме AP.
+- `[CE] reject src stmt=id=43 fact=var(42)!mark.$.*/* sample=var(42).&!mark.$` — то же на printLine sink.
+- `[CP] preconditionForFact fact=var(0)!mark.$.*/* mappingsFired=0 preconditions=0 callee=free` — `mapMethodCallToStartFlowFact` для slot-факта (без `.&`) не фитит ни одной ветки, поэтому source-правило free не распознаётся бэквард.
+- `[PE] bail call/seq` — выход на пустых `callActions`/`actions`, потому что
+  1. `preconditionFacts=[]` для `var(0)!mark` (mapping не фитит), и
+  2. для `.&`-варианта нет `PreconditionFactsForInitialFact` записи (фактPrecondition не enumerates `.&`-варианты).
+
+## Применённые фиксы (раунд 2)
+
+### B. Обратный deref-bridge в `mapMethodCallToStartFlowFactImpl`
+
+Файл: `seqra-dataflow-core/seqra-cir-dataflow/src/main/kotlin/org/seqra/dataflow/cir/ap/ifds/CIRMethodCallFactMapper.kt`
+
+Добавил зеркало существующей forward-ветки (`derefAlias(factBase, argBase) -> prepend(.&)`):
+```kotlin
+aa != null && aa.derefAlias(argBase, factBase) && factOk.startsWithAccessor(ReferenceAccessor) -> {
+    // factBase=slot, argBase=loaded-from-slot.
+    // var(slot).&!mark = "value at slot tainted" = Argument(i)!mark.
+    // Strip .& and map to Argument(i).
+    val stripped = factOk.readAccessor(ReferenceAccessor) as? F ?: ...
+    onMappedFact(stripped, AccessPathBase.Argument(i))
+}
+```
+
+Семантика: симметрично forward-бриджу. Для forward-IFDS даёт дополнительную точку propagation для slot-фактов с `.&` — alias-propagation уже даёт эквивалентные факты, так что соундность не страдает (только лишний путь генерации того же edge).
+
+### C. Variant-widening в `factPrecondition` (Call + Sequent)
+
+Файлы:
+- `seqra-cir-dataflow/.../analysis/CIRMethodCallPrecondition.kt`
+- `seqra-cir-dataflow/.../analysis/CIRMethodSequentPrecondition.kt`
+
+Зеркало `MethodTraceResolver.traceResolutionTargetPatterns`: дополнительно к самому `fact` пробуем `.&`-prepended/readAccessor(.&) и `[]`-prepended/readAccessor([]) варианты. Каждый успешный вариант добавляется отдельным `PreconditionFactsForInitialFact`.
+
+Это нужно потому, что `containsEntryEdge` сравнивает строго по форме AP против индекса. Если индекс хранит `var(p).&!mark.$`, а target — `var(p)!mark.$.*/*`, нужно явно подсунуть `.&`-вариант, чтобы initialEdge прошёл строгий `.contains`.
+
+### Цепочка после фиксов A+B+C
+
+Для `_01_bad`:
+1. Sink-search at id=43 (printLine) → `SourceTraceEdge(var(42)!mark.$.*/*)`.
+2. propagateEntryNew sequent at id=42 (load `var(42) = MLIRValueRef(var(0))`):
+   - With C: пробуем `var(42).&!mark` вариант → simpleAssign → preconditionFacts=[var(0).&!mark].
+   - containsEntryEdge для `SourceTraceEdge(var(42).&!mark)` строго проходит против `var(42).&!mark.$` в индексе.
+   - Sequential action создан → новая edge `SourceTraceEdge(var(0).&!mark)`.
+3. propagateEntryNew call at id=41 (free) с `var(0).&!mark`:
+   - With B: новая ветка mapping срабатывает (derefAlias(var(39), var(0)) и `.&` префикс), strip `.&` → Argument(0)!mark.
+   - factSourceRulePrecondition: rebase к Argument(0)!mark, match free's source rule → `Source(rule, action)`.
+   - preconditionFacts = [CallToReturnTaintRule(Source), CallToStart].
+   - containsEntryEdge для `SourceTraceEdge(var(0).&!mark)` строго проходит.
+   - propagateCall fires → CallSourceRule + Call2Start.
+4. addPredecessorAction → tryCreateSourceStart → `SourceStartEntry` создан.
+5. resolveTrace.fullTrace returns FullTrace with `SourceStartEntry`.
+6. InterProceduralTraceGraphBuilder: rootNodes.add(node) → startNodes>0.
+7. EntryPointToStartTraceBuilder: walks back to entryPoint method → entryPointNodes populated → НЕТ synthetic fallback.
+
+## Что ожидать в следующем прогоне (раунд 3)
+
+- `[CE] reject` count должен сильно упасть (или 0 для основных кейсов).
+- `[PE] bail` для основных кейсов должен исчезнуть.
+- `[CP] preconditionForFact` теперь должен показывать `preconditions>0` для slot-фактов с `.&` вариантом (forward-bridge fired backward через новую ветку).
+- `[EP] startNodes>0`, `entryPointNodes>0` — entry-point trace соберётся корректно.
+- `[EP] synthetic fallback fired` должен пропасть для всех 8 `*_bad` кейсов.
+
+Если synthetic fallback пропадёт — переходим к h3-remove-fallback и тестам.

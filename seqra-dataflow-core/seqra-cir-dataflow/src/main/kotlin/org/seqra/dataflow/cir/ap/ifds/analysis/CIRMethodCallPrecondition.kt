@@ -58,15 +58,29 @@ class CIRMethodCallPrecondition(
 
     override fun factPrecondition(fact: InitialFactAp): CallPrecondition {
         val results = mutableListOf<PreconditionFactsForInitialFact>()
+        val seen = hashSetOf<InitialFactAp>()
 
-        preconditionForFact(fact)?.let {
-            results.add(PreconditionFactsForInitialFact(fact, it))
+        fun tryFact(f: InitialFactAp) {
+            if (!seen.add(f)) return
+            preconditionForFact(f)?.let {
+                results.add(PreconditionFactsForInitialFact(f, it))
+            }
         }
 
+        tryFact(fact)
+
+        // Mirror MethodTraceResolver.traceResolutionTargetPatterns: forward IFDS / sinks at the same
+        // SSA base may shape the access path with or without a leading [ReferenceAccessor] / [ElementAccessor]
+        // (deref bridge / element fallback). Try those variants here so the backward precondition
+        // recognises e.g. `free(load(slot))` whose IFDS index keeps `slot.&!mark` while the trace edge
+        // carries the original sink fact `slot!mark` without the leading `.&`.
+        runCatching { fact.prependAccessor(ReferenceAccessor) }.getOrNull()?.let(::tryFact)
+        fact.readAccessor(ReferenceAccessor)?.let(::tryFact)
+        runCatching { fact.prependAccessor(ElementAccessor) }.getOrNull()?.let(::tryFact)
+        fact.readAccessor(ElementAccessor)?.let(::tryFact)
+
         analysisContext.aliasAnalysis?.forEachAlias(fact) { aliasedFact ->
-            preconditionForFact(aliasedFact)?.let {
-                results.add(PreconditionFactsForInitialFact(aliasedFact, it))
-            }
+            tryFact(aliasedFact)
         }
 
         return if (results.isEmpty()) {

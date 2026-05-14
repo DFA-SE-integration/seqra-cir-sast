@@ -3,6 +3,7 @@ package org.seqra.dataflow.cir.ap.ifds.analysis
 import org.seqra.dataflow.ap.ifds.AccessPathBase
 import org.seqra.dataflow.ap.ifds.Accessor
 import org.seqra.dataflow.ap.ifds.ElementAccessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.access.ApManager
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
 import org.seqra.dataflow.ap.ifds.trace.MethodSequentPrecondition
@@ -24,19 +25,30 @@ class CIRMethodSequentPrecondition(
         fact: InitialFactAp
     ): SequentPrecondition {
         val results = mutableListOf<SequentPreconditionFacts>()
+        val seen = hashSetOf<InitialFactAp>()
 
-        preconditionForFact(fact)?.let {
-            results += PreconditionFactsForInitialFact(fact, it)
+        fun tryFact(f: InitialFactAp) {
+            if (!seen.add(f)) return
+            preconditionForFact(f)?.let {
+                results += PreconditionFactsForInitialFact(f, it)
+            }
+            results.unconditionalSourcesPrecondition(f)
         }
 
-        results.unconditionalSourcesPrecondition(fact)
+        tryFact(fact)
+
+        // Mirror MethodTraceResolver.traceResolutionTargetPatterns: the IFDS forward index can carry
+        // facts shaped with or without a leading [ReferenceAccessor] / [ElementAccessor] (deref bridge
+        // / element fallback). Widening here lets the backward sequent recognise the `.&`-variant of
+        // a slot fact (`var(p).&!mark`) when the trace edge carries the original sink/target shape
+        // (`var(p)!mark`), so [containsEntryEdge] strict match against the index actually succeeds.
+        runCatching { fact.prependAccessor(ReferenceAccessor) }.getOrNull()?.let(::tryFact)
+        fact.readAccessor(ReferenceAccessor)?.let(::tryFact)
+        runCatching { fact.prependAccessor(ElementAccessor) }.getOrNull()?.let(::tryFact)
+        fact.readAccessor(ElementAccessor)?.let(::tryFact)
 
         analysisContext.aliasAnalysis?.forEachAlias(fact) { aliasedFact ->
-            preconditionForFact(aliasedFact)?.let {
-                results += PreconditionFactsForInitialFact(aliasedFact, it)
-            }
-
-            results.unconditionalSourcesPrecondition(aliasedFact)
+            tryFact(aliasedFact)
         }
 
         return if (results.isEmpty()) {
