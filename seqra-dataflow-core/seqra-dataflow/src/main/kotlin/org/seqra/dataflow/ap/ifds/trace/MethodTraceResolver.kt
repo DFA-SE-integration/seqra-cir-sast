@@ -672,28 +672,29 @@ class MethodTraceResolver(
         val entryEdges = hashSetOf<TraceEdge>()
         val sources = hashSetOf<SourceOtherAction>()
 
-        // #region agent log
-        var rejectedEdge: TraceEdge? = null
-        // #endregion
         for (edge in entry.edges) {
             // We always have fact before entry point
             if (!containsEntryEdge(entry.statement, edge)) {
                 // #region agent log
-                rejectedEdge = edge
+                val edgeFactStr: String = when (edge) {
+                    is TraceEdge.MethodTraceEdge -> edge.fact.toString()
+                    is TraceEdge.MethodTraceNDEdge -> edge.fact.toString()
+                    is TraceEdge.SourceTraceEdge -> edge.fact.toString()
+                }
+                val edgeInitialStr: String = when (edge) {
+                    is TraceEdge.MethodTraceEdge -> edge.initialFact.toString()
+                    is TraceEdge.MethodTraceNDEdge -> edge.initialFacts.toString()
+                    is TraceEdge.SourceTraceEdge -> "n/a"
+                }
                 TraceResolverDebugLog.log(
                     hypothesisId = "T5",
                     message = "entry-point-reject",
-                    data = mapOf(
+                    data = mapOf<String, Any?>(
                         "method" to methodEntryPoint.toString().take(120),
                         "entryStmt" to entry.statement.toString().take(160),
                         "edgeKind" to edge::class.java.simpleName,
-                        "edgeFact" to (edge as? TraceEdge.MethodTraceEdge)?.fact?.toString()
-                            ?: (edge as? TraceEdge.MethodTraceNDEdge)?.fact?.toString()
-                            ?: (edge as? TraceEdge.SourceTraceEdge)?.fact?.toString()
-                            ?: edge.toString().take(160),
-                        "edgeInitial" to (edge as? TraceEdge.MethodTraceEdge)?.initialFact?.toString()
-                            ?: (edge as? TraceEdge.MethodTraceNDEdge)?.initialFacts?.toString()
-                            ?: "n/a",
+                        "edgeFact" to edgeFactStr,
+                        "edgeInitial" to edgeInitialStr,
                         "totalEdgesAtEntry" to entry.edges.size,
                     ),
                 )
