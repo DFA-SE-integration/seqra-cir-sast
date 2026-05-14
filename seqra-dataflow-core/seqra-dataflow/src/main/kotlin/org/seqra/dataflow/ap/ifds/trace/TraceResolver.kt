@@ -202,7 +202,7 @@ class TraceResolver(
                             "method" to vulnerability.methodEntryPoint.toString(),
                             "sinkStatement" to vulnerability.statement.toString(),
                             "factAp" to vulnerability.factAp.toString(),
-                            "factAp.base" to vulnerability.factAp.base.toString(),
+                            "factAp.base" to vulnerability.factAp.joinToString(" | ") { it.base.toString() },
                             "tracesCount" to traces.size,
                             "traces" to traces.joinToString(" | ") { it.toString().take(160) },
                         ),

@@ -471,7 +471,7 @@ class CIRMethodCallFlowFunction(
                             hypothesisId = "H1",
                             message = "source-fact",
                             data = mapOf(
-                                "rule" to rule.id,
+                                "rule" to rule.toString(),
                                 "method" to statement.location.method.toString(),
                                 "statement" to statement.toString(),
                                 "factAfterSource" to factAfterSource.toString(),
