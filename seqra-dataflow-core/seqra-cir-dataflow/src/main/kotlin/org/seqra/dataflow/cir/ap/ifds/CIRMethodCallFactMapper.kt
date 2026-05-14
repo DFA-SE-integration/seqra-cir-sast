@@ -310,6 +310,14 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
             if (aa?.derefAlias(factBase, argBase) == true) {
                 return true
             }
+            // Reverse direction: argument is loaded from the fact's slot (e.g. `free(load(slot))`).
+            // Forward analysis materializes the call's effect on the slot via alias propagation, so the
+            // IFDS index keeps facts on the slot at this call. Backward trace resolution must treat the
+            // call as relevant for those slot-based facts so the precondition is not collapsed to
+            // [CallPrecondition.Unchanged] and the index at the call's predecessor gets queried.
+            if (aa?.derefAlias(argBase, factBase) == true) {
+                return true
+            }
             if (aa?.pointerDerivedFromSameLoadedSlotAsAddress(factBase, argBase) == true) {
                 return true
             }
@@ -327,6 +335,9 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
                 return true
             }
             if (retValBase != null && aa?.derefAlias(factBase, retValBase) == true) {
+                return true
+            }
+            if (retValBase != null && aa?.derefAlias(retValBase, factBase) == true) {
                 return true
             }
         }
