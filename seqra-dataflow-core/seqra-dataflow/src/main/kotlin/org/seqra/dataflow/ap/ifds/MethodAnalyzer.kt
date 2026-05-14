@@ -496,6 +496,15 @@ class NormalMethodAnalyzer(
             if (!edgeUnchanged) {
                 addSequentialEdge(nextEdge)
             } else {
+                // Materialize unchanged edges in the index in addition to enqueueing them.
+                // Forward IFDS otherwise only stores facts at "definition" points where the
+                // edge result differs from input, leaving transit ops (e.g., BrOp, simple
+                // assigns that don't affect the fact, ptrStride chains) with empty indexes.
+                // The trace builder's `containsEntryEdge` does a direct one-statement query
+                // and would otherwise fail at such intermediate stmts even though the fact
+                // is logically still alive, forcing the synthetic-fallback entry-point trace.
+                // `edges.add` is idempotent (returns empty for duplicates), so this is safe.
+                edges.add(nextEdge)
                 if (enqueuedUnchangedEdges.add(nextEdge)) {
                     enqueueNewEdge(nextEdge)
                 }

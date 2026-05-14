@@ -179,5 +179,86 @@ val ok = entryFacts.any { statementFact -> traceResolutionMatchFact(statementFac
 
 - `[CE] reject` count должен ещё сильно упасть (закроется паттерн 1 и 2).
 - Кейсы `int64_t_01_bad/02/03`, `_433badEv`, `_623badEv` должны собрать `startNodes>=1` и не firit'ь synthetic fallback.
-- Останется только `_17_bad` (loop control + ghost entry на BrOp). Если только он один — переходим к h-fix-loop-ghost (валидация Unchanged-sequent предка через индекс) или принимаем pragmatic solution (оставить fallback только для loop-cases). 
+- Останется только `_17_bad` (loop control + ghost entry на BrOp). Если только он один — переходим к h-fix-loop-ghost (валидация Unchanged-sequent предка через индекс) или принимаем pragmatic solution (оставить fallback только для loop-cases).
 - Если synthetic fallback пропадёт у всех 8 — переходим к h3-remove-fallback и тестам.
+
+## Прогон 4 — A+B+C+D, расширенная test-scope (5 типов)
+
+После Fix D тестовый scope расширился с `char` (1 тип) до 5 типов: `char`, `int`, `int64_t`, `long`, `struct`. Большинство `*_bad` кейсов работает.
+
+Остаются 14 fallback'ов, кластеризуются в **3 паттерна**:
+
+| Паттерн | char | int | int64_t | long | struct | total |
+|---|---|---|---|---|---|---|
+| `_17_bad` (loop control) | 1 | 2 | 2 | 2 | 1 | 8 |
+| `_43_bad` (badSource fn callout, `data[0]` ptrStride) | ✓ FIXED | 1 | 1 | 1 | — | 3 |
+| `_62_bad` (cross-file split) | ✓ FIXED | 1 | 1 | 1 | — | 3 |
+
+**Ключевая инсайт**: char/struct — single-byte/single-element access, не требуют `ptrStride`. int/int64_t/long — multi-byte, генерят `data[0]` → `ptrStride(base, 0); load(via ptrStride)`. Forward IFDS sparse-индексирует факты, и через цепочку `ptrStride+load` факт не сохраняется в индексе на промежуточных стейтментах. То же касается `BrOp(id=71)` для `_17_bad`: forward IFDS не хранит факт на этом транзитном control-flow op.
+
+### Архитектурный инсайт
+
+`MethodAnalyzerEdges.add` сохраняет факты ТОЛЬКО на тех стейтментах, где forward IFDS явно создал edge. Транзитные op'ы (BrOp, простые присваивания, ptrStride) могут не иметь edges → пустой индекс. `MethodTraceResolver.containsEntryEdge` делал прямой 1-statement query → возвращал empty → синтетический fallback.
+
+`MethodAnalyzerEdgeSearcher.findMatchingEdgesInitialFacts` (используется в sink-trace search) **уже** делает smart walk через preconditions, но он недоступен для `containsEntryEdge` (там другая семантика — нужно проверить TraceEdge с initialFact constraint).
+
+## Применённые фиксы (раунд 4)
+
+### E. Материализация Unchanged-edges в forward IFDS
+
+Файл: `seqra-dataflow-core/seqra-dataflow/src/main/kotlin/org/seqra/dataflow/ap/ifds/MethodAnalyzer.kt` → `propagateEdgeToSuccessors`.
+
+**Корневая причина sparse-индексации** найдена в forward IFDS:
+
+```kotlin
+private fun propagateEdgeToSuccessors(edge: Edge, edgeUnchanged: Boolean) {
+    methodInstGraph.forEachSuccessor(analysisManager, edge.statement) {
+        val nextEdge = edge.replaceStatement(it)
+        if (!edgeUnchanged) {
+            addSequentialEdge(nextEdge)  // adds to index AND enqueues
+        } else {
+            if (enqueuedUnchangedEdges.add(nextEdge)) {
+                enqueueNewEdge(nextEdge)  // ONLY enqueues, NOT added to index!
+            }
+        }
+    }
+}
+```
+
+Когда sequent precondition возвращает `Unchanged` (или call-edge не меняет факт), edge **только enqueue'ится** на дальнейшую обработку, но **не добавляется в `edges` индекс**. Это и есть причина: транзитные op'ы (`BrOp`, простые assigns, `ptrStride` chain) не материализованы в индексе.
+
+#### Применённый фикс
+
+Добавлен `edges.add(nextEdge)` в `else`-ветку:
+
+```kotlin
+} else {
+    edges.add(nextEdge)  // materialize in index for trace verification (idempotent)
+    if (enqueuedUnchangedEdges.add(nextEdge)) {
+        enqueueNewEdge(nextEdge)
+    }
+}
+```
+
+`edges.add` идемпотентна (возвращает пустой список для дубликатов), так что вызов всегда безопасен. `enqueuedUnchangedEdges` дедупликация для enqueue сохранена — нет регрессии в количестве шагов.
+
+#### Преимущества по сравнению с walk-back в trace builder
+
+- **Не модифицирует `MethodTraceResolver`** (структурный фикс, а не симптоматический).
+- Покрывает **все** sparse-index случаи разом: `BrOp`/transit/`ptrStride+load`/Unchanged-call.
+- Trace builder работает без изменений — `containsEntryEdge` остаётся в Fix D-варианте (`traceResolutionMatchFact` widening).
+
+#### Возможный downside
+
+- Размер индекса вырастет: для каждого факта, который пассирует через ряд транзитных op'ов, индекс получит запись на каждом из них. Это контролируемо: рост ограничен количеством stmt × кол-во facts × (длина unchanged-цепочки).
+- Memory tradeoff: при больших методах с длинными цепочками без модификаций, индекс может стать заметно больше.
+- Если профиль покажет регрессию — можно гибридизировать (материализовать только на CFG-merge points, blockTerminators).
+
+## Что ожидать в следующем прогоне (раунд 4 → 5)
+
+- `[CE] reject` count должен сильно упасть (или исчезнуть) для всех 14 fallback кейсов.
+- Кейсы `_17_bad`, `_43_bad`, `_62_bad` (для всех 5 типов) должны собрать `startNodes>=1` и не firit'ь synthetic fallback.
+- `[EP] synthetic fallback fired` должен сократиться с 14 до 0 (или близко к 0).
+- Возможно, потребуется проверить размер индекса/память (для дебага) — но это уже tradeoff.
+
+Если что-то осталось — посмотрим, не помог ли фикс из-за более глубокой проблемы (например, fact-shape mismatch на definition-points).
