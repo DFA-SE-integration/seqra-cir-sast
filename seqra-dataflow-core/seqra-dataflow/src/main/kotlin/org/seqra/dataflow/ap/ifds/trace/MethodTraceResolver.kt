@@ -493,6 +493,21 @@ class MethodTraceResolver(
 
         val builder = TraceBuilder(entryManager.entryId(summaryTrace.final), cancellation)
         builder.resolveTrace(summaryTrace.traceKind)
+        // #region agent log
+        TraceResolverDebugLog.log(
+            hypothesisId = "T4",
+            message = "post-resolveTrace",
+            data = mapOf(
+                "method" to methodEntryPoint.toString().take(120),
+                "finalStmt" to summaryTrace.final.statement.toString().take(160),
+                "traceKind" to summaryTrace.traceKind.toString(),
+                "startEntryIds" to builder.startEntryIds.cardinality(),
+                "processedEntryIds" to builder.processedEntryIds.cardinality(),
+                "predecessorsKeys" to builder.predecessors.size,
+                "successorsKeys" to builder.successors.size,
+            ),
+        )
+        // #endregion
         builder.removeUnreachableNodes()
         builder.collapseUnchangedNodes()
         return builder.fullTrace(summaryTrace.traceKind)
@@ -657,9 +672,34 @@ class MethodTraceResolver(
         val entryEdges = hashSetOf<TraceEdge>()
         val sources = hashSetOf<SourceOtherAction>()
 
+        // #region agent log
+        var rejectedEdge: TraceEdge? = null
+        // #endregion
         for (edge in entry.edges) {
             // We always have fact before entry point
-            if (!containsEntryEdge(entry.statement, edge)) return
+            if (!containsEntryEdge(entry.statement, edge)) {
+                // #region agent log
+                rejectedEdge = edge
+                TraceResolverDebugLog.log(
+                    hypothesisId = "T5",
+                    message = "entry-point-reject",
+                    data = mapOf(
+                        "method" to methodEntryPoint.toString().take(120),
+                        "entryStmt" to entry.statement.toString().take(160),
+                        "edgeKind" to edge::class.java.simpleName,
+                        "edgeFact" to (edge as? TraceEdge.MethodTraceEdge)?.fact?.toString()
+                            ?: (edge as? TraceEdge.MethodTraceNDEdge)?.fact?.toString()
+                            ?: (edge as? TraceEdge.SourceTraceEdge)?.fact?.toString()
+                            ?: edge.toString().take(160),
+                        "edgeInitial" to (edge as? TraceEdge.MethodTraceEdge)?.initialFact?.toString()
+                            ?: (edge as? TraceEdge.MethodTraceNDEdge)?.initialFacts?.toString()
+                            ?: "n/a",
+                        "totalEdgesAtEntry" to entry.edges.size,
+                    ),
+                )
+                // #endregion
+                return
+            }
 
             when (edge) {
                 is TraceEdge.MethodTraceEdge -> {
@@ -681,6 +721,20 @@ class MethodTraceResolver(
                 }
             }
         }
+
+        // #region agent log
+        TraceResolverDebugLog.log(
+            hypothesisId = "T5",
+            message = "entry-point-accept",
+            data = mapOf(
+                "method" to methodEntryPoint.toString().take(120),
+                "entryStmt" to entry.statement.toString().take(160),
+                "edgesCount" to entry.edges.size,
+                "entryEdges" to entryEdges.size,
+                "sources" to sources.size,
+            ),
+        )
+        // #endregion
 
         if (entryEdges.isEmpty()) {
             if (sources.isEmpty()) return
