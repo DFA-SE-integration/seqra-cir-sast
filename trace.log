@@ -1,0 +1,917 @@
+cd seqra-cir-sast && ./gradlew :test \
+	--tests org.seqra.cir.sast.CWE416UseAfterFreeBadEntrypointsTest
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors
+> Task :buildSrc:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :buildSrc:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :buildSrc:compilePluginsBlocks UP-TO-DATE
+> Task :buildSrc:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :buildSrc:generateScriptPluginAdapters UP-TO-DATE
+> Task :buildSrc:compileKotlin UP-TO-DATE
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:pluginDescriptors UP-TO-DATE
+> Task :buildSrc:processResources UP-TO-DATE
+> Task :buildSrc:classes UP-TO-DATE
+> Task :buildSrc:jar UP-TO-DATE
+> Task :checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-dataflow:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-dataflow:compileKotlin UP-TO-DATE
+> Task :seqra-cir-sast-dataflow:compileJava NO-SOURCE
+> Task :seqra-cir-sast-se:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-se:extractIncludeProto UP-TO-DATE
+> Task :seqra-cir-sast-se:extractProto UP-TO-DATE
+> Task :seqra-cir-sast-se:generateProto UP-TO-DATE
+> Task :seqra-cir-sast-se:compileKotlin UP-TO-DATE
+> Task :seqra-cir-sast-se:compileJava UP-TO-DATE
+> Task :compileKotlin UP-TO-DATE
+> Task :compileJava NO-SOURCE
+> Task :processResources NO-SOURCE
+> Task :classes UP-TO-DATE
+> Task :jar UP-TO-DATE
+> Task :compileTestKotlin UP-TO-DATE
+> Task :compileTestJava NO-SOURCE
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :seqra-cir-sast-dataflow:processResources NO-SOURCE
+> Task :seqra-cir-sast-dataflow:classes UP-TO-DATE
+> Task :seqra-cir-sast-dataflow:jar UP-TO-DATE
+> Task :seqra-cir-sast-se:processResources UP-TO-DATE
+> Task :seqra-cir-sast-se:classes UP-TO-DATE
+> Task :seqra-cir-sast-se:jar UP-TO-DATE
+
+> Task :test
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_01_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_02_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_03_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_04_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_05_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_06_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_07_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_08_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_09_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_10_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_11_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_12_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_13_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_14_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_15_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_16_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_17_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_18_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__malloc_free_char_433badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__malloc_free_char_623badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_63_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_char_64_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_01_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_02_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_03_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_04_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_05_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_06_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_07_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_08_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_09_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_10_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_11_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_12_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_13_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_14_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_15_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_16_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_17_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_18_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN45CWE416_Use_After_Free__malloc_free_int64_t_433badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN45CWE416_Use_After_Free__malloc_free_int64_t_623badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_63_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int64_t_64_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_01_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_02_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_03_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_04_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_05_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_06_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_07_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_08_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_09_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_10_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_11_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_12_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_13_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_14_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_15_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_16_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_17_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_18_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__malloc_free_int_433badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__malloc_free_int_623badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_63_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_int_64_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_01_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_02_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_03_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_04_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_05_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_06_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_07_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_08_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_09_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_10_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_11_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_12_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_13_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_14_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_15_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_16_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_17_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_18_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__malloc_free_long_433badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__malloc_free_long_623badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_63_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_long_64_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_01_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_02_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_03_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_04_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_05_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_06_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_07_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_08_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_09_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_10_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_11_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_12_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_13_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_14_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_15_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_16_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_17_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_18_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__malloc_free_struct_433badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__malloc_free_struct_623badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_63_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_struct_64_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_01_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_02_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_03_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_04_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_05_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_06_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_07_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_08_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_09_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_10_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_11_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_12_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_13_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_14_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_15_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_16_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_17_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_18_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN45CWE416_Use_After_Free__malloc_free_wchar_t_433badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN45CWE416_Use_After_Free__malloc_free_wchar_t_623badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_63_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__malloc_free_wchar_t_64_bad PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_013badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_023badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_033badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_043badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_053badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_063badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_073badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_083badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_093badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_103badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_113badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_123badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_133badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_143badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_153badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_163badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_173badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_183badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_433badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_623badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_633badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_char_643badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_013badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_023badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_033badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_043badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_053badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_063badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_073badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_083badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_093badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_103badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_113badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_123badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_133badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_143badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_153badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_163badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_173badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_183badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_433badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_623badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_633badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_int64_t_643badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_013badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_023badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_033badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_043badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_053badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_063badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_073badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_083badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_093badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_103badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_113badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_123badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_133badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_143badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_153badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_163badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_173badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_183badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_433badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_623badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_633badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN46CWE416_Use_After_Free__new_delete_array_int_643badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_013badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_023badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_033badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_043badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_053badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_063badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_073badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_083badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_093badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_103badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_113badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_123badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_133badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_143badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_153badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_163badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_173badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_183badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_433badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_623badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_633badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN47CWE416_Use_After_Free__new_delete_array_long_643badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_013badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_023badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_033badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_043badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_053badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_063badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_073badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_083badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_093badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_103badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_113badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_123badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_133badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_143badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_153badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_163badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_173badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_183badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_433badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_623badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_633badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN50CWE416_Use_After_Free__new_delete_array_wchar_t_643badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_013badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_023badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_033badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_043badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_053badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_063badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_073badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_083badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_093badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_103badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_113badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_123badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_133badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_143badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_153badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_163badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_173badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_183badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_433badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_623badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_633badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_char_643badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_013badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_023badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_033badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_043badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_053badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_063badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_073badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_083badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_093badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_103badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_113badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_123badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_133badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_143badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_153badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_163badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_173badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_183badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_433badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_623badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_633badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN42CWE416_Use_After_Free__new_delete_class_643badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_013badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_023badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_033badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_043badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_053badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_063badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_073badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_083badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_093badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_103badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_113badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_123badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_133badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_143badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_153badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_163badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_173badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_183badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_433badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_623badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_633badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_int64_t_643badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_013badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_023badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_033badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_043badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_053badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_063badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_073badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_083badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_093badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_103badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_113badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_123badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_133badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_143badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_153badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_163badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_173badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_183badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_433badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_623badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_633badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN40CWE416_Use_After_Free__new_delete_int_643badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_013badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_023badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_033badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_043badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_053badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_063badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_073badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_083badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_093badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_103badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_113badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_123badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_133badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_143badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_153badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_163badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_173badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_183badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_433badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_623badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_633badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN41CWE416_Use_After_Free__new_delete_long_643badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_013badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_023badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_033badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_043badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_053badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_063badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_073badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_083badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_093badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_103badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_113badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_123badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_133badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_143badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_153badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_163badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_173badEv FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_183badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_433badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_623badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_633badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN43CWE416_Use_After_Free__new_delete_struct_643badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_013badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_023badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_033badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_043badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_053badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_063badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_073badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_083badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_093badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_103badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_113badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_123badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_133badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_143badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_153badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_163badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_173badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_183badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_433badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_623badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_633badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > _ZN44CWE416_Use_After_Free__new_delete_wchar_t_643badEv PASSED
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_01_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_02_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_03_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_04_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_05_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_06_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_07_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_08_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_09_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_10_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_11_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_12_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_13_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_14_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_15_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_16_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_17_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+CWE416UseAfterFreeBadEntrypointsTest > useAfterFreeFixtureBad(String, List, String) > CWE416_Use_After_Free__return_freed_ptr_18_bad FAILED
+    org.opentest4j.AssertionFailedError at CWE416UseAfterFreeBadEntrypointsTest.kt:36
+
+> Task :test FAILED
+23 actionable tasks: 2 executed, 21 up-to-date
