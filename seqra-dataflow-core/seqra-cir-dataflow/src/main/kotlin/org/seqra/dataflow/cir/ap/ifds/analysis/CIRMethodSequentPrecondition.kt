@@ -190,6 +190,7 @@ class CIRMethodSequentPrecondition(
     }
 
     private fun resolveValueAccess(value: MLIRValue): MethodFlowFunctionUtils.Access = when (value) {
+        is MLIRValueRef -> resolveValueAccess(value.value)
         is MLIROpValue -> currentInst.method.assignInstByLhv[value]
             ?.takeIf { it.location.index < currentInst.location.index }
             ?.rhv

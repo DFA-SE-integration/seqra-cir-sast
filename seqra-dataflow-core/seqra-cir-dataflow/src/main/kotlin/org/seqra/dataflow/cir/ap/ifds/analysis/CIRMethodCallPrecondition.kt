@@ -1,8 +1,10 @@
 package org.seqra.dataflow.cir.ap.ifds.analysis
 
 import org.seqra.dataflow.ap.ifds.AccessPathBase
+import org.seqra.dataflow.ap.ifds.ElementAccessor
 import org.seqra.dataflow.ap.ifds.ExclusionSet
 import org.seqra.dataflow.ap.ifds.FinalAccessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.TaintMarkAccessor
 import org.seqra.dataflow.ap.ifds.access.ApManager
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
@@ -257,9 +259,8 @@ class CIRMethodCallPrecondition(
         }
     }
 
-    private fun ContainsMark.preconditionFact(): InitialFactAp {
-        return createPositionWithTaintMark(position.resolveAp(), mark)
-    }
+    private fun ContainsMark.preconditionPositionAccessCandidates(): List<PositionAccess> =
+        cirMirrorPreconditionPositionAccessCandidates()
 
     private fun createPositionWithTaintMark(position: PositionAccess, mark: TaintMark): InitialFactAp {
         val positionWithMark = PositionAccess.Complex(position, TaintMarkAccessor(mark.name))
@@ -280,9 +281,14 @@ class CIRMethodCallPrecondition(
 
     private fun CIRMarkAwareConditionExpr.preconditionDnf(): List<PreconditionCube> = when (this) {
         is CIRMarkAwareConditionExpr.Literal -> {
-            val preconditionFact = condition.preconditionFact()
-            val mappedFacts = methodCallFactMapper.mapMethodExitToReturnFlowFact(statement, preconditionFact)
-            mappedFacts.map { PreconditionCube(setOf(it)) }
+            buildList {
+                for (pos in condition.preconditionPositionAccessCandidates()) {
+                    val pre = createPositionWithTaintMark(pos, condition.mark)
+                    for (mapped in methodCallFactMapper.mapMethodExitToReturnFlowFact(statement, pre)) {
+                        add(PreconditionCube(setOf(mapped)))
+                    }
+                }
+            }
         }
 
         is CIRMarkAwareConditionExpr.Or -> args.flatMap { it.preconditionDnf() }
@@ -296,5 +302,21 @@ class CIRMethodCallPrecondition(
             }
             result
         }
+    }
+}
+
+/**
+ * Positions that forward [FinalFactReader.containsPositionWithTaintMark] and the call-to-start
+ * deref bridge (leading [ReferenceAccessor]) may match for a [ContainsMark] literal; exposed for tests.
+ */
+internal fun ContainsMark.cirMirrorPreconditionPositionAccessCandidates(): List<PositionAccess> {
+    val resolved = position.resolveAp()
+    return when (resolved) {
+        is PositionAccess.Simple -> listOf(
+            resolved,
+            PositionAccess.Complex(resolved, ElementAccessor),
+            PositionAccess.Complex(resolved, ReferenceAccessor),
+        )
+        else -> listOf(resolved)
     }
 }

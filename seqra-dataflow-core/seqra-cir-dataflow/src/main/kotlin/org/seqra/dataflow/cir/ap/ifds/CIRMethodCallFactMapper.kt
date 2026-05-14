@@ -20,10 +20,6 @@ import org.seqra.ir.api.common.cfg.CommonInst
 import org.seqra.ir.api.common.cfg.CommonValue
 
 object CIRMethodCallFactMapper : MethodCallFactMapper {
-    // TODO: symmetric deref bridge for mapMethodExitToReturnFlowFact — when factAp.base is Argument(i)
-    // with leading ReferenceAccessor (from call-to-start deref bridge), strip ReferenceAccessor and map
-    // back to the caller's loaded SSA for that argument expression.
-
     override fun mapMethodExitToReturnFlowFact(
         callStatement: CommonInst,
         factAp: FinalFactAp,
@@ -197,7 +193,24 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
                 val newBase = accessPathBase(argExpr) ?: return null
                 if (newBase is AccessPathBase.Constant) return null
 
-                val checkedFact = callStatement.argType(base.idx)?.let { checkFactType(it, factAp) } ?: return null
+                val factForExit: F =
+                    if (factAp.startsWithAccessor(ReferenceAccessor)) {
+                        @Suppress("UNCHECKED_CAST")
+                        when (factAp) {
+                            is InitialFactAp ->
+                                factAp.readAccessor(ReferenceAccessor) as? F ?: return null
+
+                            is FinalFactAp ->
+                                factAp.readAccessor(ReferenceAccessor) as? F ?: return null
+
+                            else -> return null
+                        }
+                    } else {
+                        factAp
+                    }
+
+                val checkedFact =
+                    callStatement.argType(base.idx)?.let { checkFactType(it, factForExit) } ?: return null
                 rebaseFact(checkedFact, newBase)
             }
 
