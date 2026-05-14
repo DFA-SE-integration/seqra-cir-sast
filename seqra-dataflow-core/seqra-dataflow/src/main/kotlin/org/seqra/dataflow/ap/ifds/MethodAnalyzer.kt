@@ -522,8 +522,110 @@ class NormalMethodAnalyzer(
             is NDFactToFact -> analysisManager.isValidMethodExitFact(apManager, analysisContext, edge.factAp)
         }
 
+        // #region agent log
+        if (DEBUG_LOG_PATH != null) {
+            val factApStr: String? = when (edge) {
+                is ZeroToZero -> null
+                is ZeroToFact -> edge.factAp.toString()
+                is FactToFact -> edge.factAp.toString()
+                is NDFactToFact -> edge.factAp.toString()
+            }
+            val factBaseStr: String? = when (edge) {
+                is ZeroToZero -> null
+                is ZeroToFact -> edge.factAp.base.toString()
+                is FactToFact -> edge.factAp.base.toString()
+                is NDFactToFact -> edge.factAp.base.toString()
+            }
+            appendDebugNdjson(
+                mapOf(
+                    "sessionId" to "67e34f",
+                    "timestamp" to System.currentTimeMillis(),
+                    "hypothesisId" to "H3",
+                    "message" to "summary-edge",
+                    "data" to mapOf(
+                        "method" to methodEntryPoint.toString(),
+                        "edgeStatement" to edge.statement.toString(),
+                        "edgeType" to edge::class.java.simpleName,
+                        "factAp" to factApStr,
+                        "factBase" to factBaseStr,
+                        "isValid" to isValidSummaryEdge,
+                    )
+                )
+            )
+        }
+        // #endregion
+
         if (isValidSummaryEdge) {
             newSummaryEdge(edge)
+        }
+    }
+
+    companion object {
+        @JvmStatic
+        private val DEBUG_LOG_PATH: String? = System.getenv("SEQRA_DEBUG_LOG_PATH")?.takeIf { it.isNotBlank() }
+        @JvmStatic
+        private val DEBUG_LOG_LOCK = Any()
+
+        @JvmStatic
+        private fun appendDebugNdjson(payload: Map<String, Any?>) {
+            val path = DEBUG_LOG_PATH ?: return
+            val sb = StringBuilder(256)
+            jsonObject(sb, payload)
+            sb.append('\n')
+            synchronized(DEBUG_LOG_LOCK) {
+                runCatching {
+                    java.nio.file.Files.write(
+                        java.nio.file.Paths.get(path),
+                        sb.toString().toByteArray(Charsets.UTF_8),
+                        java.nio.file.StandardOpenOption.CREATE,
+                        java.nio.file.StandardOpenOption.APPEND,
+                    )
+                }
+            }
+        }
+
+        @JvmStatic
+        private fun jsonObject(sb: StringBuilder, map: Map<String, Any?>) {
+            sb.append('{')
+            var first = true
+            for ((k, v) in map) {
+                if (!first) sb.append(',')
+                first = false
+                jsonString(sb, k)
+                sb.append(':')
+                jsonValue(sb, v)
+            }
+            sb.append('}')
+        }
+
+        @JvmStatic
+        private fun jsonValue(sb: StringBuilder, value: Any?) {
+            when (value) {
+                null -> sb.append("null")
+                is Boolean -> sb.append(value.toString())
+                is Number -> sb.append(value.toString())
+                is Map<*, *> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    jsonObject(sb, value as Map<String, Any?>)
+                }
+                else -> jsonString(sb, value.toString())
+            }
+        }
+
+        @JvmStatic
+        private fun jsonString(sb: StringBuilder, value: String) {
+            sb.append('"')
+            for (c in value) {
+                when (c) {
+                    '"' -> sb.append("\\\"")
+                    '\\' -> sb.append("\\\\")
+                    '\n' -> sb.append("\\n")
+                    '\r' -> sb.append("\\r")
+                    '\t' -> sb.append("\\t")
+                    else -> if (c.code < 0x20) sb.append("\\u").append(String.format("%04x", c.code)) else sb.append(c)
+                }
+            }
+            sb.append('"')
         }
     }
 

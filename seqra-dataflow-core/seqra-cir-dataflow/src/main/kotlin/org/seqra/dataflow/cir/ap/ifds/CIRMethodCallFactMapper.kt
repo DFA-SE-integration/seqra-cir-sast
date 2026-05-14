@@ -226,12 +226,35 @@ object CIRMethodCallFactMapper : MethodCallFactMapper {
             }
 
             AccessPathBase.Return -> {
-                val returnValue = callStatement.resultValueOrNull() ?: return null
-                val newBase = accessPathBase(returnValue) ?: return null
-                if (newBase is AccessPathBase.Constant) return null
-
-                val checkedFact = callStatement.resultType()?.let { checkFactType(it, factAp) } ?: return null
-                rebaseFact(checkedFact, newBase)
+                val returnValue = callStatement.resultValueOrNull()
+                val newBase = returnValue?.let { accessPathBase(it) }
+                val resultType = callStatement.resultType()
+                val checkedFact = resultType?.let { checkFactType(it, factAp) }
+                val finalResult: F? = when {
+                    returnValue == null -> null
+                    newBase == null || newBase is AccessPathBase.Constant -> null
+                    checkedFact == null -> null
+                    else -> rebaseFact(checkedFact, newBase)
+                }
+                // #region agent log
+                if (DebugLog.isEnabled()) {
+                    DebugLog.log(
+                        hypothesisId = "H4",
+                        message = "exit-return-map",
+                        data = mapOf(
+                            "callStatement" to callStatement.toString(),
+                            "factAp" to factAp.toString(),
+                            "factAp.base" to factAp.base.toString(),
+                            "returnValue" to returnValue?.toString(),
+                            "newBase" to newBase?.toString(),
+                            "resultType" to resultType?.toString(),
+                            "checkedFact" to checkedFact?.toString(),
+                            "finalResult" to finalResult?.toString(),
+                        ),
+                    )
+                }
+                // #endregion
+                finalResult
             }
 
             AccessPathBase.This,

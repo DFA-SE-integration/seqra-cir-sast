@@ -42,6 +42,8 @@ import org.seqra.ir.api.cir.cfg.MLIRValue
 import org.seqra.ir.api.common.cfg.CommonCallExpr
 import org.seqra.util.onSome
 
+private val SEQRA_TRACE_DEBUG: Boolean = System.getenv("SEQRA_TRACE_DEBUG") != null
+
 class CIRMethodCallFlowFunction(
     private val apManager: ApManager,
     private val analysisContext: CIRMethodAnalysisContext,
@@ -330,13 +332,43 @@ class CIRMethodCallFlowFunction(
         factReader: FinalFactReader?,
     ) {
         if (evaluatedFacts.isEmpty()) {
-            if (factReader != null) return
+            if (factReader != null) {
+                // #region agent log
+                if (org.seqra.dataflow.cir.ap.ifds.DebugLog.isEnabled()) {
+                    org.seqra.dataflow.cir.ap.ifds.DebugLog.log(
+                        hypothesisId = "H5",
+                        message = "sink-eval-empty-skip",
+                        data = mapOf(
+                            "rule" to rule.id,
+                            "method" to statement.location.method.toString(),
+                            "statement" to statement.toString(),
+                            "factReader.factAp" to factReader.factAp.toString(),
+                            "factReader.factAp.base" to factReader.factAp.base.toString(),
+                        ),
+                    )
+                }
+                // #endregion
+                return
+            }
 
             sinkTracker.addUnconditionalVulnerability(
                 analysisContext.methodEntryPoint,
                 statement,
                 rule,
             )
+            // #region agent log
+            if (org.seqra.dataflow.cir.ap.ifds.DebugLog.isEnabled()) {
+                org.seqra.dataflow.cir.ap.ifds.DebugLog.log(
+                    hypothesisId = "H5",
+                    message = "sink-eval-unconditional",
+                    data = mapOf(
+                        "rule" to rule.id,
+                        "method" to statement.location.method.toString(),
+                        "statement" to statement.toString(),
+                    ),
+                )
+            }
+            // #endregion
             return
         }
 
@@ -351,6 +383,22 @@ class CIRMethodCallFlowFunction(
             statement,
             rule,
         )
+        // #region agent log
+        if (org.seqra.dataflow.cir.ap.ifds.DebugLog.isEnabled()) {
+            org.seqra.dataflow.cir.ap.ifds.DebugLog.log(
+                hypothesisId = "H5",
+                message = "sink-eval-vuln",
+                data = mapOf(
+                    "rule" to rule.id,
+                    "method" to statement.location.method.toString(),
+                    "statement" to statement.toString(),
+                    "evaluatedFactsCount" to evaluatedFacts.size,
+                    "evaluatedFacts" to evaluatedFacts.joinToString(" | ") { "${it} base=${it.base}" },
+                    "mappedFacts" to mappedFacts.joinToString(" | ") { "${it} base=${it.base}" },
+                ),
+            )
+        }
+        // #endregion
     }
 
     private fun applySourceRules(
@@ -409,7 +457,34 @@ class CIRMethodCallFlowFunction(
         for (action in rule.actionsAfter) {
             sourceEvaluator.evaluate(rule, action).onSome { facts ->
                 facts.forEach { factAfterSource ->
-                    val mappedFact = factAfterSource.mapExitToReturnFact() ?: return@forEach
+                    val mappedFact = factAfterSource.mapExitToReturnFact()
+                    // #region agent log
+                    if (org.seqra.dataflow.cir.ap.ifds.DebugLog.isEnabled()) {
+                        val aliases = buildList {
+                            if (mappedFact != null) {
+                                analysisContext.aliasAnalysis?.forEachAliasAtStatement(statement, mappedFact) { aliased ->
+                                    add(aliased)
+                                }
+                            }
+                        }
+                        org.seqra.dataflow.cir.ap.ifds.DebugLog.log(
+                            hypothesisId = "H1",
+                            message = "source-fact",
+                            data = mapOf(
+                                "rule" to rule.id,
+                                "method" to statement.location.method.toString(),
+                                "statement" to statement.toString(),
+                                "factAfterSource" to factAfterSource.toString(),
+                                "factAfterSource.base" to factAfterSource.base.toString(),
+                                "mappedFact" to mappedFact?.toString(),
+                                "mappedFact.base" to mappedFact?.base?.toString(),
+                                "aliasesCount" to aliases.size,
+                                "aliases" to aliases.joinToString(" | "),
+                            ),
+                        )
+                    }
+                    // #endregion
+                    if (mappedFact == null) return@forEach
                     createFinalFact(mappedFact)
                     analysisContext.aliasAnalysis?.forEachAliasAtStatement(statement, mappedFact) { aliased ->
                         createFinalFact(aliased)

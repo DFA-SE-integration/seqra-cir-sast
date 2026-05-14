@@ -42,6 +42,8 @@ import org.seqra.ir.api.cir.cfg.MLIRValue
 import org.seqra.ir.api.cir.cfg.MLIRValueRef
 import org.seqra.ir.api.common.CommonType
 
+private val SEQRA_TRACE_DEBUG: Boolean = System.getenv("SEQRA_TRACE_DEBUG") != null
+
 class CIRMethodSequentFlowFunction(
     @Suppress("unused") private val apManager: ApManager,
     private val analysisContext: CIRMethodAnalysisContext,
@@ -135,6 +137,22 @@ class CIRMethodSequentFlowFunction(
 
                     applyMethodExitSinkRules(AccessPathBase.Return, resultFact)
                     propagated = true
+                    // #region agent log
+                    if (org.seqra.dataflow.cir.ap.ifds.DebugLog.isEnabled()) {
+                        org.seqra.dataflow.cir.ap.ifds.DebugLog.log(
+                            hypothesisId = "H2",
+                            message = "return-direct",
+                            data = mapOf(
+                                "method" to currentInst.location.method.toString(),
+                                "factAp" to factAp.toString(),
+                                "factAp.base" to factAp.base.toString(),
+                                "retInput" to retInput.toString(),
+                                "access" to access.toString(),
+                                "resultFact" to resultFact.toString(),
+                            ),
+                        )
+                    }
+                    // #endregion
                 } else {
                     analysisContext.aliasAnalysis?.forEachAlias(factAp) { aliased ->
                         if (aliased.base == access) {
@@ -142,12 +160,53 @@ class CIRMethodSequentFlowFunction(
                             propagateFact(resultFact)
                             applyMethodExitSinkRules(AccessPathBase.Return, resultFact)
                             propagated = true
+                            // #region agent log
+                            if (org.seqra.dataflow.cir.ap.ifds.DebugLog.isEnabled()) {
+                                org.seqra.dataflow.cir.ap.ifds.DebugLog.log(
+                                    hypothesisId = "H2",
+                                    message = "return-alias",
+                                    data = mapOf(
+                                        "method" to currentInst.location.method.toString(),
+                                        "factAp" to factAp.toString(),
+                                        "factAp.base" to factAp.base.toString(),
+                                        "retInput" to retInput.toString(),
+                                        "access" to access.toString(),
+                                        "aliased" to aliased.toString(),
+                                        "aliased.base" to aliased.base.toString(),
+                                        "resultFact" to resultFact.toString(),
+                                    ),
+                                )
+                            }
+                            // #endregion
                         }
                     }
                 }
 
-                if (!propagated)
+                if (!propagated) {
                     applyMethodExitSinkRules(AccessPathBase.Return, factAp)
+                    // #region agent log
+                    if (org.seqra.dataflow.cir.ap.ifds.DebugLog.isEnabled()) {
+                        val aliasSummary = buildList {
+                            analysisContext.aliasAnalysis?.forEachAlias(factAp) { aliased ->
+                                add("${aliased.base}->${aliased}")
+                            }
+                        }
+                        org.seqra.dataflow.cir.ap.ifds.DebugLog.log(
+                            hypothesisId = "H2",
+                            message = "return-no-propagate",
+                            data = mapOf(
+                                "method" to currentInst.location.method.toString(),
+                                "factAp" to factAp.toString(),
+                                "factAp.base" to factAp.base.toString(),
+                                "retInput" to retInput.toString(),
+                                "access" to access.toString(),
+                                "aliasesCount" to aliasSummary.size,
+                                "aliases" to aliasSummary.joinToString(" | "),
+                            ),
+                        )
+                    }
+                    // #endregion
+                }
             }
 
             is CIRThrowOpInst -> {
