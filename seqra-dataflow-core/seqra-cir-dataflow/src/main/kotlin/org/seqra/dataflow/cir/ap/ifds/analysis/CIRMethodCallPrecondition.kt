@@ -78,15 +78,22 @@ class CIRMethodCallPrecondition(
 
     private fun preconditionForFact(fact: InitialFactAp): List<CallPreconditionFact>? {
         if (!CIRMethodCallFactMapper.factIsRelevantToMethodCall(returnValue, callExpr, fact, analysisContext.aliasAnalysis)) {
+            if (SEQRA_TRACE_DEBUG) {
+                System.err.println(
+                    "[CP] notRelevant fact=$fact stmt=$statement callee=$method"
+                )
+            }
             return null
         }
 
         val preconditions = mutableListOf<CallPreconditionFact>()
+        var mappingsFired = 0
 
         if (returnValue != null) {
             val returnValueBase = MethodFlowFunctionUtils.accessPathBase(returnValue)
             if (returnValueBase == fact.base) {
                 preconditions.preconditionForFact(fact, AccessPathBase.Return)
+                mappingsFired++
             }
         }
 
@@ -111,6 +118,7 @@ class CIRMethodCallPrecondition(
                                     " startFactBase=$startFactBase stmt=$statement callee=$callee"
                         )
                     }
+                    mappingsFired++
                     preconditions.preconditionForFact(callerFact, startFactBase)
                 }
             }
@@ -119,6 +127,13 @@ class CIRMethodCallPrecondition(
             analysisContext.aliasAnalysis?.forEachAlias(fact) { aliasedFact ->
                 mapAndCollect(aliasedFact)
             }
+        }
+
+        if (SEQRA_TRACE_DEBUG) {
+            System.err.println(
+                "[CP] preconditionForFact fact=$fact mappingsFired=$mappingsFired" +
+                        " preconditions=${preconditions.size} stmt=$statement callee=$method"
+            )
         }
 
         return preconditions

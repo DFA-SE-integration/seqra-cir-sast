@@ -746,6 +746,13 @@ class MethodTraceResolver(
                         }
 
                         if (callActions.isEmpty()) {
+                            if (SEQRA_TRACE_DEBUG) {
+                                System.err.println(
+                                    "[PE] bail call stmt=$statement edgeFact=${edge.fact}" +
+                                            " entryStmt=${entry.statement} variants=${precondition.facts.size}" +
+                                            " preconditionFactsSizes=${precondition.facts.map { it.preconditionFacts.size }}"
+                                )
+                            }
                             // fact has no preconditions
                             return
                         }
@@ -816,6 +823,12 @@ class MethodTraceResolver(
                         }
 
                         if (actions.isEmpty()) {
+                            if (SEQRA_TRACE_DEBUG) {
+                                System.err.println(
+                                    "[PE] bail seq stmt=$statement edgeFact=${edge.fact}" +
+                                            " entryStmt=${entry.statement} variants=${precondition.facts.size}"
+                                )
+                            }
                             // fact has no preconditions
                             return
                         }
@@ -1428,17 +1441,41 @@ class MethodTraceResolver(
         when (entryEdge) {
             is TraceEdge.SourceTraceEdge -> {
                 val entryFacts = edges.allZeroToFactFactsAtStatement(entryStatement, entryEdge.fact)
-                return entryFacts.any { statementFact -> statementFact.contains(entryEdge.fact) }
+                val ok = entryFacts.any { statementFact -> statementFact.contains(entryEdge.fact) }
+                if (SEQRA_TRACE_DEBUG && !ok) {
+                    val sample = entryFacts.firstOrNull()
+                    System.err.println(
+                        "[CE] reject src stmt=$entryStatement fact=${entryEdge.fact}" +
+                                " indexSize=${entryFacts.size} sample=$sample"
+                    )
+                }
+                return ok
             }
 
             is TraceEdge.MethodTraceEdge -> {
                 val entryFacts = edges.allFactToFactFactsAtStatement(entryStatement, entryEdge.initialFact, entryEdge.fact)
-                return entryFacts.any { statementFact -> statementFact.contains(entryEdge.fact) }
+                val ok = entryFacts.any { statementFact -> statementFact.contains(entryEdge.fact) }
+                if (SEQRA_TRACE_DEBUG && !ok) {
+                    val sample = entryFacts.firstOrNull()
+                    System.err.println(
+                        "[CE] reject f2f stmt=$entryStatement initial=${entryEdge.initialFact}" +
+                                " fact=${entryEdge.fact} indexSize=${entryFacts.size} sample=$sample"
+                    )
+                }
+                return ok
             }
 
             is TraceEdge.MethodTraceNDEdge -> {
                 val entryFacts = edges.allNDFactToFactFactsAtStatement(entryStatement, entryEdge.initialFacts, entryEdge.fact)
-                return entryFacts.any { statementFact -> statementFact.contains(entryEdge.fact) }
+                val ok = entryFacts.any { statementFact -> statementFact.contains(entryEdge.fact) }
+                if (SEQRA_TRACE_DEBUG && !ok) {
+                    val sample = entryFacts.firstOrNull()
+                    System.err.println(
+                        "[CE] reject nd  stmt=$entryStatement initials=${entryEdge.initialFacts}" +
+                                " fact=${entryEdge.fact} indexSize=${entryFacts.size} sample=$sample"
+                    )
+                }
+                return ok
             }
         }
     }
