@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
   std::vector<std::string> Storage;
   Storage.reserve(4);
   Storage.push_back(std::string(llvm::sys::path::filename(KleeBin)));
-  Storage.push_back("--output-dir=/dev/null");
+//  Storage.push_back("--output-dir=/dev/null");
   Storage.push_back(std::move(EntryArg));
   Storage.push_back(std::string(llvm::StringRef(BcTmp.Path)));
 
