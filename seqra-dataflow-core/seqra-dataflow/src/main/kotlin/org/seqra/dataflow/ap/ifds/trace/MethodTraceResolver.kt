@@ -783,6 +783,34 @@ class MethodTraceResolver(
 
             for (edge in entry.edges) {
                 val precondition = preconditionFunction.factPrecondition(edge.fact)
+                // #region agent log
+                run {
+                    val variantsAccepted = if (precondition is CallPrecondition.Facts) {
+                        precondition.facts.count { f ->
+                            val initialEdge = edge.replaceFact(f.initialFact)
+                            skipFactCheck || containsEntryEdge(entry.statement, initialEdge)
+                        }
+                    } else 0
+                    val preconditionKindStr: String = when (precondition) {
+                        is CallPrecondition.Facts -> "Facts(${precondition.facts.size})"
+                        else -> "Unchanged"
+                    }
+                    TraceResolverDebugLog.log(
+                        hypothesisId = "T7",
+                        message = "propagate-call-fact",
+                        data = mapOf<String, Any?>(
+                            "method" to methodEntryPoint.toString().take(120),
+                            "callStmt" to statement.toString().take(160),
+                            "entryStmt" to entry.statement.toString().take(160),
+                            "edgeFact" to edge.fact.toString(),
+                            "edgeKind" to edge::class.java.simpleName,
+                            "preconditionKind" to preconditionKindStr,
+                            "variantsAccepted" to variantsAccepted,
+                            "skipFactCheck" to skipFactCheck,
+                        ),
+                    )
+                }
+                // #endregion
                 when (precondition) {
                     CallPrecondition.Unchanged -> {
                         unchangedEdges.add(edge)
@@ -808,6 +836,19 @@ class MethodTraceResolver(
                                             " preconditionFactsSizes=${precondition.facts.map { it.preconditionFacts.size }}"
                                 )
                             }
+                            // #region agent log
+                            TraceResolverDebugLog.log(
+                                hypothesisId = "T7",
+                                message = "propagate-call-bail",
+                                data = mapOf<String, Any?>(
+                                    "method" to methodEntryPoint.toString().take(120),
+                                    "callStmt" to statement.toString().take(160),
+                                    "entryStmt" to entry.statement.toString().take(160),
+                                    "edgeFact" to edge.fact.toString(),
+                                    "variants" to precondition.facts.size,
+                                ),
+                            )
+                            // #endregion
                             // fact has no preconditions
                             return
                         }
@@ -816,6 +857,19 @@ class MethodTraceResolver(
                     }
                 }
             }
+            // #region agent log
+            TraceResolverDebugLog.log(
+                hypothesisId = "T7",
+                message = "propagate-call-summary",
+                data = mapOf<String, Any?>(
+                    "method" to methodEntryPoint.toString().take(120),
+                    "callStmt" to statement.toString().take(160),
+                    "entryStmt" to entry.statement.toString().take(160),
+                    "unchangedEdges" to unchangedEdges.size,
+                    "callEdges" to callEdges.size,
+                ),
+            )
+            // #endregion
 
             if (callEdges.isEmpty()) {
                 addPredecessor(entry, TraceEntry.Unchanged(unchangedEdges, statement))
