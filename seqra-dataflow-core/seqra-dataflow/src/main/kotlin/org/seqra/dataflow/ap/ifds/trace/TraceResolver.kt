@@ -104,6 +104,23 @@ class TraceResolver(
         }
     }
 
+    /**
+     * Builds [Trace.entryPointToStart] and [Trace.sourceToSinkTrace] for a reported sink.
+     *
+     * **Why `entryPointToStart.entryPoints` can be empty**
+     *
+     * [EntryPointToStartTraceBuilder] only adds [EntryPointTraceNode]s when backward caller walk from
+     * [SourceToSinkTrace.startNodes] reaches a method in [entryPointMethods]. If [startNodes] is empty,
+     * that walk never runs and `entryPoints` stays empty.
+     *
+     * **Why `startNodes` / `sinkNodes` can be empty for [TaintSinkTracker.TaintVulnerabilityWithFact]**
+     *
+     * Sinks are attached from [resolveIntraProceduralTraceSummary] → [MethodTraceResolver.resolveIntraProceduralTrace],
+     * which needs IFDS summary edges at the sink whose final facts match the vulnerability facts (strict
+     * [FinalFactAp.contains]). If that list is empty, [InterProceduralTraceGraphBuilder.createSinkNode] is never
+     * called, [resolveIntraProceduralFullTrace] is never seeded from a summary, and [rootNodes]/[sinkNodes] stay empty.
+     * Typical CIR cause: forward/backward access-path shape mismatch; see repo doc `docs/trace-fact-mismatch.md`.
+     */
     fun resolveTrace(vulnerability: TaintVulnerability): Trace {
         when (vulnerability) {
             is TaintSinkTracker.TaintVulnerabilityUnconditional -> {
@@ -312,6 +329,11 @@ class TraceResolver(
         private val entryPointNodes = hashSetOf<EntryPointTraceNode>()
         private val nodeSuccessors = hashMapOf<TraceNode, MutableSet<TraceNode>>()
 
+        /**
+         * Walks backward from [startNodes] through [findMethodCallers]. Whenever the current method is one of
+         * [entryPointMethods], records an [EntryPointTraceNode] and links it to the trace node being exited.
+         * If [startNodes] is empty (degenerate interprocedural graph), this produces an empty [EntryPointToStartTrace.entryPoints].
+         */
         fun build(startNodes: Set<SourceToSinkTraceNode>): EntryPointToStartTrace {
             val unprocessedMethods = mutableListOf<Pair<MethodEntryPoint, TraceNode>>()
             startNodes.mapTo(unprocessedMethods) { it.methodEntryPoint to it }
@@ -333,6 +355,21 @@ class TraceResolver(
                     val callNode = CallTraceNode(caller.statement, caller.callerEp)
                     nodeSuccessors.getOrPut(callNode, ::hashSetOf).add(methodCallNode)
                     unprocessedMethods += (caller.callerEp to callNode)
+                }
+            }
+
+            // When backward search never reaches an analyzed entry method, or there are no start
+            // nodes (e.g. empty full-trace expansion), still emit a stable entry-point node whenever
+            // we know the analyzed entry methods so downstream serializers / KLEE have a root.
+            if (entryPointNodes.isEmpty() && entryPointMethods.isNotEmpty()) {
+                val representativeMethod =
+                    entryPointMethods.singleOrNull()
+                        ?: entryPointMethods.minWithOrNull(compareBy { it.toString() })!!
+                val epNode = EntryPointTraceNode(representativeMethod)
+                entryPointNodes.add(epNode)
+                val succ = nodeSuccessors.getOrPut(epNode, ::hashSetOf)
+                for (start in startNodes) {
+                    succ.add(start)
                 }
             }
 

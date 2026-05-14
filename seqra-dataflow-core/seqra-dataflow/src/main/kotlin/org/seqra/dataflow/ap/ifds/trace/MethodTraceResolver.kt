@@ -11,7 +11,9 @@ import org.seqra.dataflow.ap.ifds.ExclusionSet
 import org.seqra.dataflow.ap.ifds.MethodAnalyzerEdgeSearcher
 import org.seqra.dataflow.ap.ifds.MethodAnalyzerEdges
 import org.seqra.dataflow.ap.ifds.MethodEntryPoint
+import org.seqra.dataflow.ap.ifds.ElementAccessor
 import org.seqra.dataflow.ap.ifds.MethodWithContext
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.access.ApManager
 import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
@@ -357,6 +359,24 @@ class MethodTraceResolver(
         return result
     }
 
+    /**
+     * Access-path shapes that forward IFDS / sinks may use at the same SSA base; must align with
+     * [org.seqra.dataflow.cir.ap.ifds.taint.FactReader.containsPositionWithTaintMark] and CIR precondition mirroring.
+     * Used both for edge-index lookup ([org.seqra.dataflow.ap.ifds.MethodAnalyzerEdges]) and [FinalFactAp.contains].
+     */
+    private fun traceResolutionTargetPatterns(target: InitialFactAp): List<InitialFactAp> =
+        buildList {
+            add(target)
+            runCatching { add(target.prependAccessor(ReferenceAccessor)) }
+            target.readAccessor(ReferenceAccessor)?.let { add(it) }
+            runCatching { add(target.prependAccessor(ElementAccessor)) }
+            target.readAccessor(ElementAccessor)?.let { add(it) }
+        }.distinctBy { it.toString() }
+
+    /** [FinalFactAp.contains] is strict on access-path shape; see [traceResolutionTargetPatterns]. */
+    private fun traceResolutionMatchFact(factAtStatement: FinalFactAp, targetFactPattern: InitialFactAp): Boolean =
+        traceResolutionTargetPatterns(targetFactPattern).any { factAtStatement.contains(it) }
+
     private fun resolveIntraProceduralTraceEdge(
         statement: CommonInst,
         fact: InitialFactAp,
@@ -364,7 +384,10 @@ class MethodTraceResolver(
     ): List<TraceEdge> {
         val searcher = object : MethodAnalyzerEdgeSearcher(edges, apManager, analysisManager, analysisContext, graph) {
             override fun matchFact(factAtStatement: FinalFactAp, targetFactPattern: InitialFactAp): Boolean =
-                factAtStatement.contains(targetFactPattern)
+                traceResolutionMatchFact(factAtStatement, targetFactPattern)
+
+            override fun traceTargetPatternVariants(storedFact: InitialFactAp): List<InitialFactAp> =
+                traceResolutionTargetPatterns(storedFact)
         }
 
         val matchingInitialFacts = searcher.searchInitialFacts(statement, fact, includeStatement)
@@ -713,6 +736,12 @@ class MethodTraceResolver(
             val resolvedCallActions = resolveCallActions(preconditionFunction, statement, callActions)
 
             for ((callActionPrimary, callActionOther) in resolvedCallActions) {
+                if (callActionPrimary == null && callActionOther.isEmpty()) {
+                    if (unchangedEdges.isNotEmpty()) {
+                        addPredecessor(entry, TraceEntry.Unchanged(unchangedEdges, statement))
+                    }
+                    continue
+                }
                 val action = TraceEntry.Action(callActionPrimary, callActionOther, unchangedEdges, statement)
                 addPredecessorAction(entry, action)
             }
@@ -775,6 +804,12 @@ class MethodTraceResolver(
 
             val sequentActionsCombination = mergeSequentEdgeCombinations(sequentActions)
             for ((primaryAction, otherActions) in sequentActionsCombination) {
+                if (primaryAction == null && otherActions.isEmpty()) {
+                    if (unchangedEdges.isNotEmpty()) {
+                        addPredecessor(entry, TraceEntry.Unchanged(unchangedEdges, statement))
+                    }
+                    continue
+                }
                 addPredecessorAction(
                     entry, TraceEntry.Action(primaryAction, otherActions, unchangedEdges, statement)
                 )

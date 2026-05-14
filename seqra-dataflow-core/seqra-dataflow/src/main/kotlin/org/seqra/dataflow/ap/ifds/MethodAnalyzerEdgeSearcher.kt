@@ -21,6 +21,12 @@ abstract class MethodAnalyzerEdgeSearcher(
 ) {
     abstract fun matchFact(factAtStatement: FinalFactAp, targetFactPattern: InitialFactAp): Boolean
 
+    /**
+     * [MethodAnalyzerEdges] indexes facts by [InitialFactAp.base] before [matchFact]. Subclasses may
+     * return alternative shapes (e.g. deref-bridge) so lookup and matching use the same variant.
+     */
+    protected open fun traceTargetPatternVariants(storedFact: InitialFactAp): List<InitialFactAp> = listOf(storedFact)
+
     fun findMatchingEdgesInitialFacts(statement: CommonInst, fact: InitialFactAp): Set<Set<InitialFactAp>> {
         val matchingInitialFacts = hashSetOf<Set<InitialFactAp>>()
 
@@ -44,19 +50,21 @@ abstract class MethodAnalyzerEdgeSearcher(
         storedFact: InitialFactAp,
         matchingInitialFacts: HashSet<Set<InitialFactAp>>,
     ) {
-        if (edges.allZeroToFactFactsAtStatement(stmt, storedFact).any { matchFact(it, storedFact) }) {
-            matchingInitialFacts.add(emptySet())
-        }
-
-        edges.allFactToFactFactsAtStatement(stmt, storedFact).forEach { (initialFact, finalFact) ->
-            if (matchFact(finalFact, storedFact)) {
-                matchingInitialFacts.add(setOf(initialFact))
+        for (p in traceTargetPatternVariants(storedFact)) {
+            if (edges.allZeroToFactFactsAtStatement(stmt, p).any { matchFact(it, p) }) {
+                matchingInitialFacts.add(emptySet())
             }
-        }
 
-        edges.allNDFactToFactFactsAtStatement(stmt, storedFact).forEach { (initialFacts, finalFact) ->
-            if (matchFact(finalFact, storedFact)) {
-                matchingInitialFacts.add(initialFacts)
+            edges.allFactToFactFactsAtStatement(stmt, p).forEach { (initialFact, finalFact) ->
+                if (matchFact(finalFact, p)) {
+                    matchingInitialFacts.add(setOf(initialFact))
+                }
+            }
+
+            edges.allNDFactToFactFactsAtStatement(stmt, p).forEach { (initialFacts, finalFact) ->
+                if (matchFact(finalFact, p)) {
+                    matchingInitialFacts.add(initialFacts)
+                }
             }
         }
     }
