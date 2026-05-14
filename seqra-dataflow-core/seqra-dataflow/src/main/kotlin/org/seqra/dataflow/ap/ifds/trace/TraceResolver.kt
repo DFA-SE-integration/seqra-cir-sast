@@ -14,6 +14,55 @@ import org.seqra.ir.api.common.cfg.CommonInst
 
 private val SEQRA_TRACE_DEBUG: Boolean = System.getenv("SEQRA_TRACE_DEBUG") != null
 
+// #region agent log
+internal object TraceResolverDebugLog {
+    private val PATH: String? = System.getenv("SEQRA_DEBUG_LOG_PATH")?.takeIf { it.isNotBlank() }
+    private val SESSION: String = "67e34f"
+    private val LOCK = Any()
+
+    fun log(hypothesisId: String, message: String, data: Map<String, Any?>) {
+        val p = PATH ?: return
+        val sb = StringBuilder(256)
+        sb.append('{')
+        sb.append("\"sessionId\":\"").append(SESSION).append("\",")
+        sb.append("\"timestamp\":").append(System.currentTimeMillis()).append(',')
+        sb.append("\"hypothesisId\":\"").append(hypothesisId).append("\",")
+        sb.append("\"message\":\"").append(message).append("\",")
+        sb.append("\"data\":{")
+        var first = true
+        for ((k, v) in data) {
+            if (!first) sb.append(',')
+            first = false
+            sb.append('"').append(k).append("\":").append(jsonString(v?.toString() ?: "null"))
+        }
+        sb.append("}}")
+        synchronized(LOCK) {
+            java.io.FileOutputStream(p, true).use { fos ->
+                fos.write(sb.toString().toByteArray())
+                fos.write('\n'.code)
+            }
+        }
+    }
+
+    private fun jsonString(s: String): String {
+        val sb = StringBuilder(s.length + 2)
+        sb.append('"')
+        for (c in s) {
+            when (c) {
+                '\\' -> sb.append("\\\\")
+                '"' -> sb.append("\\\"")
+                '\n' -> sb.append("\\n")
+                '\r' -> sb.append("\\r")
+                '\t' -> sb.append("\\t")
+                else -> if (c.code < 0x20) sb.append(String.format("\\u%04x", c.code)) else sb.append(c)
+            }
+        }
+        sb.append('"')
+        return sb.toString()
+    }
+}
+// #endregion
+
 class TraceResolver(
     private val entryPointMethods: Set<CommonMethod>,
     private val manager: TaintAnalysisUnitRunnerManager,
@@ -145,6 +194,20 @@ class TraceResolver(
                             TaintSinkTracker.VulnerabilityTriggerPosition.AFTER_INST -> true
                         }
                     )
+                    // #region agent log
+                    TraceResolverDebugLog.log(
+                        hypothesisId = "T1",
+                        message = "intra-trace-summary-at-sink",
+                        data = mapOf(
+                            "method" to vulnerability.methodEntryPoint.toString(),
+                            "sinkStatement" to vulnerability.statement.toString(),
+                            "factAp" to vulnerability.factAp.toString(),
+                            "factAp.base" to vulnerability.factAp.base.toString(),
+                            "tracesCount" to traces.size,
+                            "traces" to traces.joinToString(" | ") { it.toString().take(160) },
+                        ),
+                    )
+                    // #endregion
 
                     for (trace in traces) {
                         builder.createSinkNode(trace)
@@ -152,6 +215,18 @@ class TraceResolver(
                 }
 
                 val sourceToSinkTrace = builder.build()
+                // #region agent log
+                TraceResolverDebugLog.log(
+                    hypothesisId = "T1",
+                    message = "trace-build-summary",
+                    data = mapOf(
+                        "method" to vulnerability.methodEntryPoint.toString(),
+                        "sinkStatement" to vulnerability.statement.toString(),
+                        "rootNodes" to sourceToSinkTrace.startNodes.size,
+                        "sinkNodes" to sourceToSinkTrace.sinkNodes.size,
+                    ),
+                )
+                // #endregion
 
                 val entryPointToStart = resolveEntryPointToStartTrace(sourceToSinkTrace.startNodes)
                 return Trace(entryPointToStart, sourceToSinkTrace)
@@ -236,6 +311,24 @@ class TraceResolver(
             val fullTraces = withMethodRunner(trace.method) {
                 resolveIntraProceduralFullTrace(trace.method, trace, cancellation)
             }
+            // #region agent log
+            run {
+                val sourceCount = fullTraces.count { it.startEntry is SourceStartEntry }
+                val methodEntryCount = fullTraces.count { it.startEntry is MethodEntry }
+                TraceResolverDebugLog.log(
+                    hypothesisId = "T2",
+                    message = "full-traces-resolved",
+                    data = mapOf(
+                        "method" to trace.method.toString(),
+                        "kind" to kind.toString(),
+                        "fullTracesCount" to fullTraces.size,
+                        "sourceStartCount" to sourceCount,
+                        "methodEntryCount" to methodEntryCount,
+                        "trace" to trace.toString().take(200),
+                    ),
+                )
+            }
+            // #endregion
 
             val resultNodes = mutableListOf<InterProceduralTraceNode>()
 
@@ -252,6 +345,19 @@ class TraceResolver(
                         resultNodes += node
 
                         val callerTraces = resolveMethodEntry(start)
+                        // #region agent log
+                        TraceResolverDebugLog.log(
+                            hypothesisId = "T3",
+                            message = "method-entry-callers",
+                            data = mapOf(
+                                "calleeMethod" to start.entryPoint.toString(),
+                                "callerTracesCount" to callerTraces.size,
+                                "callers" to callerTraces.joinToString(" | ") {
+                                    "stmt=${it.first.toString().take(80)} trace=${it.second.toString().take(80)}"
+                                },
+                            ),
+                        )
+                        // #endregion
                         for ((callerStatement, callerTrace) in callerTraces) {
                             if (params.startToSinkTraceResolutionLimit != null) {
                                 if (startToSinkTraceResolutionStat++ > params.startToSinkTraceResolutionLimit) continue
