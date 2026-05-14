@@ -34,8 +34,11 @@ import org.seqra.dataflow.configuration.core.CopyAllMarks
 import org.seqra.dataflow.configuration.core.CopyMark
 import org.seqra.dataflow.configuration.core.TaintMark
 import org.seqra.dataflow.util.cartesianProductMapTo
+import org.seqra.ir.api.cir.cfg.CIRCallOpInst
 import org.seqra.ir.api.cir.cfg.CIRDirectCall
 import org.seqra.ir.api.cir.cfg.CIRInst
+import org.seqra.ir.api.cir.cfg.CIRTryCallOpInst
+import org.seqra.ir.api.cir.cfg.MLIROpValue
 import org.seqra.ir.api.cir.cfg.MLIRValue
 import org.seqra.util.Maybe
 import org.seqra.util.maybeFlatMap
@@ -51,7 +54,18 @@ class CIRMethodCallPrecondition(
 ) : MethodCallPrecondition {
     private val methodCallFactMapper: MethodCallFactMapper get() = analysisContext.methodCallFactMapper
 
-    private val cIRValueResolver = CallPositionToCIRValueResolver(callExpr, returnValue)
+    // For CIR a [CIRCallOpInst] / [CIRTryCallOpInst] is not a [CommonAssignInst], so the generic
+    // trace-builder / IFDS callsite extraction `(statement as? CommonAssignInst)?.lhv` always
+    // returns null and we lose the call's implicit result. Mirror the fallback that
+    // [CallPositionToCIRValueResolver] uses for `Position.Result` so backward precondition
+    // mapping recognises facts based on the call's return value (e.g. `var(callId)!mark`).
+    private val effectiveReturnValue: MLIRValue? = returnValue ?: when (callExpr) {
+        is CIRCallOpInst -> callExpr.result?.let { MLIROpValue(it, callExpr.id, 0L) }
+        is CIRTryCallOpInst -> callExpr.result?.let { MLIROpValue(it, callExpr.id, 0L) }
+        else -> null
+    }
+
+    private val cIRValueResolver = CallPositionToCIRValueResolver(callExpr, effectiveReturnValue)
     private val method = callExpr.calleeRef?.function
 
     private val taintConfig get() = analysisContext.taint.taintConfig as CIRTaintRulesProvider
@@ -91,7 +105,7 @@ class CIRMethodCallPrecondition(
     }
 
     private fun preconditionForFact(fact: InitialFactAp): List<CallPreconditionFact>? {
-        if (!CIRMethodCallFactMapper.factIsRelevantToMethodCall(returnValue, callExpr, fact, analysisContext.aliasAnalysis)) {
+        if (!CIRMethodCallFactMapper.factIsRelevantToMethodCall(effectiveReturnValue, callExpr, fact, analysisContext.aliasAnalysis)) {
             if (SEQRA_TRACE_DEBUG) {
                 System.err.println(
                     "[CP] notRelevant fact=$fact stmt=$statement callee=$method"
@@ -103,8 +117,8 @@ class CIRMethodCallPrecondition(
         val preconditions = mutableListOf<CallPreconditionFact>()
         var mappingsFired = 0
 
-        if (returnValue != null) {
-            val returnValueBase = MethodFlowFunctionUtils.accessPathBase(returnValue)
+        if (effectiveReturnValue != null) {
+            val returnValueBase = MethodFlowFunctionUtils.accessPathBase(effectiveReturnValue)
             if (returnValueBase == fact.base) {
                 preconditions.preconditionForFact(fact, AccessPathBase.Return)
                 mappingsFired++
