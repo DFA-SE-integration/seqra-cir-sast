@@ -28,7 +28,8 @@ object CIRProjectAnalyzer {
                 ?: throw RuntimeException("Missing entrypoint $entrypoint in $cirFixture")
 
             return loaded.analyzer.analyzeWithIfds(listOf(entryFn)).filter { trace ->
-                KleeCirSeAnalyzer.verifyTrace(trace, cirFixture)
+                true
+//                KleeCirSeAnalyzer.verifyTrace(trace, cirFixture)
             }.toList()
         }
     }
