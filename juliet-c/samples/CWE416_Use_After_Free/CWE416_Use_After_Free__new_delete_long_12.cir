@@ -4,7 +4,7 @@
 !void = !cir.void
 #fn_attr = #cir<extra({nothrow = #cir.nothrow})>
 #fn_attr1 = #cir<extra({inline = #cir.inline<no>, optnone = #cir.optnone})>
-module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Free__new_delete_long_12.cpp" attributes {cir.lang = #cir.lang<cxx>, cir.sob = #cir.signed_overflow_behavior<undefined>, cir.triple = "aarch64-unknown-linux-gnu", dlti.dl_spec = #dlti.dl_spec<i32 = dense<32> : vector<2xi64>, f16 = dense<16> : vector<2xi64>, i1 = dense<8> : vector<2xi64>, !llvm.ptr = dense<64> : vector<4xi64>, !llvm.ptr<271> = dense<32> : vector<4xi64>, !llvm.ptr<272> = dense<64> : vector<4xi64>, f128 = dense<128> : vector<2xi64>, !llvm.ptr<270> = dense<32> : vector<4xi64>, f64 = dense<64> : vector<2xi64>, i64 = dense<64> : vector<2xi64>, i8 = dense<[8, 32]> : vector<2xi64>, i16 = dense<[16, 32]> : vector<2xi64>, i128 = dense<128> : vector<2xi64>, "dlti.endianness" = "little", "dlti.stack_alignment" = 128 : i64>} {
+module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Free__new_delete_long_12.cpp" attributes {cir.lang = #cir.lang<cxx>, cir.sob = #cir.signed_overflow_behavior<undefined>, cir.triple = "x86_64-unknown-linux-gnu", dlti.dl_spec = #dlti.dl_spec<f16 = dense<16> : vector<2xi64>, f64 = dense<64> : vector<2xi64>, f128 = dense<128> : vector<2xi64>, !llvm.ptr<270> = dense<32> : vector<4xi64>, i32 = dense<32> : vector<2xi64>, i8 = dense<8> : vector<2xi64>, i16 = dense<16> : vector<2xi64>, !llvm.ptr = dense<64> : vector<4xi64>, i1 = dense<8> : vector<2xi64>, i128 = dense<128> : vector<2xi64>, f80 = dense<128> : vector<2xi64>, !llvm.ptr<272> = dense<64> : vector<4xi64>, !llvm.ptr<271> = dense<32> : vector<4xi64>, i64 = dense<64> : vector<2xi64>, "dlti.endianness" = "little", "dlti.stack_alignment" = 128 : i64>} {
   cir.func private @globalReturnsTrueOrFalse() -> !s32i loc(#loc124)
   cir.func private @_Znwm(!u64i) -> !cir.ptr<!void> loc(#loc125)
   cir.func private @_ZdlPvm(!cir.ptr<!void>, !u64i) extra(#fn_attr) loc(#loc126)
@@ -171,10 +171,10 @@ module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Fr
 #loc = loc("/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Free__new_delete_long_12.cpp":0:0)
 #loc1 = loc("/workspace/juliet-c/testcasesupport/std_testcase_io.h":52:1)
 #loc2 = loc("/workspace/juliet-c/testcasesupport/std_testcase_io.h":52:30)
-#loc3 = loc("/usr/lib/gcc/aarch64-linux-gnu/13/../../../../include/c++/13/new":126:20)
-#loc4 = loc("/usr/lib/gcc/aarch64-linux-gnu/13/../../../../include/c++/13/new":127:41)
-#loc5 = loc("/usr/lib/gcc/aarch64-linux-gnu/13/../../../../include/c++/13/new":135:1)
-#loc6 = loc("/usr/lib/gcc/aarch64-linux-gnu/13/../../../../include/c++/13/new":136:41)
+#loc3 = loc("/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/new":126:20)
+#loc4 = loc("/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/new":127:41)
+#loc5 = loc("/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/new":135:1)
+#loc6 = loc("/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/new":136:41)
 #loc7 = loc("/workspace/juliet-c/testcasesupport/std_testcase_io.h":24:1)
 #loc8 = loc("/workspace/juliet-c/testcasesupport/std_testcase_io.h":24:35)
 #loc9 = loc("/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Free__new_delete_long_12.cpp":26:1)

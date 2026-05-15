@@ -1,15 +1,15 @@
 !s32i = !cir.int<s, 32>
 !s64i = !cir.int<s, 64>
+!s8i = !cir.int<s, 8>
 !u64i = !cir.int<u, 64>
-!u8i = !cir.int<u, 8>
 !void = !cir.void
 #fn_attr = #cir<extra({nothrow = #cir.nothrow})>
 #fn_attr1 = #cir<extra({inline = #cir.inline<no>, optnone = #cir.optnone})>
-module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Free__new_delete_int64_t_15.cpp" attributes {cir.lang = #cir.lang<cxx>, cir.sob = #cir.signed_overflow_behavior<undefined>, cir.triple = "aarch64-unknown-linux-gnu", dlti.dl_spec = #dlti.dl_spec<!llvm.ptr = dense<64> : vector<4xi64>, i1 = dense<8> : vector<2xi64>, i128 = dense<128> : vector<2xi64>, i16 = dense<[16, 32]> : vector<2xi64>, i64 = dense<64> : vector<2xi64>, !llvm.ptr<272> = dense<64> : vector<4xi64>, !llvm.ptr<271> = dense<32> : vector<4xi64>, f128 = dense<128> : vector<2xi64>, i8 = dense<[8, 32]> : vector<2xi64>, f16 = dense<16> : vector<2xi64>, f64 = dense<64> : vector<2xi64>, i32 = dense<32> : vector<2xi64>, !llvm.ptr<270> = dense<32> : vector<4xi64>, "dlti.stack_alignment" = 128 : i64, "dlti.endianness" = "little">} {
+module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Free__new_delete_int64_t_15.cpp" attributes {cir.lang = #cir.lang<cxx>, cir.sob = #cir.signed_overflow_behavior<undefined>, cir.triple = "x86_64-unknown-linux-gnu", dlti.dl_spec = #dlti.dl_spec<i64 = dense<64> : vector<2xi64>, i128 = dense<128> : vector<2xi64>, f80 = dense<128> : vector<2xi64>, !llvm.ptr = dense<64> : vector<4xi64>, i1 = dense<8> : vector<2xi64>, i16 = dense<16> : vector<2xi64>, i8 = dense<8> : vector<2xi64>, i32 = dense<32> : vector<2xi64>, f16 = dense<16> : vector<2xi64>, f128 = dense<128> : vector<2xi64>, !llvm.ptr<270> = dense<32> : vector<4xi64>, f64 = dense<64> : vector<2xi64>, !llvm.ptr<271> = dense<32> : vector<4xi64>, !llvm.ptr<272> = dense<64> : vector<4xi64>, "dlti.stack_alignment" = 128 : i64, "dlti.endianness" = "little">} {
   cir.func private @_Znwm(!u64i) -> !cir.ptr<!void> loc(#loc172)
   cir.func private @_ZdlPvm(!cir.ptr<!void>, !u64i) extra(#fn_attr) loc(#loc173)
-  cir.func private @printLine(!cir.ptr<!u8i>) loc(#loc174)
-  cir.global "private" constant cir_private dsolocal @".str" = #cir.const_array<"Benign, fixed string\00" : !cir.array<!u8i x 21>> : !cir.array<!u8i x 21> {alignment = 1 : i64} loc(#loc7)
+  cir.func private @printLine(!cir.ptr<!s8i>) loc(#loc174)
+  cir.global "private" constant cir_private dsolocal @".str" = #cir.const_array<"Benign, fixed string\00" : !cir.array<!s8i x 21>> : !cir.array<!s8i x 21> {alignment = 1 : i64} loc(#loc7)
   cir.func private @printLongLongLine(!s64i) loc(#loc175)
   cir.func @_ZN44CWE416_Use_After_Free__new_delete_int64_t_153badEv() extra(#fn_attr1) {
     %0 = cir.alloca !cir.ptr<!s64i>, !cir.ptr<!cir.ptr<!s64i>>, ["data"] {alignment = 8 : i64} loc(#loc177)
@@ -39,9 +39,9 @@ module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Fr
     cir.call @_ZdlPvm(%9, %10) : (!cir.ptr<!void>, !u64i) -> () extra(#fn_attr) loc(#loc22)
     cir.br ^bb6 loc(#loc28)
   ^bb5:  // pred: ^bb2
-    %11 = cir.get_global @".str" : !cir.ptr<!cir.array<!u8i x 21>> loc(#loc7)
-    %12 = cir.cast(array_to_ptrdecay, %11 : !cir.ptr<!cir.array<!u8i x 21>>), !cir.ptr<!u8i> loc(#loc7)
-    cir.call @printLine(%12) : (!cir.ptr<!u8i>) -> () loc(#loc29)
+    %11 = cir.get_global @".str" : !cir.ptr<!cir.array<!s8i x 21>> loc(#loc7)
+    %12 = cir.cast(array_to_ptrdecay, %11 : !cir.ptr<!cir.array<!s8i x 21>>), !cir.ptr<!s8i> loc(#loc7)
+    cir.call @printLine(%12) : (!cir.ptr<!s8i>) -> () loc(#loc29)
     cir.br ^bb6 loc(#loc30)
   ^bb6:  // 2 preds: ^bb4, ^bb5
     cir.br ^bb7 loc(#loc17)
@@ -62,9 +62,9 @@ module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Fr
     cir.call @printLongLongLine(%15) : (!s64i) -> () loc(#loc37)
     cir.br ^bb13 loc(#loc38)
   ^bb12:  // pred: ^bb9
-    %16 = cir.get_global @".str" : !cir.ptr<!cir.array<!u8i x 21>> loc(#loc39)
-    %17 = cir.cast(array_to_ptrdecay, %16 : !cir.ptr<!cir.array<!u8i x 21>>), !cir.ptr<!u8i> loc(#loc39)
-    cir.call @printLine(%17) : (!cir.ptr<!u8i>) -> () loc(#loc40)
+    %16 = cir.get_global @".str" : !cir.ptr<!cir.array<!s8i x 21>> loc(#loc39)
+    %17 = cir.cast(array_to_ptrdecay, %16 : !cir.ptr<!cir.array<!s8i x 21>>), !cir.ptr<!s8i> loc(#loc39)
+    cir.call @printLine(%17) : (!cir.ptr<!s8i>) -> () loc(#loc40)
     cir.br ^bb13 loc(#loc41)
   ^bb13:  // 2 preds: ^bb11, ^bb12
     cir.br ^bb14 loc(#loc32)
@@ -99,9 +99,9 @@ module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Fr
     cir.call @_ZdlPvm(%9, %10) : (!cir.ptr<!void>, !u64i) -> () extra(#fn_attr) loc(#loc54)
     cir.br ^bb6 loc(#loc60)
   ^bb5:  // pred: ^bb2
-    %11 = cir.get_global @".str" : !cir.ptr<!cir.array<!u8i x 21>> loc(#loc61)
-    %12 = cir.cast(array_to_ptrdecay, %11 : !cir.ptr<!cir.array<!u8i x 21>>), !cir.ptr<!u8i> loc(#loc61)
-    cir.call @printLine(%12) : (!cir.ptr<!u8i>) -> () loc(#loc62)
+    %11 = cir.get_global @".str" : !cir.ptr<!cir.array<!s8i x 21>> loc(#loc61)
+    %12 = cir.cast(array_to_ptrdecay, %11 : !cir.ptr<!cir.array<!s8i x 21>>), !cir.ptr<!s8i> loc(#loc61)
+    cir.call @printLine(%12) : (!cir.ptr<!s8i>) -> () loc(#loc62)
     cir.br ^bb6 loc(#loc63)
   ^bb6:  // 2 preds: ^bb4, ^bb5
     cir.br ^bb7 loc(#loc49)
@@ -117,9 +117,9 @@ module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Fr
   ^bb10:  // no predecessors
     cir.br ^bb11 loc(#loc67)
   ^bb11:  // 2 preds: ^bb9, ^bb10
-    %14 = cir.get_global @".str" : !cir.ptr<!cir.array<!u8i x 21>> loc(#loc68)
-    %15 = cir.cast(array_to_ptrdecay, %14 : !cir.ptr<!cir.array<!u8i x 21>>), !cir.ptr<!u8i> loc(#loc68)
-    cir.call @printLine(%15) : (!cir.ptr<!u8i>) -> () loc(#loc69)
+    %14 = cir.get_global @".str" : !cir.ptr<!cir.array<!s8i x 21>> loc(#loc68)
+    %15 = cir.cast(array_to_ptrdecay, %14 : !cir.ptr<!cir.array<!s8i x 21>>), !cir.ptr<!s8i> loc(#loc68)
+    cir.call @printLine(%15) : (!cir.ptr<!s8i>) -> () loc(#loc69)
     cir.br ^bb13 loc(#loc70)
   ^bb12:  // pred: ^bb9
     cir.br ^bb13 loc(#loc71)
@@ -156,9 +156,9 @@ module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Fr
     cir.call @_ZdlPvm(%9, %10) : (!cir.ptr<!void>, !u64i) -> () extra(#fn_attr) loc(#loc84)
     cir.br ^bb6 loc(#loc90)
   ^bb5:  // pred: ^bb2
-    %11 = cir.get_global @".str" : !cir.ptr<!cir.array<!u8i x 21>> loc(#loc91)
-    %12 = cir.cast(array_to_ptrdecay, %11 : !cir.ptr<!cir.array<!u8i x 21>>), !cir.ptr<!u8i> loc(#loc91)
-    cir.call @printLine(%12) : (!cir.ptr<!u8i>) -> () loc(#loc92)
+    %11 = cir.get_global @".str" : !cir.ptr<!cir.array<!s8i x 21>> loc(#loc91)
+    %12 = cir.cast(array_to_ptrdecay, %11 : !cir.ptr<!cir.array<!s8i x 21>>), !cir.ptr<!s8i> loc(#loc91)
+    cir.call @printLine(%12) : (!cir.ptr<!s8i>) -> () loc(#loc92)
     cir.br ^bb6 loc(#loc93)
   ^bb6:  // 2 preds: ^bb4, ^bb5
     cir.br ^bb7 loc(#loc79)
@@ -176,9 +176,9 @@ module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Fr
   ^bb11:  // 2 preds: ^bb9, ^bb10
     cir.br ^bb13 loc(#loc98)
   ^bb12:  // pred: ^bb9
-    %14 = cir.get_global @".str" : !cir.ptr<!cir.array<!u8i x 21>> loc(#loc99)
-    %15 = cir.cast(array_to_ptrdecay, %14 : !cir.ptr<!cir.array<!u8i x 21>>), !cir.ptr<!u8i> loc(#loc99)
-    cir.call @printLine(%15) : (!cir.ptr<!u8i>) -> () loc(#loc100)
+    %14 = cir.get_global @".str" : !cir.ptr<!cir.array<!s8i x 21>> loc(#loc99)
+    %15 = cir.cast(array_to_ptrdecay, %14 : !cir.ptr<!cir.array<!s8i x 21>>), !cir.ptr<!s8i> loc(#loc99)
+    cir.call @printLine(%15) : (!cir.ptr<!s8i>) -> () loc(#loc100)
     cir.br ^bb13 loc(#loc101)
   ^bb13:  // 2 preds: ^bb11, ^bb12
     cir.br ^bb14 loc(#loc95)
@@ -200,9 +200,9 @@ module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Fr
   ^bb3:  // no predecessors
     cir.br ^bb4 loc(#loc111)
   ^bb4:  // 2 preds: ^bb2, ^bb3
-    %3 = cir.get_global @".str" : !cir.ptr<!cir.array<!u8i x 21>> loc(#loc112)
-    %4 = cir.cast(array_to_ptrdecay, %3 : !cir.ptr<!cir.array<!u8i x 21>>), !cir.ptr<!u8i> loc(#loc112)
-    cir.call @printLine(%4) : (!cir.ptr<!u8i>) -> () loc(#loc113)
+    %3 = cir.get_global @".str" : !cir.ptr<!cir.array<!s8i x 21>> loc(#loc112)
+    %4 = cir.cast(array_to_ptrdecay, %3 : !cir.ptr<!cir.array<!s8i x 21>>), !cir.ptr<!s8i> loc(#loc112)
+    cir.call @printLine(%4) : (!cir.ptr<!s8i>) -> () loc(#loc113)
     cir.br ^bb6 loc(#loc114)
   ^bb5:  // pred: ^bb2
     %5 = cir.const #cir.int<8> : !u64i loc(#loc204)
@@ -232,9 +232,9 @@ module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Fr
     cir.call @printLongLongLine(%12) : (!s64i) -> () loc(#loc129)
     cir.br ^bb13 loc(#loc130)
   ^bb12:  // pred: ^bb9
-    %13 = cir.get_global @".str" : !cir.ptr<!cir.array<!u8i x 21>> loc(#loc131)
-    %14 = cir.cast(array_to_ptrdecay, %13 : !cir.ptr<!cir.array<!u8i x 21>>), !cir.ptr<!u8i> loc(#loc131)
-    cir.call @printLine(%14) : (!cir.ptr<!u8i>) -> () loc(#loc132)
+    %13 = cir.get_global @".str" : !cir.ptr<!cir.array<!s8i x 21>> loc(#loc131)
+    %14 = cir.cast(array_to_ptrdecay, %13 : !cir.ptr<!cir.array<!s8i x 21>>), !cir.ptr<!s8i> loc(#loc131)
+    cir.call @printLine(%14) : (!cir.ptr<!s8i>) -> () loc(#loc132)
     cir.br ^bb13 loc(#loc133)
   ^bb13:  // 2 preds: ^bb11, ^bb12
     cir.br ^bb14 loc(#loc124)
@@ -265,9 +265,9 @@ module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Fr
     cir.store %6, %7 : !s64i, !cir.ptr<!s64i> loc(#loc214)
     cir.br ^bb6 loc(#loc151)
   ^bb5:  // pred: ^bb2
-    %8 = cir.get_global @".str" : !cir.ptr<!cir.array<!u8i x 21>> loc(#loc152)
-    %9 = cir.cast(array_to_ptrdecay, %8 : !cir.ptr<!cir.array<!u8i x 21>>), !cir.ptr<!u8i> loc(#loc152)
-    cir.call @printLine(%9) : (!cir.ptr<!u8i>) -> () loc(#loc153)
+    %8 = cir.get_global @".str" : !cir.ptr<!cir.array<!s8i x 21>> loc(#loc152)
+    %9 = cir.cast(array_to_ptrdecay, %8 : !cir.ptr<!cir.array<!s8i x 21>>), !cir.ptr<!s8i> loc(#loc152)
+    cir.call @printLine(%9) : (!cir.ptr<!s8i>) -> () loc(#loc153)
     cir.br ^bb6 loc(#loc154)
   ^bb6:  // 2 preds: ^bb4, ^bb5
     cir.br ^bb7 loc(#loc141)
@@ -288,9 +288,9 @@ module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Fr
     cir.call @printLongLongLine(%12) : (!s64i) -> () loc(#loc161)
     cir.br ^bb13 loc(#loc162)
   ^bb12:  // pred: ^bb9
-    %13 = cir.get_global @".str" : !cir.ptr<!cir.array<!u8i x 21>> loc(#loc163)
-    %14 = cir.cast(array_to_ptrdecay, %13 : !cir.ptr<!cir.array<!u8i x 21>>), !cir.ptr<!u8i> loc(#loc163)
-    cir.call @printLine(%14) : (!cir.ptr<!u8i>) -> () loc(#loc164)
+    %13 = cir.get_global @".str" : !cir.ptr<!cir.array<!s8i x 21>> loc(#loc163)
+    %14 = cir.cast(array_to_ptrdecay, %13 : !cir.ptr<!cir.array<!s8i x 21>>), !cir.ptr<!s8i> loc(#loc163)
+    cir.call @printLine(%14) : (!cir.ptr<!s8i>) -> () loc(#loc164)
     cir.br ^bb13 loc(#loc165)
   ^bb13:  // 2 preds: ^bb11, ^bb12
     cir.br ^bb14 loc(#loc156)
@@ -306,10 +306,10 @@ module @"/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Fr
   } loc(#loc216)
 } loc(#loc)
 #loc = loc("/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Free__new_delete_int64_t_15.cpp":0:0)
-#loc1 = loc("/usr/lib/gcc/aarch64-linux-gnu/13/../../../../include/c++/13/new":126:20)
-#loc2 = loc("/usr/lib/gcc/aarch64-linux-gnu/13/../../../../include/c++/13/new":127:41)
-#loc3 = loc("/usr/lib/gcc/aarch64-linux-gnu/13/../../../../include/c++/13/new":135:1)
-#loc4 = loc("/usr/lib/gcc/aarch64-linux-gnu/13/../../../../include/c++/13/new":136:41)
+#loc1 = loc("/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/new":126:20)
+#loc2 = loc("/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/new":127:41)
+#loc3 = loc("/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/new":135:1)
+#loc4 = loc("/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/new":136:41)
 #loc5 = loc("/workspace/juliet-c/testcasesupport/std_testcase_io.h":14:1)
 #loc6 = loc("/workspace/juliet-c/testcasesupport/std_testcase_io.h":14:33)
 #loc7 = loc("/workspace/juliet-c/testcases/CWE416_Use_After_Free/CWE416_Use_After_Free__new_delete_int64_t_15.cpp":41:19)
