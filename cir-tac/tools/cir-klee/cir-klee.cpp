@@ -1,5 +1,6 @@
 #include "cir-tac/CirToLlvmIr.h"
 #include "cir-tac/Llvm16Compat.h"
+#include "TraceGuidePass.h"
 #include "proto/trace.pb.h"
 
 #include <clang/CIR/Dialect/IR/CIRDialect.h>
@@ -20,6 +21,7 @@
 #include <mlir/IR/MLIRContext.h>
 #include <mlir/Parser/Parser.h>
 
+#include <chrono>
 #include <cstdlib>
 #include <fstream>
 #include <string>
@@ -95,6 +97,18 @@ int main(int argc, char **argv) {
     return 1;
   }
   prepareLlvmModuleForLlvm16(*LlvmMod);
+
+  auto TraceGuideT0 = std::chrono::steady_clock::now();
+  bool TraceGuideOk = runTraceGuidePass(*LlvmMod, Pb);
+  auto TraceGuideT1 = std::chrono::steady_clock::now();
+  using std::chrono::duration;
+  double TraceGuideMs =
+      duration<double, std::milli>(TraceGuideT1 - TraceGuideT0).count();
+  llvm::errs() << "runTraceGuidePass: " << TraceGuideMs << " ms\n";
+  if (!TraceGuideOk) {
+    llvm::errs() << "error: TraceGuidePass failed\n";
+    return 1;
+  }
 
   TempPath LlTmp;
   if (std::error_code EC =

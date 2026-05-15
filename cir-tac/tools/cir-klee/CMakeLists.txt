@@ -6,6 +6,7 @@ set(LIBS
 
 add_executable(cir-klee
     cir-klee.cpp
-    TraceUtil.cpp)
+    TraceUtil.cpp
+    TraceGuidePass.cpp)
 
 target_link_libraries(cir-klee ${LIBS} trace_proto llvm16_compat)
