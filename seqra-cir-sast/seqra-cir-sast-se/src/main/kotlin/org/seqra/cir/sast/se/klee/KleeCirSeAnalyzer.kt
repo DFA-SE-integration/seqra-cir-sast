@@ -31,9 +31,10 @@ object KleeCirSeAnalyzer : CirSeAnalyzer {
                 .start()
 
             val out = proc.inputStream.bufferedReader().readText()
-            logger.info { "cir-klee exit=$out" }
             // Sink reached flag
-            return out.contains("abort failure")
+            val rc = out.contains("abort failure")
+            logger.info { "cir-klee exit=$rc\n$out" }
+            return rc
         } finally {
             Files.deleteIfExists(pbFile)
         }
