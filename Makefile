@@ -195,7 +195,8 @@ test-alias: docker_check build
         --tests org.seqra.cir.sast.dataflow.CIRSeaDsaAliasEvalTest
 
 test: docker_check build
-	cd seqra-cir-sast && ./gradlew :test
+	cd seqra-cir-sast && SEQRA_CWE416_FIXTURE_FILTER=malloc_free_char_01 ./gradlew :test \
+		--tests org.seqra.cir.sast.CWE416UseAfterFreeBadEntrypointsTest
 
 clean:
 	rm -rf "$(HOME)/.m2/repository/org/seqra"

@@ -34,7 +34,8 @@ object CIRProjectAnalyzer {
             return loaded.analyzer.analyzeWithIfds(listOf(entryFn)).filter { vwt ->
                 val t = vwt.trace ?: return@filter false
                 t.sourceToSinkTrace.startNodes.isNotEmpty() &&
-                    t.sourceToSinkTrace.sinkNodes.isNotEmpty()
+                    t.sourceToSinkTrace.sinkNodes.isNotEmpty() &&
+                        KleeCirSeAnalyzer.verifyTrace(vwt, cirPaths.first())
             }.toList()
         }
     }
