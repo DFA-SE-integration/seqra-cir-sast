@@ -68,6 +68,7 @@ internal object CWE416JulietFixtures {
      */
     fun findGoodEntrypoint(path: Path): String? {
         val content = Files.readString(path)
+        val fileName = path.fileName.toString()
 
         val candidates = functionDefinitionPattern.findAll(content)
             .map { match -> match.groupValues[1] }
@@ -81,11 +82,31 @@ internal object CWE416JulietFixtures {
             }
             .toList()
 
-        return when (candidates.size) {
-            0 -> null
-            1 -> candidates.single()
-            else -> error("Expected a single top-level good entrypoint in ${path.fileName}, found: $candidates")
+        val preferred = preferredGoodSymbolFromJulietFileName(fileName)
+        if (preferred in candidates) {
+            return preferred
         }
+
+        val withoutMangled = candidates.filter { !it.startsWith("_ZN") }
+        return when {
+            candidates.isEmpty() -> null
+            withoutMangled.size == 1 -> withoutMangled.single()
+            candidates.size == 1 -> candidates.single()
+            else -> error(
+                "Expected a single top-level good entrypoint in ${path.fileName}, found: $candidates",
+            )
+        }
+    }
+
+    /**
+     * For Juliet interfile splits (`*_62a.cir`, `*_63a.cir`, `*_64a.cir`) ClangIR also emits mangled
+     * `::good` helpers (`_ZN…634goodEv`). Prefer the stable C symbol `…_63_good` so we analyze the
+     * testcase entrypoint, not an inner template instantiation.
+     */
+    private fun preferredGoodSymbolFromJulietFileName(fileName: String): String {
+        val stem = fileName.removeSuffix(".cir")
+        val interfile = Regex("""^(.*)_(62|63|64)a$""").matchEntire(stem) ?: return "${stem}_good"
+        return "${interfile.groupValues[1]}_${interfile.groupValues[2]}_good"
     }
 
     fun fixtureArgumentStream(

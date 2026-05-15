@@ -195,13 +195,7 @@ test-alias: docker_check build
         --tests org.seqra.cir.sast.dataflow.CIRSeaDsaAliasEvalTest
 
 test: docker_check build
-	cd seqra-cir-sast && SEQRA_DEBUG_LOG_PATH=/workspace/debug-67e34f.log SEQRA_CWE416_FIXTURE_FILTER=return_freed_ptr_01 ./gradlew :test \
-		--tests org.seqra.cir.sast.CWE416UseAfterFreeBadEntrypointsTest \
-		2>&1 | tee seqra-trace.log
-
-test-simple: docker_check build
-	cd seqra-cir-sast && ./gradlew :test \
-		--tests org.seqra.cir.sast.CWE416UseAfterFreeBadEntrypointsTest
+	cd seqra-cir-sast && ./gradlew :test
 
 clean:
 	rm -rf "$(HOME)/.m2/repository/org/seqra"

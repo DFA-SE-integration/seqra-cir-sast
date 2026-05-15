@@ -69,6 +69,12 @@ class CIRLocalAliasAnalysis(
     fun findAliases(base: AccessPathBase): Set<Access>? = aliasGroupByBase[base]
 
     /**
+     * True iff [a] and [b] lie in the same merged alias class (SeaDSA peers plus same-load-address fallbacks).
+     */
+    fun basesAliasSymmetric(a: AccessPathBase, b: AccessPathBase): Boolean =
+        a == b || basesAliasSymmetricInternal(a, b)
+
+    /**
      * [Access] entries `addrPeer` + [ReferenceAccessor] for loads whose result base aliases [base]
      * after transparent cast canonicalization (e.g. loaded `var(N)` from `arg(0)`'s slot).
      */

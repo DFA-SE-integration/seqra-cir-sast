@@ -1117,13 +1117,23 @@ class MethodTraceResolver(
         callees: List<MethodEntryPoint>
     ): Set<PartiallyResolvedMergedPrimaryCallAction>? {
         if (callees.isEmpty()) {
-            // Drop fact if it is mapped to the method return value
             val nonReturnSummaries = callSummaries.filter { it.call2Start.startFactBase != AccessPathBase.Return }
-            if (nonReturnSummaries.isEmpty()) return null
+            if (nonReturnSummaries.isEmpty()) {
+                // Do not drop callee-return-only summaries: trace still needs the call-site return edges
+                // when the callee cannot be re-resolved (Juliet `return_freed_ptr_*` / hidden `__retval`).
+                val returnEdges =
+                    callSummaries
+                        .filter { it.call2Start.startFactBase == AccessPathBase.Return }
+                        .mapTo(hashSetOf()) { it.currentEdge }
+                return if (returnEdges.isEmpty()) {
+                    null
+                } else {
+                    setOf(MergedPrimaryUnresolvedCallSkip(UnresolvedCallSkip(returnEdges)))
+                }
+            }
 
             val nonReturnEdges = nonReturnSummaries.mapTo(hashSetOf()) { it.currentEdge }
             return setOf(MergedPrimaryUnresolvedCallSkip(UnresolvedCallSkip(nonReturnEdges)))
-
         }
 
         return callees.mapTo(hashSetOf()) {

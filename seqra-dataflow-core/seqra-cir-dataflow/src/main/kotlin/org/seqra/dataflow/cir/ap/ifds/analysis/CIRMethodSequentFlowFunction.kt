@@ -33,6 +33,7 @@ import org.seqra.ir.api.cir.cfg.CIRCastOpExpr
 import org.seqra.ir.api.cir.cfg.CIRDynamicCastOpExpr
 import org.seqra.ir.api.cir.cfg.CIRExpr
 import org.seqra.ir.api.cir.cfg.CIRGetMemberOpExpr
+import org.seqra.ir.api.cir.cfg.CIRFunction
 import org.seqra.ir.api.cir.cfg.CIRInst
 import org.seqra.ir.api.cir.cfg.CIRPtrStrideOpExpr
 import org.seqra.ir.api.cir.cfg.CIRReturnOpInst
@@ -178,6 +179,45 @@ class CIRMethodSequentFlowFunction(
                                 )
                             }
                             // #endregion
+                        }
+                    }
+                }
+
+                if (!propagated && retInput != null) {
+                    val fn = currentInst.location.method as CIRFunction
+                    val storedVal =
+                        MethodFlowFunctionUtils.returnOperandLoadNearestStoreSource(
+                            fn,
+                            currentInst,
+                        )
+                    val storedBase = storedVal?.let { accessPathBase(it) }
+                    if (storedBase != null) {
+                        val aa = analysisContext.aliasAnalysis
+                        fun factBaseMatchesStoredRhs(b: AccessPathBase?): Boolean {
+                            if (b == null) return false
+                            if (b == storedBase) return true
+                            return aa?.basesAliasSymmetric(b, storedBase) == true
+                        }
+                        when {
+                            factBaseMatchesStoredRhs(factAp.base) -> {
+                                val resultFact = factAp.rebase(AccessPathBase.Return)
+                                propagateFact(resultFact)
+                                applyMethodExitSinkRules(AccessPathBase.Return, resultFact)
+                                propagated = true
+                            }
+                            else -> {
+                                analysisContext.aliasAnalysis?.forEachAlias(factAp) { aliased ->
+                                    if (factBaseMatchesStoredRhs(aliased.base)) {
+                                        val resultFact = aliased.rebase(AccessPathBase.Return)
+                                        propagateFact(resultFact)
+                                        applyMethodExitSinkRules(
+                                            AccessPathBase.Return,
+                                            resultFact,
+                                        )
+                                        propagated = true
+                                    }
+                                }
+                            }
                         }
                     }
                 }

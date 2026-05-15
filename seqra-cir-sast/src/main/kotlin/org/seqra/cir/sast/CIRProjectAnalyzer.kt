@@ -27,9 +27,14 @@ object CIRProjectAnalyzer {
             val entryFn = loaded.analyzer.cp.findFunctionBySymbolName(entrypoint)
                 ?: throw RuntimeException("Missing entrypoint $entrypoint in $cirFixture")
 
-            return loaded.analyzer.analyzeWithIfds(listOf(entryFn)).filter { trace ->
-                true
-//                KleeCirSeAnalyzer.verifyTrace(trace, cirFixture)
+            // Drop sink hits whose interprocedural trace graph is degenerate (empty start/sink
+            // nodes). Otherwise collection order can surface e.g. `libc.memset` before `printLine`
+            // on Juliet `_17_bad` loops — the sink fires forward, but backward IFDS edge matching
+            // yields no summary trace, while the real UAF at `printLine` resolves fine.
+            return loaded.analyzer.analyzeWithIfds(listOf(entryFn)).filter { vwt ->
+                val t = vwt.trace ?: return@filter false
+                t.sourceToSinkTrace.startNodes.isNotEmpty() &&
+                    t.sourceToSinkTrace.sinkNodes.isNotEmpty()
             }.toList()
         }
     }
