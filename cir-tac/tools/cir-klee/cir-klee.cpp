@@ -42,13 +42,62 @@ struct TempPath {
   }
 };
 
+static bool cirFuncHasBody(cir::FuncOp f) { return !f.getFunctionBody().empty(); }
+
+static cir::FuncOp findFuncBySym(mlir::ModuleOp m, llvm::StringRef sym) {
+  for (mlir::Operation &op : *m.getBody()) {
+    if (auto fn = mlir::dyn_cast<cir::FuncOp>(&op))
+      if (fn.getSymName() == sym)
+        return fn;
+  }
+  return cir::FuncOp();
+}
+
+/// Move top-level ops from \p extra into \p primary. When both modules define
+/// the same `cir.func` symbol, keep a single definition (Juliet `_a` decl +
+/// `_b` body).
+static bool mergeExtraModuleIntoPrimary(mlir::ModuleOp primary,
+                                        mlir::ModuleOp extra) {
+  mlir::Block &pBlock = *primary.getBody();
+  llvm::SmallVector<mlir::Operation *, 32> extraOps;
+  for (mlir::Operation &op : extra.getBody()->without_terminator())
+    extraOps.push_back(&op);
+
+  for (mlir::Operation *op : extraOps) {
+    auto fn = mlir::dyn_cast<cir::FuncOp>(op);
+    if (!fn) {
+      op->moveBefore(&pBlock, pBlock.end());
+      continue;
+    }
+    cir::FuncOp conflict = findFuncBySym(primary, fn.getSymName());
+    if (conflict) {
+      if (!cirFuncHasBody(conflict) && cirFuncHasBody(fn)) {
+        conflict.erase();
+      } else if (cirFuncHasBody(conflict) && !cirFuncHasBody(fn)) {
+        fn.erase();
+        continue;
+      } else if (!cirFuncHasBody(conflict) && !cirFuncHasBody(fn)) {
+        fn.erase();
+        continue;
+      } else {
+        fn.erase();
+        continue;
+      }
+    }
+    op->moveBefore(&pBlock, pBlock.end());
+  }
+  return true;
+}
+
 } // namespace
 
 int main(int argc, char **argv) {
-  if (argc != 3) {
-    llvm::errs() << "usage: cir-klee <input.cir> <trace.pb>\n"
+  if (argc < 3) {
+    llvm::errs() << "usage: cir-klee <input.cir> [<more.cir>...] <trace.pb>\n"
                     "  Lowers CIR to LLVM IR, assembles with llvm-as-16, runs "
                     "KLEE (--output-dir=/dev/null).\n"
+                    "  Extra .cir files are merged into the first (Juliet _a + "
+                    "_b split).\n"
                     "  Entry point is taken from trace.entry_point_name. "
                     "Requires KLEE_BIN in the environment.\n";
     return 2;
@@ -56,7 +105,7 @@ int main(int argc, char **argv) {
 
   trace::Trace Pb;
   {
-    std::ifstream In(argv[2], std::ios::binary);
+    std::ifstream In(argv[argc - 1], std::ios::binary);
     if (!In || !Pb.ParseFromIstream(&In)) {
       llvm::errs() << "error: failed to parse trace.pb\n";
       return 1;
@@ -89,6 +138,20 @@ int main(int argc, char **argv) {
     llvm::errs() << "error: failed to parse CIR module\n";
     return 1;
   }
+
+  for (int i = 2; i < argc - 1; ++i) {
+    auto Extra = mlir::parseSourceFile<mlir::ModuleOp>(argv[i], ParseConfig);
+    if (!Extra) {
+      llvm::errs() << "error: failed to parse CIR module: " << argv[i] << "\n";
+      return 1;
+    }
+    if (!mergeExtraModuleIntoPrimary(*OwningModule, *Extra)) {
+      llvm::errs() << "error: failed to merge CIR module: " << argv[i] << "\n";
+      return 1;
+    }
+  }
+  if (argc > 3)
+    llvm::errs() << "cir-klee: merged " << (argc - 3) << " extra CIR module(s)\n";
 
   stampSeqraOpIdsForTraceGuide(*OwningModule);
 

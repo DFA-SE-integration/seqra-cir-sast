@@ -11,7 +11,8 @@ object KleeCirSeAnalyzer : CirSeAnalyzer {
 
     private val logger = object : KLogging() {}.logger
 
-    override fun verifyTrace(trace: VulnerabilityWithTrace, cirFile: Path): Boolean {
+    override fun verifyTrace(trace: VulnerabilityWithTrace, cirFiles: List<Path>): Boolean {
+        require(cirFiles.isNotEmpty()) { "verifyTrace requires at least one .cir file" }
         val cirKlee = System.getenv("CIRTAC_KLEE")?.trim()?.takeIf { it.isNotEmpty() }
             ?: error("CIRTAC_KLEE must be set to the cir-klee executable path")
 
@@ -20,9 +21,11 @@ object KleeCirSeAnalyzer : CirSeAnalyzer {
             Files.write(pbFile, trace.serialize())
 
             val proc = ProcessBuilder(
-                cirKlee,
-                cirFile.toAbsolutePath().toString(),
-                pbFile.toAbsolutePath().toString(),
+                buildList {
+                    add(cirKlee)
+                    cirFiles.forEach { add(it.toAbsolutePath().toString()) }
+                    add(pbFile.toAbsolutePath().toString())
+                },
             )
                 .redirectErrorStream(true)
                 .start()

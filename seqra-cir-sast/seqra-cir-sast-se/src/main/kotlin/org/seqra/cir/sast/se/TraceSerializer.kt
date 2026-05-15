@@ -340,7 +340,10 @@ private fun serializeProtoTrace(t: TraceResolver.Trace): ProtoTrace {
     val epToStart = t.entryPointToStart ?: notModeled()
     val nameEp = run {
         val s = epToStart.entryPoints.singleOrNull() ?: notModeled()
-        s.method.name
+        // Align with `serializeCirFunctionId` / LLVM symbol: `name` is CIR `symName`
+        // and can differ from the persisted function id string used in trace MLIROpIDs.
+        val m = s.method
+        (m as? CIRFunction)?.id?.id ?: m.name
     }
     return ProtoTrace.newBuilder()
         .setEntryPointName(nameEp)

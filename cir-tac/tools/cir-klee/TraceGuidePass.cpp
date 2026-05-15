@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <string>
 #include <vector>
 
 using namespace llvm;
@@ -51,14 +52,6 @@ void reachableFromStart(const trace::method::FullTrace &Ft,
         Q.push_back(V);
     }
   }
-}
-
-bool opMatchesFunction(const trace::MLIROpID &Op, const Function *F) {
-  if (!F)
-    return false;
-  if (Op.fun_id().id().empty())
-    return true;
-  return Op.fun_id().id() == F->getName().str();
 }
 
 uint64_t opIdFromEntry(const trace::method::TraceEntry &E) {
@@ -139,9 +132,25 @@ Instruction *getInsnForTraceEntry(
   if (It == Ft.id_to_trace_entry().end())
     return nullptr;
   const auto &E = It->second;
-  if (!opMatchesFunction(E.statement(), F))
+  // Intra-procedural FullTrace: op ids are for this LLVM function. Protobuf
+  // `fun_id` may use a different string than `F->getName()` (symName vs id).
+  Instruction *Insn = seqra_trace::lookupInsn(OpTab, opIdFromEntry(E));
+  if (!Insn || Insn->getFunction() != F)
     return nullptr;
-  return seqra_trace::lookupInsn(OpTab, opIdFromEntry(E));
+  return Insn;
+}
+
+Instruction *findNextMappedInsnOnPath(
+    const trace::method::FullTrace &Ft, const std::vector<uint32_t> &Path,
+    size_t StartIdx, const DenseMap<uint64_t, Instruction *> &OpTab,
+    const Function *F) {
+  for (size_t I = StartIdx + 1; I < Path.size(); ++I) {
+    Instruction *Insn = getInsnForTraceEntry(Ft, Path[I], OpTab, F);
+    if (!Insn)
+      continue;
+    return Insn;
+  }
+  return nullptr;
 }
 
 unsigned cfgSuccessorCount(const Instruction *Term) {
@@ -304,13 +313,16 @@ bool runTraceGuidePass(Module &M, const trace::Trace &Pb) {
 
   const trace::method::TraceEntry *SourceEntry = nullptr;
   uint32_t SourceEid = 0;
-  for (uint32_t Eid : Path) {
+  size_t SourcePathIdx = 0;
+  for (size_t CurrentIdx = 0; CurrentIdx < Path.size(); ++CurrentIdx) {
+    uint32_t Eid = Path[CurrentIdx];
     auto It = Ft.id_to_trace_entry().find(Eid);
     if (It == Ft.id_to_trace_entry().end())
       continue;
     if (It->second.kind() == trace::method::TraceEntry::KIND_SOURCE_START) {
       SourceEntry = &It->second;
       SourceEid = Eid;
+      SourcePathIdx = CurrentIdx;
       break;
     }
   }
@@ -321,15 +333,18 @@ bool runTraceGuidePass(Module &M, const trace::Trace &Pb) {
     return true;
   }
 
-  if (!opMatchesFunction(SourceEntry->statement(), F)) {
-    errs() << "traceguide: source entry " << SourceEid
-           << " statement does not match function\n";
-    return false;
-  }
-
   Instruction *SrcInsn =
       seqra_trace::lookupInsn(OpTab, opIdFromEntry(*SourceEntry));
-  if (!SrcInsn) {
+  bool InsertBeforeSrcInsn = false;
+  if (!SrcInsn || SrcInsn->getFunction() != F) {
+    Instruction *FallbackInsn =
+        findNextMappedInsnOnPath(Ft, Path, SourcePathIdx, OpTab, F);
+    if (FallbackInsn) {
+      SrcInsn = FallbackInsn;
+      InsertBeforeSrcInsn = true;
+    }
+  }
+  if (!SrcInsn || SrcInsn->getFunction() != F) {
     errs() << "traceguide: could not lookup llvm instruction for source entry "
            << SourceEid << "\n";
     return false;
@@ -337,7 +352,9 @@ bool runTraceGuidePass(Module &M, const trace::Trace &Pb) {
 
   {
     IRBuilder<> B(Ctx);
-    if (Instruction *Next = SrcInsn->getNextNode())
+    if (InsertBeforeSrcInsn)
+      B.SetInsertPoint(SrcInsn);
+    else if (Instruction *Next = SrcInsn->getNextNode())
       B.SetInsertPoint(Next);
     else
       B.SetInsertPoint(SrcInsn->getParent()->getTerminator());
