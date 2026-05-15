@@ -27,6 +27,14 @@ message FullTrace {
   map<uint32, TraceEntryIds> successors = 6;
 }
 
+// Intra-procedural SummaryTrace (MethodTraceResolver.SummaryTrace): final entry only.
+message SummaryTrace {
+  CIRFunctionID method = 1;
+  uint32 final_entry_id = 2;
+  FullTrace.TraceKind trace_kind = 3;
+  map<uint32, TraceEntry> id_to_trace_entry = 4;
+}
+
 message TraceEdge {
   oneof value {
     SourceTraceEdge source_trace_edge = 1;

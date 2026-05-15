@@ -28,13 +28,16 @@ message FullTraceNode {
   trace.method.FullTrace trace = 2;
 }
 
-// InterProceduralSummaryTraceNode (Kotlin SourceToSinkTraceNode variant) is
-// intentionally omitted: cir-klee TraceGuidePass works with FullTrace-bearing
-// nodes only.
+message SummaryTraceNode {
+  CIRFunctionID method = 1;
+  trace.method.SummaryTrace trace = 2;
+}
+
 message SourceToSinkTraceNode {
   oneof value {
-      SimpleTraceNode simple = 1;
-      FullTraceNode full = 2;
+    SimpleTraceNode simple = 1;
+    FullTraceNode full = 2;
+    SummaryTraceNode summary = 3;
   }
 }
 
@@ -44,6 +47,7 @@ message TraceNode {
     CallTraceNode call = 2;
     SimpleTraceNode simple = 3;
     FullTraceNode full = 4;
+    SummaryTraceNode summary = 5;
   }
 }
 
@@ -65,13 +69,15 @@ message InterProceduralCall {
   }
   CallKind kind = 1;
   MLIROpID statement = 2;
-  // Tag 3 was MethodTraceResolver.SummaryTrace; intentionally omitted along
-  // with InterProceduralSummaryTraceNode. Kotlin InterProceduralCall-s that
-  // differ only by `summary` collapse into one entry on the wire.
+  // Legacy wire tag; do not reuse field name "summary".
   reserved 3;
   reserved "summary";
-  // Only FullTrace-bearing nodes by design (Summary nodes are dropped).
+  // InterProceduralFullTraceNode on the Kotlin side.
   FullTraceNode node = 4;
+  // Kotlin InterProceduralCall.summary (always set).
+  trace.method.SummaryTrace call_summary = 5;
+  // InterProceduralSummaryTraceNode on the Kotlin side.
+  SummaryTraceNode summary_node = 6;
 }
 
 message SourceToSinkTrace {

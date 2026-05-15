@@ -20,6 +20,7 @@ import org.seqra.cir.sast.dataflow.proto.trace.EntryPointTraceNode
 import org.seqra.cir.sast.dataflow.proto.trace.FactAp
 import org.seqra.cir.sast.dataflow.proto.trace.FullTraceNode
 import org.seqra.cir.sast.dataflow.proto.trace.InterProceduralCall
+import org.seqra.cir.sast.dataflow.proto.trace.SummaryTraceNode
 import org.seqra.cir.sast.dataflow.proto.trace.MLIRModuleID
 import org.seqra.cir.sast.dataflow.proto.trace.MLIROpID
 import org.seqra.cir.sast.dataflow.proto.trace.SimpleTraceNode
@@ -28,6 +29,7 @@ import org.seqra.cir.sast.dataflow.proto.trace.SourceToSinkTraceNode
 import org.seqra.cir.sast.dataflow.proto.trace.Trace as ProtoTrace
 import org.seqra.cir.sast.dataflow.proto.trace.TraceNode
 import org.seqra.cir.sast.dataflow.proto.trace.method.FullTrace as ProtoFullTrace
+import org.seqra.cir.sast.dataflow.proto.trace.method.SummaryTrace as ProtoSummaryTrace
 import org.seqra.cir.sast.dataflow.proto.trace.method.MethodTraceEdge
 import org.seqra.cir.sast.dataflow.proto.trace.method.SourceTraceEdge
 import org.seqra.cir.sast.dataflow.proto.trace.method.TraceEdge as ProtoMethodTraceEdge
@@ -123,7 +125,7 @@ private fun serializeProtoTraceKind(kind: MethodTraceResolver.TraceKind): ProtoF
         MethodTraceResolver.TraceKind.TraceToFact -> ProtoFullTrace.TraceKind.TRACE_KIND_TRACE_TO_FACT
         MethodTraceResolver.TraceKind.TraceToFactAfterStatement ->
             ProtoFullTrace.TraceKind.TRACE_KIND_TRACE_TO_FACT_AFTER_STATEMENT
-        MethodTraceResolver.TraceKind.SummaryTrace -> notModeled()
+        MethodTraceResolver.TraceKind.SummaryTrace -> ProtoFullTrace.TraceKind.TRACE_KIND_SUMMARY
     }
 
 private fun orderedFullTraceEntries(trace: MethodTraceResolver.FullTrace): List<MethodTraceResolver.TraceEntry> =
@@ -193,6 +195,16 @@ private fun serializeProtoFullTrace(trace: MethodTraceResolver.FullTrace): Proto
     return b.build()
 }
 
+private const val SUMMARY_TRACE_FINAL_ENTRY_ID: Int = 0
+
+private fun serializeProtoSummaryTrace(trace: MethodTraceResolver.SummaryTrace): ProtoSummaryTrace =
+    ProtoSummaryTrace.newBuilder()
+        .setMethod(serializeCirFunctionId(trace.method.method))
+        .setFinalEntryId(SUMMARY_TRACE_FINAL_ENTRY_ID)
+        .setTraceKind(serializeProtoTraceKind(trace.traceKind))
+        .putIdToTraceEntry(SUMMARY_TRACE_FINAL_ENTRY_ID, serializeTraceEntry(trace.final))
+        .build()
+
 private fun serializeEntryPointTraceNode(node: TraceResolver.EntryPointTraceNode): EntryPointTraceNode =
     EntryPointTraceNode.newBuilder().setMethod(serializeCirFunctionId(node.method)).build()
 
@@ -214,12 +226,18 @@ private fun serializeFullTraceNode(node: TraceResolver.InterProceduralFullTraceN
         .setTrace(serializeProtoFullTrace(node.trace))
         .build()
 
+private fun serializeSummaryTraceNode(node: TraceResolver.InterProceduralSummaryTraceNode): SummaryTraceNode =
+    SummaryTraceNode.newBuilder()
+        .setMethod(serializeCirFunctionId(node.methodEntryPoint.method))
+        .setTrace(serializeProtoSummaryTrace(node.trace))
+        .build()
+
 private fun serializeSourceToSinkTraceNode(node: TraceResolver.SourceToSinkTraceNode): SourceToSinkTraceNode =
     SourceToSinkTraceNode.newBuilder().apply {
         when (node) {
             is TraceResolver.SimpleTraceNode -> setSimple(serializeSimpleTraceNode(node))
             is TraceResolver.InterProceduralFullTraceNode -> setFull(serializeFullTraceNode(node))
-            is TraceResolver.InterProceduralSummaryTraceNode -> notModeled()
+            is TraceResolver.InterProceduralSummaryTraceNode -> setSummary(serializeSummaryTraceNode(node))
         }
     }.build()
 
@@ -230,7 +248,7 @@ private fun serializeTraceNodeGraph(node: TraceResolver.TraceNode): TraceNode =
             is TraceResolver.CallTraceNode -> setCall(serializeCallTraceNode(node))
             is TraceResolver.SimpleTraceNode -> setSimple(serializeSimpleTraceNode(node))
             is TraceResolver.InterProceduralFullTraceNode -> setFull(serializeFullTraceNode(node))
-            is TraceResolver.InterProceduralSummaryTraceNode -> notModeled()
+            is TraceResolver.InterProceduralSummaryTraceNode -> setSummary(serializeSummaryTraceNode(node))
         }
     }.build()
 
@@ -266,14 +284,16 @@ private fun serializeCallKind(kind: TraceResolver.CallKind): InterProceduralCall
     }
 
 private fun serializeInterProceduralCall(call: TraceResolver.InterProceduralCall): InterProceduralCall {
-    val node = call.node
-    if (node is TraceResolver.InterProceduralSummaryTraceNode) notModeled()
-    require(node is TraceResolver.InterProceduralFullTraceNode)
-    return InterProceduralCall.newBuilder()
-        .setKind(serializeCallKind(call.kind))
-        .setStatement(serializeMlirOpId(call.statement))
-        .setNode(serializeFullTraceNode(node))
-        .build()
+    val b =
+        InterProceduralCall.newBuilder()
+            .setKind(serializeCallKind(call.kind))
+            .setStatement(serializeMlirOpId(call.statement))
+            .setCallSummary(serializeProtoSummaryTrace(call.summary))
+    when (val node = call.node) {
+        is TraceResolver.InterProceduralFullTraceNode -> b.setNode(serializeFullTraceNode(node))
+        is TraceResolver.InterProceduralSummaryTraceNode -> b.setSummaryNode(serializeSummaryTraceNode(node))
+    }
+    return b.build()
 }
 
 private fun collectSourceToSinkInterProceduralNodes(t: TraceResolver.SourceToSinkTrace): List<TraceResolver.InterProceduralTraceNode> {
@@ -281,7 +301,7 @@ private fun collectSourceToSinkInterProceduralNodes(t: TraceResolver.SourceToSin
     fun addNode(n: TraceResolver.SourceToSinkTraceNode) {
         when (n) {
             is TraceResolver.InterProceduralFullTraceNode -> out.add(n)
-            is TraceResolver.InterProceduralSummaryTraceNode -> notModeled()
+            is TraceResolver.InterProceduralSummaryTraceNode -> out.add(n)
             is TraceResolver.SimpleTraceNode -> Unit
         }
     }
