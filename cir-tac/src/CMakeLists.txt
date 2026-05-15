@@ -20,6 +20,7 @@ add_library(protoSerializer
   AttrSerializer.cpp
   OpSerializer.cpp
   AliasSerializer.cpp
+  StampSeqraOpIdsForTraceGuide.cpp
   CirToLlvmIr.cpp
   Deserializer.cpp
   EnumDeserializer.cpp

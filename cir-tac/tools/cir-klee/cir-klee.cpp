@@ -1,5 +1,6 @@
 #include "cir-tac/CirToLlvmIr.h"
 #include "cir-tac/Llvm16Compat.h"
+#include "cir-tac/StampSeqraOpIdsForTraceGuide.h"
 #include "TraceGuidePass.h"
 #include "proto/trace.pb.h"
 
@@ -88,6 +89,8 @@ int main(int argc, char **argv) {
     llvm::errs() << "error: failed to parse CIR module\n";
     return 1;
   }
+
+  stampSeqraOpIdsForTraceGuide(*OwningModule);
 
   llvm::LLVMContext LlvmCtx;
   std::unique_ptr<llvm::Module> LlvmMod =
