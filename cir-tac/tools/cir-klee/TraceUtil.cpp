@@ -1,5 +1,7 @@
 #include "TraceUtil.h"
 
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
@@ -81,32 +83,39 @@ void bfsReachable(const trace::method::FullTrace &Ft,
   }
 }
 
-FunctionCallee getKleeAssume(Module &M) {
-  LLVMContext &Ctx = M.getContext();
-  Type *I64 = IntegerType::getInt64Ty(Ctx);
-  FunctionType *FT =
-      FunctionType::get(Type::getVoidTy(Ctx), {I64}, false);
-  return M.getOrInsertFunction("klee_assume", FT);
+static void markNoReturn(FunctionCallee Fc) {
+  if (Function *Fn = dyn_cast<Function>(Fc.getCallee()))
+    Fn->addFnAttr(Attribute::NoReturn);
 }
 
-FunctionCallee getKleeAssert(Module &M) {
+FunctionCallee getKleeSilentExit(Module &M) {
   LLVMContext &Ctx = M.getContext();
   Type *I32 = IntegerType::getInt32Ty(Ctx);
   FunctionType *FT =
       FunctionType::get(Type::getVoidTy(Ctx), {I32}, false);
-  return M.getOrInsertFunction("klee_assert", FT);
+  FunctionCallee Fc = M.getOrInsertFunction("klee_silent_exit", FT);
+  markNoReturn(Fc);
+  return Fc;
 }
 
-void emitKleeAssumeEq(IRBuilder<> &B, FunctionCallee KAssume, Value *CondI1) {
-  Value *Ext =
-      B.CreateZExt(CondI1, IntegerType::getInt64Ty(B.getContext()));
-  B.CreateCall(KAssume, {Ext});
+FunctionCallee getKleeAbort(Module &M) {
+  LLVMContext &Ctx = M.getContext();
+  FunctionType *FT = FunctionType::get(Type::getVoidTy(Ctx), {}, false);
+  FunctionCallee Fc = M.getOrInsertFunction("klee_abort", FT);
+  markNoReturn(Fc);
+  return Fc;
 }
 
-void emitKleeAssertTrue(IRBuilder<> &B, FunctionCallee KAssert, Value *CondI1) {
-  Value *I32 =
-      B.CreateZExt(CondI1, IntegerType::getInt32Ty(B.getContext()));
-  B.CreateCall(KAssert, {I32});
+void emitKleeSilentExit(IRBuilder<> &B, FunctionCallee KSilentExit,
+                        int Status) {
+  Value *StatusVal = ConstantInt::get(IntegerType::getInt32Ty(B.getContext()),
+                                      static_cast<uint64_t>(Status),
+                                      /*isSigned=*/true);
+  B.CreateCall(KSilentExit, {StatusVal});
+}
+
+void emitKleeAbort(IRBuilder<> &B, FunctionCallee KAbort) {
+  B.CreateCall(KAbort, {});
 }
 
 } // namespace seqra_trace

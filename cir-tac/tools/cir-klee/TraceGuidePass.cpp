@@ -7,7 +7,6 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -162,12 +161,13 @@ unsigned cfgSuccessorCount(const Instruction *Term) {
   return Term->getNumSuccessors();
 }
 
-/// Insert klee_assume(false) after the first meaningful instruction in BB (see
-/// plan). If the only non-PHI is the terminator, insert before the terminator.
+/// Prune an alternate CFG successor by ending the path with klee_silent_exit(0)
+/// (no test case), after the first meaningful instruction in BB. If the only
+/// non-PHI is the terminator, insert before the terminator.
 /// Unsafe if BB has multiple predecessors: caller checks singlePredecessor.
-void insertAssumeFalseAfterFirstMeaningful(BasicBlock *BB, Module &M) {
+void insertSilentExitAfterFirstMeaningful(BasicBlock *BB, Module &M) {
   LLVMContext &Ctx = M.getContext();
-  FunctionCallee KAssume = seqra_trace::getKleeAssume(M);
+  FunctionCallee KSilentExit = seqra_trace::getKleeSilentExit(M);
   Instruction *Terminator = BB->getTerminator();
 
   Instruction *FirstMeaningful = nullptr;
@@ -186,7 +186,7 @@ void insertAssumeFalseAfterFirstMeaningful(BasicBlock *BB, Module &M) {
   } else {
     B.SetInsertPoint(FirstMeaningful->getNextNode());
   }
-  seqra_trace::emitKleeAssumeEq(B, KAssume, ConstantInt::getFalse(Ctx));
+  seqra_trace::emitKleeSilentExit(B, KSilentExit, 0);
 }
 
 bool trySelectFullTrace(const trace::Trace &Pb, const Function *F,
@@ -264,8 +264,6 @@ bool runTraceGuidePass(Module &M, const trace::Trace &Pb) {
   }
 
   DenseMap<uint64_t, Instruction *> OpTab = seqra_trace::makeOpIndex(*F);
-  LLVMContext &Ctx = M.getContext();
-  FunctionCallee KAssert = seqra_trace::getKleeAssert(M);
 
   for (size_t I = 0; I + 1 < Path.size(); ++I) {
     uint32_t U = Path[I];
@@ -283,8 +281,8 @@ bool runTraceGuidePass(Module &M, const trace::Trace &Pb) {
 
     BasicBlock *ParentU = Iu->getParent();
     if (ParentU->getTerminator() != Iu) {
-      // Not a block terminator; trace step may be intra-block — no assume
-      // insertion for alternate CFG targets.
+      // Not a block terminator; trace step may be intra-block — no
+      // klee_silent_exit pruning for alternate CFG targets.
       continue;
     }
 
@@ -301,13 +299,13 @@ bool runTraceGuidePass(Module &M, const trace::Trace &Pb) {
       BasicBlock *Pred = SuccBB->getSinglePredecessor();
       if (Pred != ParentU) {
         errs()
-            << "traceguide: skip klee_assume(false) for block; not single "
+            << "traceguide: skip klee_silent_exit(0) for block; not single "
                "pred from terminator parent (entry edge "
             << U << " -> " << V << ")\n";
         continue;
       }
 
-      insertAssumeFalseAfterFirstMeaningful(SuccBB, M);
+      insertSilentExitAfterFirstMeaningful(SuccBB, M);
     }
   }
 
@@ -329,7 +327,7 @@ bool runTraceGuidePass(Module &M, const trace::Trace &Pb) {
 
   if (!SourceEntry) {
     errs() << "traceguide: warning: no KIND_SOURCE_START on path; skipping "
-              "klee_assert marker\n";
+              "klee_abort marker\n";
     return true;
   }
 
@@ -351,6 +349,8 @@ bool runTraceGuidePass(Module &M, const trace::Trace &Pb) {
   }
 
   {
+    LLVMContext &Ctx = M.getContext();
+    FunctionCallee KAbort = seqra_trace::getKleeAbort(M);
     IRBuilder<> B(Ctx);
     if (InsertBeforeSrcInsn)
       B.SetInsertPoint(SrcInsn);
@@ -358,7 +358,7 @@ bool runTraceGuidePass(Module &M, const trace::Trace &Pb) {
       B.SetInsertPoint(Next);
     else
       B.SetInsertPoint(SrcInsn->getParent()->getTerminator());
-    seqra_trace::emitKleeAssertTrue(B, KAssert, ConstantInt::getTrue(Ctx));
+    seqra_trace::emitKleeAbort(B, KAbort);
   }
 
   return true;

@@ -32,6 +32,7 @@ object KleeCirSeAnalyzer : CirSeAnalyzer {
 
             val out = proc.inputStream.bufferedReader().readText()
             val rc = proc.waitFor()
+            out.
             logger.info { "cir-klee exit=$rc\n$out" }
             return rc == 0
         } finally {

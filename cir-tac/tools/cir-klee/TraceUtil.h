@@ -37,13 +37,12 @@ void successorsOf(const trace::method::FullTrace &Ft, uint32_t U,
 void bfsReachable(const trace::method::FullTrace &Ft,
                   llvm::DenseSet<uint32_t> &Reach);
 
-llvm::FunctionCallee getKleeAssume(llvm::Module &M);
-llvm::FunctionCallee getKleeAssert(llvm::Module &M);
+llvm::FunctionCallee getKleeSilentExit(llvm::Module &M);
+llvm::FunctionCallee getKleeAbort(llvm::Module &M);
 
-void emitKleeAssumeEq(llvm::IRBuilder<> &B, llvm::FunctionCallee KAssume,
-                      llvm::Value *CondI1);
+void emitKleeSilentExit(llvm::IRBuilder<> &B,
+                        llvm::FunctionCallee KSilentExit, int Status);
 
-void emitKleeAssertTrue(llvm::IRBuilder<> &B, llvm::FunctionCallee KAssert,
-                        llvm::Value *CondI1);
+void emitKleeAbort(llvm::IRBuilder<> &B, llvm::FunctionCallee KAbort);
 
 } // namespace seqra_trace
