@@ -39,10 +39,18 @@ void bfsReachable(const trace::method::FullTrace &Ft,
 
 llvm::FunctionCallee getKleeSilentExit(llvm::Module &M);
 llvm::FunctionCallee getKleeAbort(llvm::Module &M);
+llvm::FunctionCallee getKleeAssume(llvm::Module &M);
 
 void emitKleeSilentExit(llvm::IRBuilder<> &B,
                         llvm::FunctionCallee KSilentExit, int Status);
 
 void emitKleeAbort(llvm::IRBuilder<> &B, llvm::FunctionCallee KAbort);
+
+/// KLEE runtime: `void klee_assume(int cond);` — pass i1 zext to i32.
+void emitKleeAssumeI1(llvm::IRBuilder<> &B, llvm::FunctionCallee KAssume,
+                      llvm::Value *CondI1);
+
+void emitKleeAssumePtrEq(llvm::IRBuilder<> &B, llvm::FunctionCallee KAssume,
+                         llvm::Value *PtrA, llvm::Value *PtrB);
 
 } // namespace seqra_trace

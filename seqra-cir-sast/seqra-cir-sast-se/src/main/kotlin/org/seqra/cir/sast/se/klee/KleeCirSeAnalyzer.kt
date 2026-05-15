@@ -20,17 +20,18 @@ object KleeCirSeAnalyzer : CirSeAnalyzer {
         try {
             Files.write(pbFile, trace.serialize())
 
-            val proc = ProcessBuilder(
-                buildList {
-                    add(cirKlee)
-                    cirFiles.forEach { add(it.toAbsolutePath().toString()) }
-                    add(pbFile.toAbsolutePath().toString())
-                },
-            )
+            val command = buildList {
+                add(cirKlee)
+                cirFiles.forEach { add(it.toAbsolutePath().toString()) }
+                add(pbFile.toAbsolutePath().toString())
+            }
+
+            val proc = ProcessBuilder(command)
                 .redirectErrorStream(true)
                 .start()
 
             val out = proc.inputStream.bufferedReader().readText()
+            proc.waitFor()
             // Sink reached flag
             val rc = out.contains("abort failure")
             logger.info { "cir-klee exit=$rc\n$out" }

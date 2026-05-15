@@ -3,6 +3,7 @@
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Metadata.h"
@@ -116,6 +117,26 @@ void emitKleeSilentExit(IRBuilder<> &B, FunctionCallee KSilentExit,
 
 void emitKleeAbort(IRBuilder<> &B, FunctionCallee KAbort) {
   B.CreateCall(KAbort, {});
+}
+
+FunctionCallee getKleeAssume(Module &M) {
+  LLVMContext &Ctx = M.getContext();
+  Type *I32 = IntegerType::getInt32Ty(Ctx);
+  FunctionType *FT =
+      FunctionType::get(Type::getVoidTy(Ctx), {I32}, false);
+  return M.getOrInsertFunction("klee_assume", FT);
+}
+
+void emitKleeAssumeI1(IRBuilder<> &B, FunctionCallee KAssume, Value *CondI1) {
+  LLVMContext &Ctx = B.getContext();
+  Value *Ext = B.CreateZExt(CondI1, IntegerType::getInt32Ty(Ctx));
+  B.CreateCall(KAssume, {Ext});
+}
+
+void emitKleeAssumePtrEq(IRBuilder<> &B, FunctionCallee KAssume, Value *PtrA,
+                         Value *PtrB) {
+  Value *Eq = B.CreateICmpEQ(PtrA, PtrB);
+  emitKleeAssumeI1(B, KAssume, Eq);
 }
 
 } // namespace seqra_trace

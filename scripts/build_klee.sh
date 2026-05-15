@@ -61,5 +61,7 @@ cmake -DENABLE_TCMALLOC=ON \
       -B "$KLEE_BUILD" -S "$KLEE_SOURCE"
 cmake --build "$KLEE_BUILD"
 if [[ -n "$KLEE_BIN_DEST" ]]; then
+  mkdir -p "$KLEE_BIN_DEST"
   cp "${KLEE_BUILD}/bin/klee" "$KLEE_BIN_DEST"
+  cp "${STP_INSTALL_PREFIX}"/lib/libstp.so* "$KLEE_BIN_DEST"/
 fi

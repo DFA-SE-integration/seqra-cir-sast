@@ -1,11 +1,13 @@
 #include "cir-tac/CirToLlvmIr.h"
 #include "cir-tac/Llvm16Compat.h"
 #include "cir-tac/StampSeqraOpIdsForTraceGuide.h"
+#include "TraceAssertPass.h"
 #include "TraceGuidePass.h"
 #include "proto/trace.pb.h"
 
 #include <clang/CIR/Dialect/IR/CIRDialect.h>
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -41,6 +43,30 @@ struct TempPath {
       llvm::sys::fs::remove(Path);
   }
 };
+
+/// KLEE `--output-dir` under a uniquely named subdirectory; removed on exit unless
+/// `Preserve` is set (typically from `CIR_KLEE_KEEP_OUTPUT`).
+struct TempDir {
+  llvm::SmallString<256> Path;
+  bool Valid = false;
+  bool Preserve = false;
+
+  ~TempDir() {
+    if (!Valid || Preserve)
+      return;
+    llvm::sys::fs::remove_directories(Path, /* IgnoreErrors=*/true);
+  }
+};
+
+static bool cirKleeKeepOutputEnv() {
+  const char *Raw = std::getenv("CIR_KLEE_KEEP_OUTPUT");
+  if (!Raw || !Raw[0])
+    return false;
+  llvm::StringRef S(Raw);
+  S = S.trim();
+  return S.equals_insensitive("1") || S.equals_insensitive("true") ||
+         S.equals_insensitive("yes") || S.equals_insensitive("on");
+}
 
 static bool cirFuncHasBody(cir::FuncOp f) { return !f.getFunctionBody().empty(); }
 
@@ -95,7 +121,9 @@ int main(int argc, char **argv) {
   if (argc < 3) {
     llvm::errs() << "usage: cir-klee <input.cir> [<more.cir>...] <trace.pb>\n"
                     "  Lowers CIR to LLVM IR, assembles with llvm-as-16, runs "
-                    "KLEE (--output-dir=/dev/null).\n"
+                    "KLEE in a temporary output directory removed after the run.\n"
+                    "  Set CIR_KLEE_KEEP_OUTPUT=1 to preserve that directory for "
+                    "debugging.\n"
                     "  Extra .cir files are merged into the first (Juliet _a + "
                     "_b split).\n"
                     "  Entry point is taken from trace.entry_point_name. "
@@ -176,6 +204,11 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  if (!runTraceAssertPass(*LlvmMod, Pb)) {
+    llvm::errs() << "error: TraceAssertPass failed\n";
+    return 1;
+  }
+
   TempPath LlTmp;
   if (std::error_code EC =
           llvm::sys::fs::createTemporaryFile("cirklee", "ll", LlTmp.Path)) {
@@ -209,17 +242,48 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  TempDir KleeOutDir;
+  KleeOutDir.Preserve = cirKleeKeepOutputEnv();
+  if (std::error_code EC =
+          llvm::sys::fs::createUniqueDirectory("cir-klee-output", KleeOutDir.Path)) {
+    llvm::errs() << "error: createUniqueDirectory(KLEE output): "
+                  << EC.message() << "\n";
+    return 1;
+  }
+  if (std::error_code EC =
+          llvm::sys::fs::remove_directories(KleeOutDir.Path, /*IgnoreErrors=*/false)) {
+    llvm::errs() << "error: remove placeholder KLEE output dir: "
+                  << EC.message() << "\n";
+    return 1;
+  }
+  KleeOutDir.Valid = true;
+  if (KleeOutDir.Preserve)
+    llvm::errs() << "cir-klee: preserving KLEE output dir: " << KleeOutDir.Path
+                 << "\n";
+
+  std::string OutputDirArg =
+      std::string("--output-dir=") + std::string(KleeOutDir.Path);
   std::string EntryArg = std::string("--entry-point=") + EntryName;
   std::vector<std::string> Storage;
-  Storage.reserve(4);
+  Storage.reserve(5);
   Storage.push_back(std::string(llvm::sys::path::filename(KleeBin)));
-//  Storage.push_back("--output-dir=/dev/null");
+  Storage.push_back(std::move(OutputDirArg));
   Storage.push_back(std::move(EntryArg));
   Storage.push_back(std::string(llvm::StringRef(BcTmp.Path)));
 
   llvm::SmallVector<llvm::StringRef, 8> Args;
   for (auto &S : Storage)
     Args.push_back(S);
+
+  llvm::SmallString<256> KleeLibDir(llvm::sys::path::parent_path(KleeBin));
+  std::string NewLdLibraryPath = KleeLibDir.str().str() + ":/usr/local/lib";
+  if (const char *ExistingLd = std::getenv("LD_LIBRARY_PATH")) {
+    if (*ExistingLd) {
+      NewLdLibraryPath += ":";
+      NewLdLibraryPath += ExistingLd;
+    }
+  }
+  setenv("LD_LIBRARY_PATH", NewLdLibraryPath.c_str(), 1);
 
   std::string ExecErr;
   int RC = llvm::sys::ExecuteAndWait(KleeBin, Args, std::nullopt, {}, 0, 0,

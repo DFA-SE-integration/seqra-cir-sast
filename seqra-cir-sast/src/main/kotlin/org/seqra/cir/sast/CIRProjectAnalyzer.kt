@@ -33,9 +33,9 @@ object CIRProjectAnalyzer {
             // yields no summary trace, while the real UAF at `printLine` resolves fine.
             return loaded.analyzer.analyzeWithIfds(listOf(entryFn)).filter { vwt ->
                 val t = vwt.trace ?: return@filter false
-                t.sourceToSinkTrace.startNodes.isNotEmpty() &&
-                    t.sourceToSinkTrace.sinkNodes.isNotEmpty() &&
-                        KleeCirSeAnalyzer.verifyTrace(vwt, cirPaths)
+                val hasTraceNodes = t.sourceToSinkTrace.startNodes.isNotEmpty() &&
+                    t.sourceToSinkTrace.sinkNodes.isNotEmpty()
+                hasTraceNodes && KleeCirSeAnalyzer.verifyTrace(vwt, cirPaths)
             }.toList()
         }
     }

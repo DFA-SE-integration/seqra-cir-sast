@@ -6,4 +6,4 @@ namespace llvm {
 class Module;
 }
 
-bool runTraceAssertPass(llvm::Module &M, /*Trace pb */);
+bool runTraceAssertPass(llvm::Module &M, const trace::Trace &Pb);
