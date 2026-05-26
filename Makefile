@@ -187,8 +187,14 @@ build: .seqra-cir-sast
 	cd seqra-cir-sast && GRADLE_OPTS="-Xmx4g -Dkotlin.daemon.jvm.options=-Xmx3g" ./gradlew --no-daemon --max-workers=1 -Dkotlin.compiler.execution.strategy=in-process clean build && \
 	cd "$(ROOT)" && touch $@
 
-test-dfa: docker_check build
-	cd seqra-cir-sast && ./gradlew :seqra-cir-sast-dataflow:test
+# ATTENTION: 8GB heap not enough to generate traces for all samples
+test-dfa-bad: docker_check build
+	cd seqra-cir-sast && ./gradlew :seqra-cir-sast-dataflow:test --rerun-tasks \
+		--tests org.seqra.cir.sast.dataflow.CWE416UseAfterFreeBadEntrypointsTest
+
+test-dfa-good: docker_check build
+	cd seqra-cir-sast && ./gradlew :seqra-cir-sast-dataflow:test --rerun-tasks \
+		--tests org.seqra.cir.sast.dataflow.CWE416UseAfterFreeGoodEntrypointsTest
 
 test-alias: docker_check build
 	cd seqra-cir-sast && ./gradlew :seqra-cir-sast-dataflow:test \
@@ -202,7 +208,7 @@ test-bad: docker_check build
 	cd seqra-cir-sast && ./gradlew :test \
 		--tests org.seqra.cir.sast.CWE416UseAfterFreeBadEntrypointsTest
 
-test-bad: docker_check build
+test-good: docker_check build
 	cd seqra-cir-sast && SEQRA_CWE416_FIXTURE_FILTER=malloc_free_char_09 ./gradlew :test \
 		--tests org.seqra.cir.sast.CWE416UseAfterFreeGoodEntrypointsTest
 
