@@ -95,7 +95,12 @@ bool resolveFactAp(IRBuilder<> &B, Function *F,
     case ap::APAccessor::kFinalAcc:
       break;
     case ap::APAccessor::kRefAcc:
-      Cur = B.CreateLoad(PointerType::getUnqual(B.getContext()), Cur);
+      // Dereferencing the tracked pointer at runtime would force KLEE to load
+      // through a potentially-freed address — a UAF source — which fires its
+      // own *.ptr.err before our `klee_abort` can run. The trace's `.&`
+      // accessor models alias relationship between SSA values, not value
+      // identity; equality on the pointer values themselves is the correct
+      // KLEE-level constraint.
       break;
     default:
       return false;
@@ -139,6 +144,44 @@ bool traceEntryHasMatchingMethodInitial(const trace::method::TraceEntry &Te,
   return false;
 }
 
+bool insertKleeAbortAfterTraceEntry(
+    Module &M, Function *F, const trace::method::FullTrace &Ft,
+    uint32_t EntryId, const DenseMap<uint64_t, Instruction *> &OpTab) {
+  auto ItEntry = Ft.id_to_trace_entry().find(EntryId);
+  if (ItEntry == Ft.id_to_trace_entry().end()) {
+    errs() << "traceassert: sink entry id " << EntryId
+           << " not in id_to_trace_entry\n";
+    return false;
+  }
+  const auto &Te = ItEntry->second;
+  trace::method::TraceEntry::Kind Kind = Te.kind();
+  if (Kind != trace::method::TraceEntry::KIND_FINAL &&
+      Kind != trace::method::TraceEntry::KIND_UNSPECIFIED) {
+    errs() << "traceassert: warning: sink marker entry " << EntryId
+           << " is not KIND_FINAL; inserting klee_abort anyway\n";
+  }
+
+  Instruction *SinkInsn =
+      seqra_trace::lookupInsn(OpTab, seqra_trace::traceOpIdFromEntry(Te));
+  if (!SinkInsn || SinkInsn->getFunction() != F)
+    SinkInsn = seqra_trace::traceGetInsnForTraceEntry(Ft, EntryId, OpTab, F);
+  if (!SinkInsn || SinkInsn->getFunction() != F) {
+    errs() << "traceassert: could not lookup llvm instruction for sink entry "
+           << EntryId << "\n";
+    return false;
+  }
+
+  LLVMContext &Ctx = M.getContext();
+  FunctionCallee KAbort = seqra_trace::getKleeAbort(M);
+  IRBuilder<> B(Ctx);
+  if (Instruction *Next = SinkInsn->getNextNode())
+    B.SetInsertPoint(Next);
+  else
+    B.SetInsertPoint(SinkInsn->getParent()->getTerminator());
+  seqra_trace::emitKleeAbort(B, KAbort);
+  return true;
+}
+
 } // namespace
 
 bool runTraceAssertPass(Module &M, const trace::Trace &Pb) {
@@ -154,15 +197,16 @@ bool runTraceAssertPass(Module &M, const trace::Trace &Pb) {
     return false;
   const trace::method::FullTrace &StartFt = *StartFtPtr;
 
-  DenseSet<uint32_t> Reach;
-  seqra_trace::traceReachableFromStart(StartFt, Reach);
-  DenseMap<uint32_t, SmallVector<uint32_t, 4>> Preds;
-  seqra_trace::traceBuildPredecessorMap(StartFt, Preds);
   std::vector<uint32_t> Path;
-  if (!seqra_trace::traceBuildPathFwd(StartFt, Reach, Preds, Path)) {
+  if (!seqra_trace::traceBuildPathFwd(StartFt, Path)) {
     errs() << "traceassert: could not reconstruct start_nodes path\n";
     return false;
   }
+
+  const trace::method::FullTrace *SinkFtPtr = nullptr;
+  if (!seqra_trace::traceTrySelectSinkFullTrace(Pb, F, &SinkFtPtr))
+    return false;
+  const trace::method::FullTrace &SinkFt = *SinkFtPtr;
 
   DenseMap<uint64_t, Instruction *> OpTab = seqra_trace::makeOpIndex(*F);
   LLVMContext &Ctx = M.getContext();
@@ -307,6 +351,10 @@ bool runTraceAssertPass(Module &M, const trace::Trace &Pb) {
     errs() << "traceassert: never initialized freed pointer (no source?)\n";
     return false;
   }
+
+  uint32_t SinkFinalId = SinkFt.final_entry_id();
+  if (!insertKleeAbortAfterTraceEntry(M, F, SinkFt, SinkFinalId, OpTab))
+    return false;
 
   return true;
 }

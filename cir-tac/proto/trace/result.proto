@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package trace;
+
+option java_package = "org.seqra.cir.sast.dataflow.proto.trace";
+option java_multiple_files = true;
+
+// Result of one `cir-klee` invocation. Written by cir-klee when `--result=<path>`
+// is supplied; read by KleeCirSeAnalyzer. Replaces the previous fragile stdout
+// regex on `"abort failure"`.
+message KleeResult {
+  // True iff KLEE hit the `klee_abort()` inserted at the trace's sink — i.e.
+  // a concrete realizable path from source to sink exists.
+  bool trace_confirmed = 1;
+
+  // Per-stage wall-clock timings (ms). Zero if the stage did not run.
+  double cir_to_llvm_ms = 2;
+  double trace_guide_ms = 3;
+  double trace_assert_ms = 4;
+  double llvm_as_ms = 5;
+  double klee_ms = 6;
+
+  // KLEE statistics parsed from `<output-dir>/info`. Zero if parsing failed.
+  uint64 klee_instructions = 7;
+  uint64 klee_completed_paths = 8;
+  uint64 klee_explored_paths = 9;
+
+  // For debugging: absolute paths to `*.abort.err` files KLEE produced. Only
+  // populated when `CIR_KLEE_KEEP_OUTPUT=1` keeps the run dir around.
+  repeated string klee_abort_files = 10;
+}

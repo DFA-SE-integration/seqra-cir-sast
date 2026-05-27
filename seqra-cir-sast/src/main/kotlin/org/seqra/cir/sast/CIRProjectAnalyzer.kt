@@ -1,13 +1,15 @@
 package org.seqra.cir.sast
 
 import org.seqra.cir.sast.dataflow.CIRTaintAnalyzer
-import org.seqra.cir.sast.se.klee.KleeCirSeAnalyzer
+import org.seqra.cir.sast.se.api.CirSeAnalyzer
 import org.seqra.dataflow.ap.ifds.trace.VulnerabilityWithTrace
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.use
 
 object CIRProjectAnalyzer {
+    private val seAnalyzer: CirSeAnalyzer by lazy { CirSeAnalyzer.fromEnv() }
+
     private val julietInterfileSplitEntryPattern = Regex("""^(.*)_(62|63|64)a\.cir$""")
 
     /** Juliet `_Na.cir` + `_Nb.cir` split: load companion so IFDS sees malloc/free bodies. */
@@ -35,7 +37,7 @@ object CIRProjectAnalyzer {
                 val t = vwt.trace ?: return@filter false
                 val hasTraceNodes = t.sourceToSinkTrace.startNodes.isNotEmpty() &&
                     t.sourceToSinkTrace.sinkNodes.isNotEmpty()
-                hasTraceNodes && KleeCirSeAnalyzer.verifyTrace(vwt, cirPaths)
+                hasTraceNodes && seAnalyzer.verifyTrace(vwt, cirPaths)
             }.toList()
         }
     }

@@ -11,7 +11,12 @@ message MLIRModuleID {
 
 message CIRFunctionID {
   MLIRModuleID module_id = 1;
+  // Persisted CIR function id (`CIRFunctionID.id`) — used by IFDS for fact lookups,
+  // can differ from the LLVM symbol (e.g. mangled C++ vs. unmangled testcase wrapper).
   string id = 2;
+  // LLVM symbol (`CIRFunction.name` == `cir.func` symName) — what `Module::getFunction`
+  // resolves. Always populated for trace nodes that cir-klee needs to match.
+  string name = 3;
 }
 
 message MLIROpID {

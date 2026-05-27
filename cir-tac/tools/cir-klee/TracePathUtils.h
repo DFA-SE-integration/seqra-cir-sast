@@ -21,15 +21,8 @@ uint64_t traceOpIdFromEntry(const trace::method::TraceEntry &E);
 void traceReachableFromStart(const trace::method::FullTrace &Ft,
                              llvm::DenseSet<uint32_t> &Reach);
 
-bool traceBuildPredecessorMap(
-    const trace::method::FullTrace &Ft,
-    llvm::DenseMap<uint32_t, llvm::SmallVector<uint32_t, 4>> &Preds);
-
-bool traceBuildPathFwd(
-    const trace::method::FullTrace &Ft,
-    const llvm::DenseSet<uint32_t> &Reach,
-    const llvm::DenseMap<uint32_t, llvm::SmallVector<uint32_t, 4>> &Preds,
-    std::vector<uint32_t> &OutPath);
+bool traceBuildPathFwd(const trace::method::FullTrace &Ft,
+                       std::vector<uint32_t> &OutPath);
 
 bool tracePathHasSourceStart(
     const trace::method::FullTrace &Ft,

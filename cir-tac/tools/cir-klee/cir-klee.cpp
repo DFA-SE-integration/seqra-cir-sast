@@ -3,6 +3,7 @@
 #include "cir-tac/StampSeqraOpIdsForTraceGuide.h"
 #include "TraceAssertPass.h"
 #include "TraceGuidePass.h"
+#include "proto/result.pb.h"
 #include "proto/trace.pb.h"
 
 #include <clang/CIR/Dialect/IR/CIRDialect.h>
@@ -26,13 +27,25 @@
 
 #include <chrono>
 #include <cstdlib>
+#include <cstdio>
+#include <cstring>
 #include <fstream>
+#include <regex>
 #include <string>
 #include <vector>
 
 namespace {
 
-static constexpr llvm::StringLiteral kLlvmAs = "/usr/bin/llvm-as-16";
+using Clock = std::chrono::steady_clock;
+template <typename T0, typename T1> double ms(T0 a, T1 b) {
+  return std::chrono::duration<double, std::milli>(b - a).count();
+}
+
+static std::string resolveLlvmAs() {
+  if (const char *E = std::getenv("LLVM_AS_16_BIN"); E && *E)
+    return std::string(E);
+  return "/usr/bin/llvm-as-16";
+}
 
 struct TempPath {
   llvm::SmallString<256> Path;
@@ -115,25 +128,107 @@ static bool mergeExtraModuleIntoPrimary(mlir::ModuleOp primary,
   return true;
 }
 
+// Parse the human-readable `<output-dir>/info` file KLEE writes. The format is
+// "Key = Value" or "Key: Value" lines; we look for instruction / path counters
+// using forgiving regexes (the field names vary slightly across KLEE versions).
+static void parseKleeInfo(llvm::StringRef OutputDir, trace::KleeResult &Result) {
+  llvm::SmallString<256> InfoPath(OutputDir);
+  llvm::sys::path::append(InfoPath, "info");
+  std::ifstream In(InfoPath.c_str());
+  if (!In)
+    return;
+
+  static const std::regex InstrRe(R"(^\s*(?:KLEE:\s+done:\s+)?(?:total\s+)?[Ii]nstructions\s*[:=]\s*([0-9]+))");
+  static const std::regex CompletedRe(R"(^\s*(?:KLEE:\s+done:\s+)?[Cc]ompleted\s+paths\s*[:=]\s*([0-9]+))");
+  static const std::regex ExploredRe(R"(^\s*(?:KLEE:\s+done:\s+)?[Ee]xplored\s+paths\s*[:=]\s*([0-9]+))");
+
+  std::string Line;
+  while (std::getline(In, Line)) {
+    std::smatch M;
+    if (Result.klee_instructions() == 0 && std::regex_search(Line, M, InstrRe))
+      Result.set_klee_instructions(std::stoull(M[1].str()));
+    if (Result.klee_completed_paths() == 0 && std::regex_search(Line, M, CompletedRe))
+      Result.set_klee_completed_paths(std::stoull(M[1].str()));
+    if (Result.klee_explored_paths() == 0 && std::regex_search(Line, M, ExploredRe))
+      Result.set_klee_explored_paths(std::stoull(M[1].str()));
+  }
+}
+
+// Detect `klee_abort()` reachability via the `*.abort.err` files KLEE drops in
+// its output directory. More robust than scraping stdout.
+static void collectKleeAbortFiles(llvm::StringRef OutputDir,
+                                  trace::KleeResult &Result) {
+  std::error_code EC;
+  for (llvm::sys::fs::directory_iterator It(OutputDir, EC), End;
+       It != End && !EC; It.increment(EC)) {
+    llvm::StringRef Name = llvm::sys::path::filename(It->path());
+    if (Name.ends_with(".abort.err"))
+      Result.add_klee_abort_files(It->path());
+  }
+  Result.set_trace_confirmed(Result.klee_abort_files_size() > 0);
+}
+
+static bool writeResult(const std::string &Path, const trace::KleeResult &R) {
+  std::ofstream Out(Path, std::ios::binary | std::ios::trunc);
+  if (!Out)
+    return false;
+  return R.SerializeToOstream(&Out);
+}
+
+struct Args {
+  std::vector<std::string> Cir;
+  std::string TracePb;
+  std::string ResultPath;
+  bool NoTraceGuide = false;
+  bool ParseOk = false;
+};
+
+static Args parseArgs(int argc, char **argv) {
+  Args A;
+  std::vector<std::string> Positional;
+  for (int i = 1; i < argc; ++i) {
+    llvm::StringRef Arg(argv[i]);
+    if (Arg.starts_with("--result=")) {
+      A.ResultPath = Arg.drop_front(strlen("--result=")).str();
+      continue;
+    }
+    if (Arg == "--no-trace-guide") {
+      A.NoTraceGuide = true;
+      continue;
+    }
+    Positional.push_back(argv[i]);
+  }
+  if (Positional.size() < 2)
+    return A;
+  A.TracePb = Positional.back();
+  Positional.pop_back();
+  A.Cir = std::move(Positional);
+  A.ParseOk = true;
+  return A;
+}
+
 } // namespace
 
 int main(int argc, char **argv) {
-  if (argc < 3) {
+  Args A = parseArgs(argc, argv);
+  if (!A.ParseOk) {
     llvm::errs() << "usage: cir-klee <input.cir> [<more.cir>...] <trace.pb>\n"
-                    "  Lowers CIR to LLVM IR, assembles with llvm-as-16, runs "
-                    "KLEE in a temporary output directory removed after the run.\n"
-                    "  Set CIR_KLEE_KEEP_OUTPUT=1 to preserve that directory for "
-                    "debugging.\n"
-                    "  Extra .cir files are merged into the first (Juliet _a + "
-                    "_b split).\n"
-                    "  Entry point is taken from trace.entry_point_name. "
-                    "Requires KLEE_BIN in the environment.\n";
+                    "  Options:\n"
+                    "    --result=<path>      Write a serialized trace.KleeResult here.\n"
+                    "    --no-trace-guide     Skip TraceGuidePass (still runs TraceAssertPass\n"
+                    "                         so klee_abort is inserted at the sink).\n"
+                    "  Lowers CIR to LLVM IR, assembles with llvm-as-16, runs\n"
+                    "  KLEE in a temporary output directory removed after the run.\n"
+                    "  Set CIR_KLEE_KEEP_OUTPUT=1 to preserve that directory for\n"
+                    "  debugging. Extra .cir files are merged into the first\n"
+                    "  (Juliet _a + _b split). Entry point is taken from\n"
+                    "  trace.entry_point_name. Requires KLEE_BIN in the environment.\n";
     return 2;
   }
 
   trace::Trace Pb;
   {
-    std::ifstream In(argv[argc - 1], std::ios::binary);
+    std::ifstream In(A.TracePb, std::ios::binary);
     if (!In || !Pb.ParseFromIstream(&In)) {
       llvm::errs() << "error: failed to parse trace.pb\n";
       return 1;
@@ -152,6 +247,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  trace::KleeResult Result;
+
   mlir::MLIRContext Context;
   mlir::DialectRegistry Registry;
   Registry.insert<cir::CIRDialect, mlir::DLTIDialect, mlir::LLVM::LLVMDialect,
@@ -161,29 +258,31 @@ int main(int argc, char **argv) {
 
   mlir::ParserConfig ParseConfig(&Context);
   auto OwningModule =
-      mlir::parseSourceFile<mlir::ModuleOp>(argv[1], ParseConfig);
+      mlir::parseSourceFile<mlir::ModuleOp>(A.Cir.front(), ParseConfig);
   if (!OwningModule) {
     llvm::errs() << "error: failed to parse CIR module\n";
     return 1;
   }
 
-  for (int i = 2; i < argc - 1; ++i) {
-    auto Extra = mlir::parseSourceFile<mlir::ModuleOp>(argv[i], ParseConfig);
+  for (size_t i = 1; i < A.Cir.size(); ++i) {
+    auto Extra = mlir::parseSourceFile<mlir::ModuleOp>(A.Cir[i], ParseConfig);
     if (!Extra) {
-      llvm::errs() << "error: failed to parse CIR module: " << argv[i] << "\n";
+      llvm::errs() << "error: failed to parse CIR module: " << A.Cir[i] << "\n";
       return 1;
     }
     if (!mergeExtraModuleIntoPrimary(*OwningModule, *Extra)) {
-      llvm::errs() << "error: failed to merge CIR module: " << argv[i] << "\n";
+      llvm::errs() << "error: failed to merge CIR module: " << A.Cir[i] << "\n";
       return 1;
     }
   }
-  if (argc > 3)
-    llvm::errs() << "cir-klee: merged " << (argc - 3) << " extra CIR module(s)\n";
+  if (A.Cir.size() > 1)
+    llvm::outs() << "cir-klee: merged " << (A.Cir.size() - 1)
+                 << " extra CIR module(s)\n";
 
   stampSeqraOpIdsForTraceGuide(*OwningModule);
 
   llvm::LLVMContext LlvmCtx;
+  auto CirToLlvmT0 = Clock::now();
   std::unique_ptr<llvm::Module> LlvmMod =
       lowerCirToLlvmIr(*OwningModule, LlvmCtx);
   if (!LlvmMod) {
@@ -191,22 +290,48 @@ int main(int argc, char **argv) {
     return 1;
   }
   prepareLlvmModuleForLlvm16(*LlvmMod);
+  Result.set_cir_to_llvm_ms(ms(CirToLlvmT0, Clock::now()));
 
-  auto TraceGuideT0 = std::chrono::steady_clock::now();
-  bool TraceGuideOk = runTraceGuidePass(*LlvmMod, Pb);
-  auto TraceGuideT1 = std::chrono::steady_clock::now();
-  using std::chrono::duration;
-  double TraceGuideMs =
-      duration<double, std::milli>(TraceGuideT1 - TraceGuideT0).count();
-  llvm::errs() << "runTraceGuidePass: " << TraceGuideMs << " ms\n";
-  if (!TraceGuideOk) {
-    llvm::errs() << "error: TraceGuidePass failed\n";
+  if (!LlvmMod->getFunction(EntryName)) {
+    llvm::errs() << "error: entry_point_name '" << EntryName
+                 << "' not found in lowered LLVM module. Available named "
+                    "functions (first 32):\n";
+    unsigned Shown = 0;
+    for (llvm::Function &Fn : *LlvmMod) {
+      if (Fn.isDeclaration() || Fn.getName().empty())
+        continue;
+      llvm::errs() << "  " << Fn.getName() << "\n";
+      if (++Shown >= 32) {
+        llvm::errs() << "  ...\n";
+        break;
+      }
+    }
     return 1;
   }
 
-  if (!runTraceAssertPass(*LlvmMod, Pb)) {
-    llvm::errs() << "error: TraceAssertPass failed\n";
-    return 1;
+  if (!A.NoTraceGuide) {
+    auto T0 = Clock::now();
+    bool Ok = runTraceGuidePass(*LlvmMod, Pb);
+    Result.set_trace_guide_ms(ms(T0, Clock::now()));
+    llvm::outs() << "runTraceGuidePass: " << Result.trace_guide_ms() << " ms\n";
+    if (!Ok) {
+      llvm::errs() << "error: TraceGuidePass failed\n";
+      return 1;
+    }
+  } else {
+    llvm::outs() << "cir-klee: --no-trace-guide, skipping TraceGuidePass\n";
+  }
+
+  {
+    auto T0 = Clock::now();
+    bool Ok = runTraceAssertPass(*LlvmMod, Pb);
+    Result.set_trace_assert_ms(ms(T0, Clock::now()));
+    llvm::outs() << "runTraceAssertPass: " << Result.trace_assert_ms()
+                 << " ms\n";
+    if (!Ok) {
+      llvm::errs() << "error: TraceAssertPass failed\n";
+      return 1;
+    }
   }
 
   TempPath LlTmp;
@@ -236,10 +361,16 @@ int main(int argc, char **argv) {
   }
   BcTmp.Valid = true;
 
-  std::string LlvmAsErr;
-  if (!runLlvmAs(kLlvmAs, LlTmp.Path, BcTmp.Path, LlvmAsErr)) {
-    llvm::errs() << "error: llvm-as: " << LlvmAsErr << "\n";
-    return 1;
+  {
+    auto T0 = Clock::now();
+    std::string LlvmAsErr;
+    std::string LlvmAsBin = resolveLlvmAs();
+    bool Ok = runLlvmAs(LlvmAsBin, LlTmp.Path, BcTmp.Path, LlvmAsErr);
+    Result.set_llvm_as_ms(ms(T0, Clock::now()));
+    if (!Ok) {
+      llvm::errs() << "error: llvm-as: " << LlvmAsErr << "\n";
+      return 1;
+    }
   }
 
   TempDir KleeOutDir;
@@ -258,7 +389,7 @@ int main(int argc, char **argv) {
   }
   KleeOutDir.Valid = true;
   if (KleeOutDir.Preserve)
-    llvm::errs() << "cir-klee: preserving KLEE output dir: " << KleeOutDir.Path
+    llvm::outs() << "cir-klee: preserving KLEE output dir: " << KleeOutDir.Path
                  << "\n";
 
   std::string OutputDirArg =
@@ -271,9 +402,9 @@ int main(int argc, char **argv) {
   Storage.push_back(std::move(EntryArg));
   Storage.push_back(std::string(llvm::StringRef(BcTmp.Path)));
 
-  llvm::SmallVector<llvm::StringRef, 8> Args;
+  llvm::SmallVector<llvm::StringRef, 8> ExecArgs;
   for (auto &S : Storage)
-    Args.push_back(S);
+    ExecArgs.push_back(S);
 
   llvm::SmallString<256> KleeLibDir(llvm::sys::path::parent_path(KleeBin));
   std::string NewLdLibraryPath = KleeLibDir.str().str() + ":/usr/local/lib";
@@ -286,12 +417,26 @@ int main(int argc, char **argv) {
   setenv("LD_LIBRARY_PATH", NewLdLibraryPath.c_str(), 1);
 
   std::string ExecErr;
-  int RC = llvm::sys::ExecuteAndWait(KleeBin, Args, std::nullopt, {}, 0, 0,
+  auto KleeT0 = Clock::now();
+  int RC = llvm::sys::ExecuteAndWait(KleeBin, ExecArgs, std::nullopt, {}, 0, 0,
                                      &ExecErr);
+  Result.set_klee_ms(ms(KleeT0, Clock::now()));
   if (!ExecErr.empty())
     llvm::errs() << ExecErr << "\n";
 
+  collectKleeAbortFiles(KleeOutDir.Path, Result);
+  parseKleeInfo(KleeOutDir.Path, Result);
+
+  if (!A.ResultPath.empty()) {
+    if (!writeResult(A.ResultPath, Result))
+      llvm::errs() << "warning: failed to write --result=" << A.ResultPath
+                    << "\n";
+  }
+
   if (RC < 0)
     return 1;
-  return RC;
+  // Canonical signal of trace confirmation is the KleeResult file. Exit code 0
+  // means KLEE ran to completion regardless of whether the trace was confirmed
+  // — readers must consult --result=<path>.
+  return 0;
 }

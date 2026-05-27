@@ -71,6 +71,7 @@ private fun serializeCirFunctionId(method: CommonMethod): CIRFunctionID {
     return CIRFunctionID.newBuilder()
         .setModuleId(serializeMlirModuleId(cir.id.moduleID))
         .setId(cir.id.id)
+        .setName(cir.name)
         .build()
 }
 
@@ -128,14 +129,24 @@ private fun serializeProtoTraceKind(kind: MethodTraceResolver.TraceKind): ProtoF
         MethodTraceResolver.TraceKind.SummaryTrace -> ProtoFullTrace.TraceKind.TRACE_KIND_SUMMARY
     }
 
+// Stable key for deterministic protobuf ids. Upstream `trace.successors` is a Map
+// whose iteration order is not contractually fixed; (CIR statement id, entry class)
+// breaks ties without depending on hashCode.
+private fun MethodTraceResolver.TraceEntry.sortKey(): Pair<Long, String> {
+    val cirId = (statement as? CIRInst)?.id?.id ?: Long.MAX_VALUE
+    return cirId to this::class.java.simpleName
+}
+
 private fun orderedFullTraceEntries(trace: MethodTraceResolver.FullTrace): List<MethodTraceResolver.TraceEntry> =
     buildList {
         add(trace.startEntry)
         add(trace.final)
-        trace.successors.forEach { (from, tos) ->
-            add(from)
-            addAll(tos)
-        }
+        trace.successors.entries
+            .sortedWith(compareBy({ it.key.sortKey().first }, { it.key.sortKey().second }))
+            .forEach { (from, tos) ->
+                add(from)
+                addAll(tos.sortedWith(compareBy({ it.sortKey().first }, { it.sortKey().second })))
+            }
     }.distinct()
 
 private fun serializeSourceTraceEdge(edge: MethodTraceResolver.TraceEdge.SourceTraceEdge): SourceTraceEdge =
@@ -340,10 +351,11 @@ private fun serializeProtoTrace(t: TraceResolver.Trace): ProtoTrace {
     val epToStart = t.entryPointToStart ?: notModeled()
     val nameEp = run {
         val s = epToStart.entryPoints.singleOrNull() ?: notModeled()
-        // Align with `serializeCirFunctionId` / LLVM symbol: `name` is CIR `symName`
-        // and can differ from the persisted function id string used in trace MLIROpIDs.
+        // LLVM symbol == CIR `symName` == `CommonMethod.name`. The persisted CIRFunction.id.id
+        // is a different identifier (used inside trace MLIROpIDs) and must NOT be sent as the
+        // KLEE entry-point — `Module::getFunction(EntryName)` resolves by symbol name only.
         val m = s.method
-        (m as? CIRFunction)?.id?.id ?: m.name
+        m.name.takeIf { it.isNotEmpty() } ?: (m as? CIRFunction)?.id?.id ?: notModeled()
     }
     return ProtoTrace.newBuilder()
         .setEntryPointName(nameEp)

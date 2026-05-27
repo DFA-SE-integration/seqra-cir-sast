@@ -20,8 +20,15 @@ uint64_t traceOpIdFromEntry(const trace::method::TraceEntry &E) {
   return E.statement().id();
 }
 
-void traceReachableFromStart(const trace::method::FullTrace &Ft,
-                             DenseSet<uint32_t> &Reach) {
+// BFS from start_entry_id over the FullTrace successors graph. Records both
+// reachability and the BFS parent of each discovered node — the parent map is
+// the BFS spanning tree, so reconstructing final → start gives a real path
+// (independent of id ordering). Sentinel `kNoParent` marks the start.
+static constexpr uint32_t kNoParent = UINT32_MAX;
+
+static void bfsParents(const trace::method::FullTrace &Ft,
+                       DenseSet<uint32_t> &Reach,
+                       DenseMap<uint32_t, uint32_t> &Parent) {
   const auto &Entries = Ft.id_to_trace_entry();
   if (Entries.empty())
     return;
@@ -33,6 +40,7 @@ void traceReachableFromStart(const trace::method::FullTrace &Ft,
   std::deque<uint32_t> Q;
   Q.push_back(Start);
   Reach.insert(Start);
+  Parent[Start] = kNoParent;
   SmallVector<uint32_t, 8> Succ;
   while (!Q.empty()) {
     uint32_t U = Q.front();
@@ -41,58 +49,43 @@ void traceReachableFromStart(const trace::method::FullTrace &Ft,
     for (uint32_t V : Succ) {
       if (Entries.find(V) == Entries.end())
         continue;
-      if (Reach.insert(V).second)
+      if (Reach.insert(V).second) {
+        Parent[V] = U;
         Q.push_back(V);
+      }
     }
   }
 }
 
-bool traceBuildPredecessorMap(
-    const trace::method::FullTrace &Ft,
-    DenseMap<uint32_t, SmallVector<uint32_t, 4>> &Preds) {
-  const auto &Entries = Ft.id_to_trace_entry();
-  for (const auto &Pair : Ft.successors()) {
-    uint32_t From = Pair.first;
-    if (Entries.find(From) == Entries.end())
-      continue;
-    for (uint32_t To : Pair.second.ids()) {
-      if (Entries.find(To) == Entries.end())
-        continue;
-      Preds[To].push_back(From);
-    }
-  }
-  return true;
+void traceReachableFromStart(const trace::method::FullTrace &Ft,
+                             DenseSet<uint32_t> &Reach) {
+  DenseMap<uint32_t, uint32_t> Parent;
+  bfsParents(Ft, Reach, Parent);
 }
 
-bool traceBuildPathFwd(
-    const trace::method::FullTrace &Ft,
-    const DenseSet<uint32_t> &Reach,
-    const DenseMap<uint32_t, SmallVector<uint32_t, 4>> &Preds,
-    std::vector<uint32_t> &OutPath) {
+bool traceBuildPathFwd(const trace::method::FullTrace &Ft,
+                       std::vector<uint32_t> &OutPath) {
   const auto &Entries = Ft.id_to_trace_entry();
   uint32_t Start = Ft.start_entry_id();
   uint32_t Final = Ft.final_entry_id();
   if (Entries.find(Start) == Entries.end() ||
       Entries.find(Final) == Entries.end())
     return false;
-  if (!Reach.count(Final))
+
+  DenseSet<uint32_t> LocalReach;
+  DenseMap<uint32_t, uint32_t> Parent;
+  bfsParents(Ft, LocalReach, Parent);
+  if (!LocalReach.count(Final))
     return false;
 
   SmallVector<uint32_t, 32> Backward;
   uint32_t Cur = Final;
   Backward.push_back(Cur);
   while (Cur != Start) {
-    auto Pit = Preds.find(Cur);
-    if (Pit == Preds.end())
+    auto Pit = Parent.find(Cur);
+    if (Pit == Parent.end() || Pit->second == kNoParent)
       return false;
-    uint32_t Best = UINT32_MAX;
-    for (uint32_t P : Pit->second) {
-      if (Reach.count(P) && Entries.find(P) != Entries.end())
-        Best = std::min(Best, P);
-    }
-    if (Best == UINT32_MAX)
-      return false;
-    Cur = Best;
+    Cur = Pit->second;
     Backward.push_back(Cur);
   }
 
@@ -168,24 +161,18 @@ bool traceTrySelectStartFullTrace(const trace::Trace &Pb, const Function *F,
   int BestScore = -1;
   size_t BestIdx = SIZE_MAX;
   std::vector<uint32_t> Path;
-  DenseSet<uint32_t> Reach;
-  DenseMap<uint32_t, SmallVector<uint32_t, 4>> Preds;
 
   for (int Idx = 0; Idx < Sts.start_nodes_size(); ++Idx) {
     const trace::SourceToSinkTraceNode &Node = Sts.start_nodes(Idx);
     if (Node.value_case() != trace::SourceToSinkTraceNode::kFull)
       continue;
     const trace::FullTraceNode &Fn = Node.full();
-    if (Fn.method().id() != F->getName().str())
+    if (Fn.method().name() != F->getName().str())
       continue;
     const trace::method::FullTrace &Ft = Fn.trace();
 
-    Reach.clear();
-    traceReachableFromStart(Ft, Reach);
-    Preds.clear();
-    traceBuildPredecessorMap(Ft, Preds);
     Path.clear();
-    if (!traceBuildPathFwd(Ft, Reach, Preds, Path))
+    if (!traceBuildPathFwd(Ft, Path))
       continue;
 
     bool HasSource = tracePathHasSourceStart(Ft, Path);
@@ -216,8 +203,6 @@ bool traceTrySelectSinkFullTrace(const trace::Trace &Pb, const Function *F,
   size_t BestIdx = SIZE_MAX;
   bool HasUnsupportedSink = false;
   std::vector<uint32_t> Path;
-  DenseSet<uint32_t> Reach;
-  DenseMap<uint32_t, SmallVector<uint32_t, 4>> Preds;
 
   for (int Idx = 0; Idx < Sts.sink_nodes_size(); ++Idx) {
     const trace::SourceToSinkTraceNode &Node = Sts.sink_nodes(Idx);
@@ -226,16 +211,12 @@ bool traceTrySelectSinkFullTrace(const trace::Trace &Pb, const Function *F,
       continue;
     }
     const trace::FullTraceNode &Fn = Node.full();
-    if (Fn.method().id() != F->getName().str())
+    if (Fn.method().name() != F->getName().str())
       continue;
     const trace::method::FullTrace &Ft = Fn.trace();
 
-    Reach.clear();
-    traceReachableFromStart(Ft, Reach);
-    Preds.clear();
-    traceBuildPredecessorMap(Ft, Preds);
     Path.clear();
-    if (!traceBuildPathFwd(Ft, Reach, Preds, Path))
+    if (!traceBuildPathFwd(Ft, Path))
       continue;
 
     size_t UIdx = static_cast<size_t>(Idx);

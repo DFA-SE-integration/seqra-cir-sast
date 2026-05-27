@@ -31,6 +31,7 @@ set(TRACE_PROTO_SRC
     trace/fact.proto
     trace/method.proto
     trace/trace.proto
+    trace/result.proto
 )
 
 add_library(trace_proto OBJECT ${TRACE_PROTO_SRC})
