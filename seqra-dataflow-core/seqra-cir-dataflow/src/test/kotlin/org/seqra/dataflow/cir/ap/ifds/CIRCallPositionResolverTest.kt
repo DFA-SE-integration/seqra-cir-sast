@@ -4,6 +4,8 @@ import org.seqra.dataflow.ap.ifds.AccessPathBase
 import org.seqra.dataflow.ap.ifds.Accessor
 import org.seqra.dataflow.ap.ifds.EmptyMethodContext
 import org.seqra.dataflow.ap.ifds.ExclusionSet
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
+import org.seqra.dataflow.ap.ifds.TaintMarkAccessor
 import org.seqra.dataflow.ap.ifds.FactTypeChecker
 import org.seqra.dataflow.ap.ifds.MethodEntryPoint
 import org.seqra.dataflow.ap.ifds.analysis.MethodCallFlowFunction
@@ -28,9 +30,12 @@ import org.seqra.cir.graph.CApplicationGraph
 import org.seqra.dataflow.cir.ap.ifds.CIRFactTypeChecker
 import org.seqra.dataflow.cir.ap.ifds.CIRLanguageManager
 import org.seqra.dataflow.cir.ap.ifds.CIRLocalVariableReachability
+import org.seqra.dataflow.ap.ifds.access.automata.AutomataApManager
 import org.seqra.dataflow.cir.ap.ifds.analysis.CIRMethodAnalysisContext
 import org.seqra.dataflow.cir.ap.ifds.analysis.CIRMethodCallFlowFunction
 import org.seqra.dataflow.cir.ap.ifds.analysis.CIRMethodStartFlowFunction
+import org.seqra.dataflow.cir.ap.ifds.taint.PositionAccess
+import org.seqra.dataflow.cir.ap.ifds.taint.mkInitialAccessPath
 import org.seqra.dataflow.cir.ap.ifds.taint.CIRTaintRulesProvider
 import org.seqra.dataflow.configuration.core.TaintMethodSource
 import org.seqra.ir.api.cir.CIRClasspath
@@ -616,6 +621,54 @@ class CIRCallPositionResolverTest {
         val unrelatedLocal = StubFinalFactAp(AccessPathBase.LocalVar(999))
         assertFalse(CIRMethodCallFactMapper.factIsRelevantToMethodCall(null, call, unrelatedLocal))
         assertFalse(CIRMethodCallFactMapper.factIsRelevantToMethodCall(null, call, unrelatedLocal, null))
+    }
+
+    @Test
+    fun `mapMethodExitToReturnFlowFact strips leading ReferenceAccessor on callee argument fact`() {
+        val cp = StubClasspath()
+        cp.register(intTy, CIRSingleType(intTy))
+        val callee = StubFunction(
+            id = CIRFunctionID(moduleId, "callee"),
+            classpath = cp,
+            parameters = emptyList(),
+            returnType = voidTy,
+            blocks = CIRBlockList(emptyList()),
+            funcOp = stubFuncOp(voidTy),
+            allInstructions = emptyList(),
+        )
+        cp.register(callee)
+        val argVal = MLIRBlockValue(intTy, MLIRBlockID(3), 1L)
+        val call = CIRCallOpInst(
+            location = CIRInstLocation(callee, 0, MLIRUnknownLoc),
+            id = MLIROpID(11),
+            arg_ops = listOf(argVal),
+            exception = null,
+            callee = MLIRFlatSymbolRefAttr(MLIRStringAttr("callee", null)),
+            callingConv = CIRCallingConv.C,
+            extraAttrs = extraAttrs,
+            result = null,
+            calleeRef = CIRCalleeRef("callee", cp),
+        )
+        val ap = AutomataApManager()
+        val calleeExit = ap.mkInitialAccessPath(
+            PositionAccess.Complex(
+                PositionAccess.Complex(
+                    PositionAccess.Simple(AccessPathBase.Argument(0)),
+                    ReferenceAccessor,
+                ),
+                TaintMarkAccessor("m"),
+            ),
+            ExclusionSet.Universe,
+        )
+        val mapped = CIRMethodCallFactMapper.mapMethodExitToReturnFlowFact(call, calleeExit)
+        val expected = ap.mkInitialAccessPath(
+            PositionAccess.Complex(
+                PositionAccess.Simple(AccessPathBase.Argument(1)),
+                TaintMarkAccessor("m"),
+            ),
+            ExclusionSet.Universe,
+        )
+        assertEquals(listOf(expected), mapped)
     }
 
     @Test
