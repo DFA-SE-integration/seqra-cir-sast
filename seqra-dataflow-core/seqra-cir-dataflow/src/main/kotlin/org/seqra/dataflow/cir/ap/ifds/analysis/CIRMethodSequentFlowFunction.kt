@@ -3,6 +3,7 @@ package org.seqra.dataflow.cir.ap.ifds.analysis
 import org.seqra.dataflow.ap.ifds.AccessPathBase
 import org.seqra.dataflow.ap.ifds.Accessor
 import org.seqra.dataflow.ap.ifds.ElementAccessor
+import org.seqra.dataflow.ap.ifds.ReferenceAccessor
 import org.seqra.dataflow.ap.ifds.access.ApManager
 import org.seqra.dataflow.ap.ifds.access.FinalFactAp
 import org.seqra.dataflow.ap.ifds.access.InitialFactAp
@@ -32,6 +33,7 @@ import org.seqra.ir.api.cir.cfg.CIRCastOpExpr
 import org.seqra.ir.api.cir.cfg.CIRDynamicCastOpExpr
 import org.seqra.ir.api.cir.cfg.CIRExpr
 import org.seqra.ir.api.cir.cfg.CIRGetMemberOpExpr
+import org.seqra.ir.api.cir.cfg.CIRFunction
 import org.seqra.ir.api.cir.cfg.CIRInst
 import org.seqra.ir.api.cir.cfg.CIRPtrStrideOpExpr
 import org.seqra.ir.api.cir.cfg.CIRReturnOpInst
@@ -145,8 +147,48 @@ class CIRMethodSequentFlowFunction(
                     }
                 }
 
-                if (!propagated)
+                if (!propagated && retInput != null) {
+                    val fn = currentInst.location.method as CIRFunction
+                    val storedVal =
+                        MethodFlowFunctionUtils.returnOperandLoadNearestStoreSource(
+                            fn,
+                            currentInst,
+                        )
+                    val storedBase = storedVal?.let { accessPathBase(it) }
+                    if (storedBase != null) {
+                        val aa = analysisContext.aliasAnalysis
+                        fun factBaseMatchesStoredRhs(b: AccessPathBase?): Boolean {
+                            if (b == null) return false
+                            if (b == storedBase) return true
+                            return aa?.basesAliasSymmetric(b, storedBase) == true
+                        }
+                        when {
+                            factBaseMatchesStoredRhs(factAp.base) -> {
+                                val resultFact = factAp.rebase(AccessPathBase.Return)
+                                propagateFact(resultFact)
+                                applyMethodExitSinkRules(AccessPathBase.Return, resultFact)
+                                propagated = true
+                            }
+                            else -> {
+                                analysisContext.aliasAnalysis?.forEachAlias(factAp) { aliased ->
+                                    if (factBaseMatchesStoredRhs(aliased.base)) {
+                                        val resultFact = aliased.rebase(AccessPathBase.Return)
+                                        propagateFact(resultFact)
+                                        applyMethodExitSinkRules(
+                                            AccessPathBase.Return,
+                                            resultFact,
+                                        )
+                                        propagated = true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!propagated) {
                     applyMethodExitSinkRules(AccessPathBase.Return, factAp)
+                }
             }
 
             is CIRThrowOpInst -> {
@@ -180,11 +222,24 @@ class CIRMethodSequentFlowFunction(
         if (!loadAddressAliasesFactBase(loadAddr, factAp.base)) return
 
         val reader = FinalFactReader(factAp, apManager)
-        if (!reader.containsPositionWithTaintMark(PositionAccess.Simple(factAp.base), TaintMark(USE_AFTER_FREE_MARK_NAME))) {
+        val mark = TaintMark(USE_AFTER_FREE_MARK_NAME)
+        val markAtSimpleBase =
+            reader.containsPositionWithTaintMark(PositionAccess.Simple(factAp.base), mark)
+        val markUnderRef = reader.containsPositionWithTaintMark(
+            PositionAccess.Complex(PositionAccess.Simple(factAp.base), ReferenceAccessor),
+            mark,
+        )
+        if (!markAtSimpleBase && !markUnderRef) {
             return
         }
 
-        emitUseAfterFreeDereferenceSink(reader, PositionAccess.Simple(factAp.base))
+        val positionForSink =
+            if (markUnderRef && !markAtSimpleBase) {
+                PositionAccess.Complex(PositionAccess.Simple(factAp.base), ReferenceAccessor)
+            } else {
+                PositionAccess.Simple(factAp.base)
+            }
+        emitUseAfterFreeDereferenceSink(reader, positionForSink)
     }
 
     /**
@@ -234,11 +289,8 @@ class CIRMethodSequentFlowFunction(
 
     private fun loadAddressAliasesFactBase(loadAddress: MLIRValue, factBase: AccessPathBase): Boolean {
         val loadBase = accessPathBase(loadAddress) ?: return false
-        if (loadBase == factBase) return true
-        val aa = analysisContext.aliasAnalysis ?: return false
-        if (aa.findAliases(factBase)?.any { it.base == loadBase } == true) return true
-        if (aa.findAliases(loadBase)?.any { it.base == factBase } == true) return true
-        return false
+        return analysisContext.aliasAnalysis?.basesAliasSymmetric(loadBase, factBase)
+            ?: (loadBase == factBase)
     }
 
     private fun sequentFlowAssign(
@@ -263,8 +315,14 @@ class CIRMethodSequentFlowFunction(
         val onUnchanged: (FinalFactAp) -> Unit = if (factModified) propagateFact else { _ -> unchanged() }
 
         when {
+            // TODO
+            // Compound element/field copy: `*A.acc = *B.acc` (e.g. `reversedString[j] = aString[i-j-1]`
+            // after CIRLoadStoreFeature). Forward IFDS skips fact propagation through this shape; the
+            // mirror in [CIRMethodSequentPrecondition.sequentAssignPrecondition] does the same so trace
+            // resolution stays in sync.
+            assignFromAccess?.accessor != null && assignToAccess.accessor != null -> onUnchanged(fact)
+
             assignFromAccess?.accessor != null -> {
-                check(assignToAccess.accessor == null) { "Complex assignment: $assignTo = $assignFrom" }
                 fieldRead(
                     assignToAccess.base, assignFromAccess.base, assignFromAccess.accessor, fact,
                     onUnchanged, propagateFact, propagateFactWithAccessorExclude
