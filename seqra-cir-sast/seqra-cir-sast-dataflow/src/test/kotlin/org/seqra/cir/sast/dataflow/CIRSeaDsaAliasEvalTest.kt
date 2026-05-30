@@ -39,7 +39,7 @@ import kotlin.test.fail
  *      sea-dsa already gives correct cells, but our enrichment can either
  *      under- or over-merge.
  *
- * Ground truth: `results/Test-Suite/Sea-DSA-llvm20/butd-cs/<sub>.log` lines
+ * Ground truth: `results/Test-Suite/Sea-DSA-llvm20/flat/<sub>.log` lines
  * such as
  *
  *   FAILURE :NOALIAS check at (tests/Test-Suite/src/flow/ben11.c:17:2)
@@ -74,7 +74,7 @@ class CIRSeaDsaAliasEvalTest {
                 "Missing CIR fixture $cir — run `make testsuite` (inside docker-shell) first",
             )
             val log = repoRoot()
-                .resolve("results/Test-Suite/Sea-DSA-llvm20/butd-cs/${sample.cirSubpath.removeSuffix(".cir") + ".log"}")
+                .resolve("results/Test-Suite/Sea-DSA-llvm20/flat/${sample.cirSubpath.removeSuffix(".cir") + ".log"}")
             assumeTrue(log.exists(), "Missing sea-dsa eval log $log — run alias-analysis-research first")
 
             runOne(cir, log, sample.entryFn)
