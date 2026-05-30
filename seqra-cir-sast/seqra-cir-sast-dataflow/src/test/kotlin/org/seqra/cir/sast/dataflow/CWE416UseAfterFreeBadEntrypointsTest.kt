@@ -47,6 +47,8 @@ class CWE416UseAfterFreeBadEntrypointsTest {
 
             val vulnerabilities = loaded.analyzer.analyzeWithIfds(listOf(entrypoint))
 
+            TraceDebugPrinter.maybePrint(fileName, vulnerabilities)
+
             assertTrue(vulnerabilities.isNotEmpty(), "No vulnerabilities found!")
             vulnerabilities.forEach { v ->
                 assertNotNull(v.trace, "Cannot build vulnerability trace!")
