@@ -93,9 +93,20 @@ static cir::FuncOp findFuncBySym(mlir::ModuleOp m, llvm::StringRef sym) {
   return cir::FuncOp();
 }
 
+static mlir::Operation *findTopLevelSymbolByName(mlir::ModuleOp m,
+                                                 llvm::StringRef sym) {
+  for (mlir::Operation &op : *m.getBody()) {
+    auto attr = op.getAttrOfType<mlir::StringAttr>("sym_name");
+    if (attr && attr.getValue() == sym)
+      return &op;
+  }
+  return nullptr;
+}
+
 /// Move top-level ops from \p extra into \p primary. When both modules define
 /// the same `cir.func` symbol, keep a single definition (Juliet `_a` decl +
-/// `_b` body).
+/// `_b` body). For other duplicate top-level symbols, keep the primary copy
+/// (Juliet split files duplicate private support globals such as `.str`).
 static bool mergeExtraModuleIntoPrimary(mlir::ModuleOp primary,
                                         mlir::ModuleOp extra) {
   mlir::Block &pBlock = *primary.getBody();
@@ -106,6 +117,12 @@ static bool mergeExtraModuleIntoPrimary(mlir::ModuleOp primary,
   for (mlir::Operation *op : extraOps) {
     auto fn = mlir::dyn_cast<cir::FuncOp>(op);
     if (!fn) {
+      if (auto attr = op->getAttrOfType<mlir::StringAttr>("sym_name")) {
+        if (findTopLevelSymbolByName(primary, attr.getValue())) {
+          op->erase();
+          continue;
+        }
+      }
       op->moveBefore(&pBlock, pBlock.end());
       continue;
     }
@@ -299,6 +316,97 @@ static void defineJulietControlGlobals(llvm::Module &M) {
   }
 }
 
+static void defineRandShim(llvm::Module &M) {
+  llvm::LLVMContext &Ctx = M.getContext();
+  llvm::Type *I32Ty = llvm::Type::getInt32Ty(Ctx);
+  auto *RandTy = llvm::FunctionType::get(I32Ty, {}, false);
+  llvm::Function *Rand = M.getFunction("rand");
+  if (!Rand)
+    Rand = llvm::Function::Create(RandTy, llvm::GlobalValue::ExternalLinkage,
+                                  "rand", M);
+  if (!Rand->isDeclaration() || Rand->getFunctionType() != RandTy)
+    return;
+
+  auto *KleeRangeTy =
+      llvm::FunctionType::get(I32Ty, {I32Ty, I32Ty, llvm::PointerType::getUnqual(Ctx)}, false);
+  llvm::FunctionCallee KleeRange = M.getOrInsertFunction("klee_range", KleeRangeTy);
+
+  llvm::BasicBlock *BB = llvm::BasicBlock::Create(Ctx, "entry", Rand);
+  llvm::IRBuilder<> B(BB);
+  llvm::Value *Name = B.CreateGlobalStringPtr("seqra.rand");
+  llvm::Value *Value = B.CreateCall(
+      KleeRange,
+      {llvm::ConstantInt::get(I32Ty, 0), llvm::ConstantInt::get(I32Ty, 2), Name});
+  B.CreateRet(Value);
+}
+
+static llvm::FunctionCallee getOrCreateCStringReadShim(llvm::Module &M) {
+  llvm::LLVMContext &Ctx = M.getContext();
+  llvm::Type *VoidTy = llvm::Type::getVoidTy(Ctx);
+  llvm::Type *I8Ty = llvm::Type::getInt8Ty(Ctx);
+  llvm::Type *I64Ty = llvm::Type::getInt64Ty(Ctx);
+  llvm::Type *PtrTy = llvm::PointerType::getUnqual(Ctx);
+
+  auto *Ty = llvm::FunctionType::get(VoidTy, {PtrTy}, false);
+  llvm::FunctionCallee Callee =
+      M.getOrInsertFunction("__seqra_mock_read_c_string", Ty);
+  auto *F = llvm::dyn_cast<llvm::Function>(Callee.getCallee());
+  if (!F || !F->isDeclaration())
+    return Callee;
+
+  llvm::BasicBlock *Entry = llvm::BasicBlock::Create(Ctx, "entry", F);
+  llvm::BasicBlock *Loop = llvm::BasicBlock::Create(Ctx, "loop", F);
+  llvm::BasicBlock *Next = llvm::BasicBlock::Create(Ctx, "next", F);
+  llvm::BasicBlock *Done = llvm::BasicBlock::Create(Ctx, "done", F);
+
+  llvm::IRBuilder<> B(Entry);
+  B.CreateBr(Loop);
+
+  B.SetInsertPoint(Loop);
+  auto *P = B.CreatePHI(PtrTy, 2, "p");
+  P->addIncoming(F->getArg(0), Entry);
+  llvm::Value *Ch = B.CreateLoad(I8Ty, P);
+  llvm::Value *IsZero = B.CreateICmpEQ(Ch, llvm::ConstantInt::get(I8Ty, 0));
+  B.CreateCondBr(IsZero, Done, Next);
+
+  B.SetInsertPoint(Next);
+  llvm::Value *PNext =
+      B.CreateGEP(I8Ty, P, llvm::ConstantInt::get(I64Ty, 1), "p.next");
+  B.CreateBr(Loop);
+  P->addIncoming(PNext, Next);
+
+  B.SetInsertPoint(Done);
+  B.CreateRetVoid();
+
+  return Callee;
+}
+
+static void defineExternalFunctionShims(llvm::Module &M) {
+  llvm::FunctionCallee ReadCString = getOrCreateCStringReadShim(M);
+  llvm::SmallVector<llvm::CallBase *, 16> Calls;
+
+  for (llvm::Function &F : M) {
+    for (llvm::BasicBlock &BB : F) {
+      for (llvm::Instruction &I : BB) {
+        auto *Call = llvm::dyn_cast<llvm::CallBase>(&I);
+        if (!Call)
+          continue;
+        llvm::Function *Callee = Call->getCalledFunction();
+        if (!Callee || Callee->getName() != "printf" || Call->arg_size() < 2)
+          continue;
+        if (!Call->getArgOperand(1)->getType()->isPointerTy())
+          continue;
+        Calls.push_back(Call);
+      }
+    }
+  }
+
+  for (llvm::CallBase *Call : Calls) {
+    llvm::IRBuilder<> B(Call);
+    B.CreateCall(ReadCString, {Call->getArgOperand(1)});
+  }
+}
+
 } // namespace
 
 int main(int argc, char **argv) {
@@ -386,6 +494,8 @@ int main(int argc, char **argv) {
   prepareLlvmModuleForLlvm16(*LlvmMod);
   defineCppAllocatorShims(*LlvmMod);
   defineJulietControlGlobals(*LlvmMod);
+  defineRandShim(*LlvmMod);
+  defineExternalFunctionShims(*LlvmMod);
   Result.set_cir_to_llvm_ms(ms(CirToLlvmT0, Clock::now()));
 
   if (!LlvmMod->getFunction(EntryName)) {

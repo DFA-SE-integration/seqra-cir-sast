@@ -33,12 +33,24 @@ object CIRProjectAnalyzer {
             // nodes). Otherwise collection order can surface e.g. `libc.memset` before `printLine`
             // on Juliet `_17_bad` loops — the sink fires forward, but backward IFDS edge matching
             // yields no summary trace, while the real UAF at `printLine` resolves fine.
-            return loaded.analyzer.analyzeWithIfds(listOf(entryFn)).filter { vwt ->
-                val t = vwt.trace ?: return@filter false
+            val ifdsHits = loaded.analyzer.analyzeWithIfds(listOf(entryFn)).toList()
+            var idx = 0
+            val confirmedHits = ifdsHits.filter { vwt ->
+                idx++
+                val t = vwt.trace
+                if (t == null) {
+                    return@filter false
+                }
                 val hasTraceNodes = t.sourceToSinkTrace.startNodes.isNotEmpty() &&
                     t.sourceToSinkTrace.sinkNodes.isNotEmpty()
-                hasTraceNodes && seAnalyzer.verifyTrace(vwt, cirPaths)
+                if (!hasTraceNodes) {
+                    return@filter false
+                }
+                val confirmed = runCatching { seAnalyzer.verifyTrace(vwt, cirPaths) }
+                    .getOrDefault(false)
+                confirmed
             }.toList()
+            return confirmedHits
         }
     }
 }

@@ -219,6 +219,13 @@ class TraceResolver(
             }
 
             val resultNodes = mutableListOf<InterProceduralTraceNode>()
+            if (fullTraces.isEmpty()) {
+                val node = InterProceduralSummaryTraceNode(trace)
+                resultNodes += node
+                if (kind == CallKind.CallToSink) {
+                    rootNodes.add(node)
+                }
+            }
 
             for (fullTrace in fullTraces) {
                 when (val start = fullTrace.startEntry) {
