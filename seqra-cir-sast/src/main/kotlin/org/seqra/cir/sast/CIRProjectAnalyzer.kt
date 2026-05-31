@@ -25,9 +25,21 @@ object CIRProjectAnalyzer {
             add(cirFixture)
             addAll(julietInterfileCompanionCir(cirFixture))
         }
+        return analyze(cirPaths, entrypoint)
+    }
+
+    /**
+     * Multi-module variant: loads every `.cir` in [cirFixtures] into one classpath so IFDS
+     * can follow a source→sink path that crosses translation units (e.g. a real-world project
+     * where `free` lives in one file and the dereference in another). Used by the big-project
+     * runner; [entrypoint] must be the (unmangled, for C) symbol of a function present in the
+     * combined classpath.
+     */
+    fun analyze(cirFixtures: List<Path>, entrypoint: String): List<VulnerabilityWithTrace> {
+        val cirPaths = cirFixtures
         CIRTaintAnalyzer.loadCirFiles(cirPaths).use { loaded ->
             val entryFn = loaded.analyzer.cp.findFunctionBySymbolName(entrypoint)
-                ?: throw RuntimeException("Missing entrypoint $entrypoint in $cirFixture")
+                ?: throw RuntimeException("Missing entrypoint $entrypoint in $cirPaths")
 
             // Drop sink hits whose interprocedural trace graph is degenerate (empty start/sink
             // nodes). Otherwise collection order can surface e.g. `libc.memset` before `printLine`

@@ -47,3 +47,19 @@ dependencies {
     implementation(Libs.logback)
     implementation(Libs.jdot)
 }
+
+tasks.withType<Test> {
+    // Big real-world TUs (Wireshark) need far more heap than the Juliet fixtures; override with
+    // SEQRA_TEST_XMX when even this is not enough. Test JVMs inherit the launching process env
+    // by default, so SEQRA_BIGPROJ_*, CIR_KLEE_RESULTS_TSV, SEQRA_SE_MODE, CIRTAC_*/KLEE_BIN
+    // (set by big_projects.sh / stats.sh) reach the analyzer without explicit forwarding.
+    maxHeapSize = System.getenv("SEQRA_TEST_XMX")?.takeIf { it.isNotBlank() } ?: "12g"
+    jvmArgs(
+        "--add-opens", "java.base/java.nio=ALL-UNNAMED",
+        "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED",
+    )
+    testLogging {
+        showStandardStreams = true
+        events("passed", "skipped", "failed")
+    }
+}
