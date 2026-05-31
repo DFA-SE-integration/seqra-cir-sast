@@ -48,6 +48,11 @@ object KleeCirSeAnalyzer : CirSeAnalyzer {
         val noTraceGuide = System.getenv("CIRTAC_KLEE_NO_TRACE_GUIDE")
             ?.let { it.equals("1") || it.equals("true", ignoreCase = true) }
             ?: false
+        // The mandatory sink pass (klee_abort) always runs; only the optional
+        // klee_assume alias constraints can be turned off here.
+        val noTraceAssert = System.getenv("CIRTAC_KLEE_NO_TRACE_ASSERT")
+            ?.let { it.equals("1") || it.equals("true", ignoreCase = true) }
+            ?: false
 
         val pbFile = Files.createTempFile("cir-klee-trace-", ".pb")
         val resultFile = Files.createTempFile("cir-klee-result-", ".pb")
@@ -58,6 +63,7 @@ object KleeCirSeAnalyzer : CirSeAnalyzer {
             val command = buildList {
                 add(cirKlee)
                 if (noTraceGuide) add("--no-trace-guide")
+                if (noTraceAssert) add("--no-trace-assert")
                 add("--result=${resultFile.toAbsolutePath()}")
                 cirFiles.forEach { add(it.toAbsolutePath().toString()) }
                 add(pbFile.toAbsolutePath().toString())
@@ -82,6 +88,7 @@ object KleeCirSeAnalyzer : CirSeAnalyzer {
             val confirmed = result?.let {
                 logger.info {
                     "cir-klee exit=${proc.exitValue()} confirmed=${it.traceConfirmed} " +
+                        "mem_errs=${it.kleeMemErrFilesCount} precond_violations=${it.kleeAbortFilesCount} " +
                         "klee_ms=${it.kleeMs} instr=${it.kleeInstructions} " +
                         "guide_ms=${it.traceGuideMs} assert_ms=${it.traceAssertMs}"
                 }
