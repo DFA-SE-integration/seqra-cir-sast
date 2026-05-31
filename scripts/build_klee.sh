@@ -64,4 +64,6 @@ if [[ -n "$KLEE_BIN_DEST" ]]; then
   mkdir -p "$KLEE_BIN_DEST"
   cp "${KLEE_BUILD}/bin/klee" "$KLEE_BIN_DEST"
   cp "${STP_INSTALL_PREFIX}"/lib/libstp.so* "$KLEE_BIN_DEST"/
+  mkdir -p "${KLEE_BIN_DEST}/runtime"
+  cp -r "${KLEE_BUILD}/runtime/lib" "${KLEE_BIN_DEST}/runtime/"
 fi
