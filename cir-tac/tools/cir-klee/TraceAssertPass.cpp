@@ -144,44 +144,6 @@ bool traceEntryHasMatchingMethodInitial(const trace::method::TraceEntry &Te,
   return false;
 }
 
-bool insertKleeAbortAfterTraceEntry(
-    Module &M, Function *F, const trace::method::FullTrace &Ft,
-    uint32_t EntryId, const DenseMap<uint64_t, Instruction *> &OpTab) {
-  auto ItEntry = Ft.id_to_trace_entry().find(EntryId);
-  if (ItEntry == Ft.id_to_trace_entry().end()) {
-    errs() << "traceassert: sink entry id " << EntryId
-           << " not in id_to_trace_entry\n";
-    return false;
-  }
-  const auto &Te = ItEntry->second;
-  trace::method::TraceEntry::Kind Kind = Te.kind();
-  if (Kind != trace::method::TraceEntry::KIND_FINAL &&
-      Kind != trace::method::TraceEntry::KIND_UNSPECIFIED) {
-    errs() << "traceassert: warning: sink marker entry " << EntryId
-           << " is not KIND_FINAL; inserting klee_abort anyway\n";
-  }
-
-  Instruction *SinkInsn =
-      seqra_trace::lookupInsn(OpTab, seqra_trace::traceOpIdFromEntry(Te));
-  if (!SinkInsn || SinkInsn->getFunction() != F)
-    SinkInsn = seqra_trace::traceGetInsnForTraceEntry(Ft, EntryId, OpTab, F);
-  if (!SinkInsn || SinkInsn->getFunction() != F) {
-    errs() << "traceassert: could not lookup llvm instruction for sink entry "
-           << EntryId << "\n";
-    return false;
-  }
-
-  LLVMContext &Ctx = M.getContext();
-  FunctionCallee KAbort = seqra_trace::getKleeAbort(M);
-  IRBuilder<> B(Ctx);
-  if (Instruction *Next = SinkInsn->getNextNode())
-    B.SetInsertPoint(Next);
-  else
-    B.SetInsertPoint(SinkInsn->getParent()->getTerminator());
-  seqra_trace::emitKleeAbort(B, KAbort);
-  return true;
-}
-
 } // namespace
 
 bool runTraceAssertPass(Module &M, const trace::Trace &Pb) {
@@ -203,15 +165,10 @@ bool runTraceAssertPass(Module &M, const trace::Trace &Pb) {
     return false;
   }
 
-  const trace::method::FullTrace *SinkFtPtr = nullptr;
-  if (!seqra_trace::traceTrySelectSinkFullTrace(Pb, F, &SinkFtPtr))
-    return false;
-  const trace::method::FullTrace &SinkFt = *SinkFtPtr;
-
   DenseMap<uint64_t, Instruction *> OpTab = seqra_trace::makeOpIndex(*F);
   LLVMContext &Ctx = M.getContext();
   PointerType *PtrTy = PointerType::getUnqual(Ctx);
-  FunctionCallee KAssume = seqra_trace::getKleeAssume(M);
+  FunctionCallee KAbort = seqra_trace::getKleeAbort(M);
 
   BasicBlock &Entry = F->getEntryBlock();
   IRBuilder<> EntryB(&Entry, Entry.getFirstInsertionPt());
@@ -257,7 +214,7 @@ bool runTraceAssertPass(Module &M, const trace::Trace &Pb) {
           lastFactKey = Fact.SerializeAsString();
         } else {
           Value *Ld = B.CreateLoad(PtrTy, FreedSlot);
-          seqra_trace::emitKleeAssumePtrEq(B, KAssume, P, Ld);
+          seqra_trace::emitKleeAbortIfPtrNe(B, KAbort, P, Ld);
         }
       }
       if (!sawSource) {
@@ -313,27 +270,26 @@ bool runTraceAssertPass(Module &M, const trace::Trace &Pb) {
         return false;
       }
       IRBuilder<> B(Ctx);
-      if (!setIRBuilderForTraceStmt(B, StartFt, InsertEid, afterStmt, OpTab,
-                                    F)) {
+      // `initial_fact` is the precondition on entry to the edge's operation, so
+      // the check goes strictly *before* that operation, independent of the
+      // trace's after-statement materialization mode.
+      if (!setIRBuilderForTraceStmt(B, StartFt, InsertEid, /*afterStmt=*/false,
+                                    OpTab, F)) {
         errs() << "traceassert: no llvm instruction for edge insert at "
                << InsertEid << "\n";
         return false;
       }
       Value *Ini = nullptr;
-      Value *FactV = nullptr;
       if (!resolveFactAp(B, F, OpTab, Me->initial_fact(), &Ini)) {
         errs() << "traceassert: resolve initial_fact failed step " << U << "->"
                << V << "\n";
         return false;
       }
-      if (!resolveFactAp(B, F, OpTab, Me->fact(), &FactV)) {
-        errs() << "traceassert: resolve fact failed step " << U << "->" << V
-               << "\n";
-        return false;
-      }
+      // Check only `init`: this edge's `fact` is the next edge's `init`, so it
+      // is checked before the next operation; the trace's final `fact` is left
+      // to KLEE's native use-after-free detection at the sink.
       Value *Ld = B.CreateLoad(PtrTy, FreedSlot);
-      seqra_trace::emitKleeAssumePtrEq(B, KAssume, Ini, Ld);
-      seqra_trace::emitKleeAssumePtrEq(B, KAssume, FactV, Ld);
+      seqra_trace::emitKleeAbortIfPtrNe(B, KAbort, Ini, Ld);
       lastFactKey = Me->fact().SerializeAsString();
     } else {
       bool Expect =
@@ -351,10 +307,6 @@ bool runTraceAssertPass(Module &M, const trace::Trace &Pb) {
     errs() << "traceassert: never initialized freed pointer (no source?)\n";
     return false;
   }
-
-  uint32_t SinkFinalId = SinkFt.final_entry_id();
-  if (!insertKleeAbortAfterTraceEntry(M, F, SinkFt, SinkFinalId, OpTab))
-    return false;
 
   return true;
 }
