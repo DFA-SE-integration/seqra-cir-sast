@@ -28,6 +28,7 @@ CIRTAC_COMPILER 		:= $(CIRTAC_DIR)/cir-ser-proto/cir-ser-proto
 
 BUILD_TESTSUITE 		:= scripts/02_build_testsuite.sh
 JULIET_PREPARE 			:= $(ROOT)/juliet_prepare.sh
+STATS 					:= $(ROOT)/stats.sh
 
 KLEE_SOURCE				:= $(ROOT)/klee
 KLEE_DIR 				:= $(MOUNT_ROOT)/klee-linux-$(HOST_ARCH)
@@ -224,3 +225,6 @@ test-good: docker_check build
 clean:
 	rm -rf "$(HOME)/.m2/repository/org/seqra"
 	rm -f "$(ROOT)"/.seqra-*
+
+stats:
+	bash "$(STATS)"
