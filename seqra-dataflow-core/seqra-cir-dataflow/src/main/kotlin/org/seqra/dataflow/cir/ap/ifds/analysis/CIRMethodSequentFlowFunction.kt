@@ -33,7 +33,6 @@ import org.seqra.ir.api.cir.cfg.CIRCastOpExpr
 import org.seqra.ir.api.cir.cfg.CIRDynamicCastOpExpr
 import org.seqra.ir.api.cir.cfg.CIRExpr
 import org.seqra.ir.api.cir.cfg.CIRGetMemberOpExpr
-import org.seqra.ir.api.cir.cfg.CIRFunction
 import org.seqra.ir.api.cir.cfg.CIRInst
 import org.seqra.ir.api.cir.cfg.CIRPtrStrideOpExpr
 import org.seqra.ir.api.cir.cfg.CIRReturnOpInst
@@ -147,45 +146,9 @@ class CIRMethodSequentFlowFunction(
                     }
                 }
 
-                if (!propagated && retInput != null) {
-                    val fn = currentInst.location.method as CIRFunction
-                    val storedVal =
-                        MethodFlowFunctionUtils.returnOperandLoadNearestStoreSource(
-                            fn,
-                            currentInst,
-                        )
-                    val storedBase = storedVal?.let { accessPathBase(it) }
-                    if (storedBase != null) {
-                        val aa = analysisContext.aliasAnalysis
-                        fun factBaseMatchesStoredRhs(b: AccessPathBase?): Boolean {
-                            if (b == null) return false
-                            if (b == storedBase) return true
-                            return aa?.basesAliasSymmetric(b, storedBase) == true
-                        }
-                        when {
-                            factBaseMatchesStoredRhs(factAp.base) -> {
-                                val resultFact = factAp.rebase(AccessPathBase.Return)
-                                propagateFact(resultFact)
-                                applyMethodExitSinkRules(AccessPathBase.Return, resultFact)
-                                propagated = true
-                            }
-                            else -> {
-                                analysisContext.aliasAnalysis?.forEachAlias(factAp) { aliased ->
-                                    if (factBaseMatchesStoredRhs(aliased.base)) {
-                                        val resultFact = aliased.rebase(AccessPathBase.Return)
-                                        propagateFact(resultFact)
-                                        applyMethodExitSinkRules(
-                                            AccessPathBase.Return,
-                                            resultFact,
-                                        )
-                                        propagated = true
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
+                // The ClangIR `__retval` lowering (`store %v, %slot; %r = load %slot; return %r`) needs
+                // no special handling: the load/store copy chain already rebases the fact onto the return
+                // operand `%r`, so the direct `access == base` match above carries it to Return.
                 if (!propagated) {
                     applyMethodExitSinkRules(AccessPathBase.Return, factAp)
                 }
@@ -215,6 +178,10 @@ class CIRMethodSequentFlowFunction(
         if (lhv !is MLIROpValue) return
 
         if (rhv is CIRPtrStrideOpExpr && applyUseAfterFreePtrStrideSink(factAp, rhv)) {
+            return
+        }
+
+        if (rhv is CIRGetMemberOpExpr && applyUseAfterFreeGetMemberSink(factAp, rhv)) {
             return
         }
 
@@ -258,6 +225,29 @@ class CIRMethodSequentFlowFunction(
             val elemPos = PositionAccess.Complex(PositionAccess.Simple(candidate.base), ElementAccessor)
             if (!reader.containsPositionWithTaintMark(elemPos, mark)) continue
             emitUseAfterFreeDereferenceSink(reader, elemPos)
+            return true
+        }
+        return false
+    }
+
+    /**
+     * Field access (`cir.get_member`) computes the address of a struct member; treat it as a dereference-style UAF
+     * sink when the fact carries `use-after-free` at the field position `.field` of the (aliased) base pointer.
+     * Mirrors [applyUseAfterFreePtrStrideSink], with the member accessor in place of the array element.
+     */
+    private fun applyUseAfterFreeGetMemberSink(factAp: FinalFactAp, rhv: CIRGetMemberOpExpr): Boolean {
+        val mark = TaintMark(USE_AFTER_FREE_MARK_NAME)
+        val fieldAccessor = mkFieldAccess(rhv.addr, rhv.name.value, rhv.result).accessor ?: return false
+        val candidates = buildList {
+            add(factAp)
+            analysisContext.aliasAnalysis?.forEachAlias(factAp) { add(it) }
+        }
+        for (candidate in candidates) {
+            if (!loadAddressAliasesFactBase(rhv.addr, candidate.base)) continue
+            val reader = FinalFactReader(candidate, apManager)
+            val fieldPos = PositionAccess.Complex(PositionAccess.Simple(candidate.base), fieldAccessor)
+            if (!reader.containsPositionWithTaintMark(fieldPos, mark)) continue
+            emitUseAfterFreeDereferenceSink(reader, fieldPos)
             return true
         }
         return false
