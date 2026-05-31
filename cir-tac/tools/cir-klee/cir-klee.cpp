@@ -155,18 +155,30 @@ static void parseKleeInfo(llvm::StringRef OutputDir, trace::KleeResult &Result) 
   }
 }
 
-// Detect `klee_abort()` reachability via the `*.abort.err` files KLEE drops in
-// its output directory. More robust than scraping stdout.
-static void collectKleeAbortFiles(llvm::StringRef OutputDir,
-                                  trace::KleeResult &Result) {
+// Scan KLEE's output directory for the `*.err` files it drops per error. Two
+// kinds drive the verdict:
+//   * native memory errors (`*.ptr.err` / `*.free.err`) — a use-after-free was
+//     reached along the guided path: evidence the trace is realizable;
+//   * `*.abort.err` — the per-edge `klee_abort()` from TraceAssertPass fired,
+//     i.e. a guided path violated an edge precondition. That means the IFDS
+//     fact did not hold concretely, so the trace is a product of the analysis'
+//     over-approximation and must be refuted.
+// A trace is confirmed iff KLEE reached the use-after-free AND no edge
+// precondition was ever violated. File-based detection is more robust than
+// scraping stdout.
+static void collectKleeErrFiles(llvm::StringRef OutputDir,
+                                trace::KleeResult &Result) {
   std::error_code EC;
   for (llvm::sys::fs::directory_iterator It(OutputDir, EC), End;
        It != End && !EC; It.increment(EC)) {
     llvm::StringRef Name = llvm::sys::path::filename(It->path());
-    if (Name.ends_with(".abort.err"))
+    if (Name.ends_with(".ptr.err") || Name.ends_with(".free.err"))
+      Result.add_klee_mem_err_files(It->path());
+    else if (Name.ends_with(".abort.err"))
       Result.add_klee_abort_files(It->path());
   }
-  Result.set_trace_confirmed(Result.klee_abort_files_size() > 0);
+  Result.set_trace_confirmed(Result.klee_mem_err_files_size() > 0 &&
+                             Result.klee_abort_files_size() == 0);
 }
 
 static bool writeResult(const std::string &Path, const trace::KleeResult &R) {
@@ -181,6 +193,7 @@ struct Args {
   std::string TracePb;
   std::string ResultPath;
   bool NoTraceGuide = false;
+  bool NoTraceAssert = false;
   bool ParseOk = false;
 };
 
@@ -195,6 +208,10 @@ static Args parseArgs(int argc, char **argv) {
     }
     if (Arg == "--no-trace-guide") {
       A.NoTraceGuide = true;
+      continue;
+    }
+    if (Arg == "--no-trace-assert") {
+      A.NoTraceAssert = true;
       continue;
     }
     Positional.push_back(argv[i]);
@@ -290,8 +307,10 @@ int main(int argc, char **argv) {
     llvm::errs() << "usage: cir-klee <input.cir> [<more.cir>...] <trace.pb>\n"
                     "  Options:\n"
                     "    --result=<path>      Write a serialized trace.KleeResult here.\n"
-                    "    --no-trace-guide     Skip TraceGuidePass (still runs TraceAssertPass\n"
-                    "                         so klee_abort is inserted at the sink).\n"
+                    "    --no-trace-guide     Skip TraceGuidePass (klee_silent_exit branch cuts).\n"
+                    "    --no-trace-assert    Skip TraceAssertPass (per-edge klee_abort precondition checks).\n"
+                    "  The trace is confirmed by KLEE's own use-after-free detection at the\n"
+                    "  sink (*.ptr.err / *.free.err); there is no injected sink marker.\n"
                     "  Lowers CIR to LLVM IR, assembles with llvm-as-16, runs\n"
                     "  KLEE in a temporary output directory removed after the run.\n"
                     "  Set CIR_KLEE_KEEP_OUTPUT=1 to preserve that directory for\n"
@@ -399,7 +418,7 @@ int main(int argc, char **argv) {
     llvm::outs() << "cir-klee: --no-trace-guide, skipping TraceGuidePass\n";
   }
 
-  {
+  if (!A.NoTraceAssert) {
     auto T0 = Clock::now();
     bool Ok = runTraceAssertPass(*LlvmMod, Pb);
     Result.set_trace_assert_ms(ms(T0, Clock::now()));
@@ -409,7 +428,14 @@ int main(int argc, char **argv) {
       llvm::errs() << "error: TraceAssertPass failed\n";
       return 1;
     }
+  } else {
+    llvm::outs() << "cir-klee: --no-trace-assert, skipping TraceAssertPass\n";
   }
+
+  // No sink instrumentation: the trace is confirmed by KLEE's own use-after-free
+  // detection (`*.ptr.err` / `*.free.err`) when execution reaches the sink and
+  // dereferences the freed pointer along the guided path. See
+  // collectKleeMemErrFiles below.
 
   TempPath LlTmp;
   if (std::error_code EC =
@@ -508,7 +534,7 @@ int main(int argc, char **argv) {
   if (!ExecErr.empty())
     llvm::errs() << ExecErr << "\n";
 
-  collectKleeAbortFiles(KleeOutDir.Path, Result);
+  collectKleeErrFiles(KleeOutDir.Path, Result);
   parseKleeInfo(KleeOutDir.Path, Result);
 
   if (!A.ResultPath.empty()) {

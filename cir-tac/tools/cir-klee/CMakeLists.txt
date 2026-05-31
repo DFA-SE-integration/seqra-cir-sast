@@ -2,6 +2,7 @@ set(LIBS
     protoSerializer
     LLVMBitWriter
     LLVMAsmParser
+    LLVMTransformUtils
 )
 
 add_executable(cir-klee
