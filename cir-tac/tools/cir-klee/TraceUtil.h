@@ -39,18 +39,20 @@ void bfsReachable(const trace::method::FullTrace &Ft,
 
 llvm::FunctionCallee getKleeSilentExit(llvm::Module &M);
 llvm::FunctionCallee getKleeAbort(llvm::Module &M);
-llvm::FunctionCallee getKleeAssume(llvm::Module &M);
 
 void emitKleeSilentExit(llvm::IRBuilder<> &B,
                         llvm::FunctionCallee KSilentExit, int Status);
 
 void emitKleeAbort(llvm::IRBuilder<> &B, llvm::FunctionCallee KAbort);
 
-/// KLEE runtime: `void klee_assume(int cond);` — pass i1 zext to i32.
-void emitKleeAssumeI1(llvm::IRBuilder<> &B, llvm::FunctionCallee KAssume,
-                      llvm::Value *CondI1);
-
-void emitKleeAssumePtrEq(llvm::IRBuilder<> &B, llvm::FunctionCallee KAssume,
-                         llvm::Value *PtrA, llvm::Value *PtrB);
+/// Emit, at the builder's current insertion point, a guarded abort:
+///   if (PtrA != PtrB) klee_abort();
+/// The current block is split; the `then` block calls `klee_abort()` and ends
+/// in `unreachable`, execution falls through to the original continuation when
+/// the pointers are equal. Used by TraceAssertPass to flag, at runtime, a
+/// guided path on which a trace edge's precondition (`init == freed slot`) does
+/// not hold — an IFDS↔KLEE mismatch — without pruning the path.
+void emitKleeAbortIfPtrNe(llvm::IRBuilder<> &B, llvm::FunctionCallee KAbort,
+                          llvm::Value *PtrA, llvm::Value *PtrB);
 
 } // namespace seqra_trace
