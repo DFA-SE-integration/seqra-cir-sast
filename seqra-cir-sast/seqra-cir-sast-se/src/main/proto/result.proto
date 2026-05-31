@@ -19,6 +19,7 @@ message KleeResult {
   double trace_assert_ms = 4;
   double llvm_as_ms = 5;
   double klee_ms = 6;
+  double trace_sink_ms = 11;
 
   // KLEE statistics parsed from `<output-dir>/info`. Zero if parsing failed.
   uint64 klee_instructions = 7;
