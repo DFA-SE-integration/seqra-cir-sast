@@ -1,3 +1,5 @@
+#!/bin/bash
+
 CLANG="/tmp/llvm-build/bin/clang"
 CLANGXX="/tmp/llvm-build/bin/clang++"
 SRC="/workspace/juliet-c/testcases/CWE416_Use_After_Free"
