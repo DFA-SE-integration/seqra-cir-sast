@@ -43,6 +43,7 @@ class CWE416UseAfterFreeBadEntrypointsTest {
             CWE416JulietFixtures.fixtureArgumentStream(
                 findEntrypoint = CWE416JulietFixtures::findBadEntrypoint,
                 missingEntrypointDescription = "_bad entrypoint",
+                hasComplementEntrypoint = CWE416JulietFixtures::findGoodEntrypoint,
             )
     }
 }

@@ -144,7 +144,7 @@ cir-tac: docker_check clangir-link-build
 	cp -r /tmp/cir-tac-build/tools/cir-ser-proto/cir-ser-proto $(CIRTAC_DIR)/cir-ser-proto/cir-ser-proto
 
 # Seqra
-.PHONY: build build-dfa clean test test-alias test-se
+.PHONY: build build-dfa clean test test-alias test-se stats
 
 build: .seqra-common-build
 .seqra-common-build:
@@ -226,5 +226,5 @@ clean:
 	rm -rf "$(HOME)/.m2/repository/org/seqra"
 	rm -f "$(ROOT)"/.seqra-*
 
-stats:
+stats: docker_check clangir-link-build
 	bash "$(STATS)"

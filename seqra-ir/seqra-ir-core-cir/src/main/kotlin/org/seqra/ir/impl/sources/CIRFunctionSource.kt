@@ -8,6 +8,7 @@ class PersistenceCIRFunctionSource(
     private val cp: CIRClasspath,
     override val functionID: CIRFunctionID,
     override val enclosingModuleId: String,
+    override val locationId: Long? = null,
     private val cachedInfo: ByteArray? = null,
     private val cachedBytecode: ByteArray? = null
 ) : CIRFunctionSource {

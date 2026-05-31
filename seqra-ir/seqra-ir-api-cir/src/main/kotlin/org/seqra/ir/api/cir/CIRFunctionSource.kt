@@ -9,4 +9,6 @@ interface CIRFunctionSource {
     val bytecodeNode: ByteArray?
 
     val enclosingModuleId: String
+    val locationId: Long?
+        get() = null
 }

@@ -37,7 +37,7 @@ dependencies {
 
 tasks.withType<Test> {
     jvmArgs = listOf(
-        "-Xmx4g",
+        "-Xmx12g",
         "--add-opens",
         "java.base/java.nio=ALL-UNNAMED",
         "--add-opens",

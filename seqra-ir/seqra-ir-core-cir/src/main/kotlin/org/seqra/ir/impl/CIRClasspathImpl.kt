@@ -220,8 +220,33 @@ class CIRClasspathImpl(
         symbolName: String,
         definitionSources: List<CIRFunctionSource>,
     ): CIRFunctionSource? =
-        preferDefinitionWhoseModuleStemAppearsInSymbol(symbolName, definitionSources)
-            ?: preferJulietInterfileBOverADefinition(definitionSources)
+        preferDefinitionWhoseRegisteredLocationStemAppearsInSymbol(symbolName, definitionSources)
+            ?: preferDefinitionWhoseModuleStemAppearsInSymbol(symbolName, definitionSources)
+            ?: preferJulietInterfileBOverADefinition(definitionSources) { it.registeredLocationPath().orEmpty() }
+            ?: preferJulietInterfileBOverADefinition(definitionSources) { it.functionID.moduleID.id }
+
+    private fun preferDefinitionWhoseRegisteredLocationStemAppearsInSymbol(
+        symbolName: String,
+        definitionSources: List<CIRFunctionSource>,
+    ): CIRFunctionSource? {
+        val scored = definitionSources.mapNotNull { src ->
+            val stem = src.registeredLocationPath()
+                ?.let(::moduleFileStemWithoutExtension)
+                ?.removeSuffix(".proto")
+                .orEmpty()
+            if (stem.isNotEmpty() && symbolName.contains(stem)) {
+                src to stem.length
+            } else {
+                null
+            }
+        }
+        if (scored.isEmpty()) return null
+        val bestLen = scored.maxOf { it.second }
+        return scored.filter { it.second == bestLen }
+            .map { it.first }
+            .distinct()
+            .minByOrNull { it.registeredLocationPath().orEmpty() }
+    }
 
     private fun preferDefinitionWhoseModuleStemAppearsInSymbol(
         symbolName: String,
@@ -245,10 +270,11 @@ class CIRClasspathImpl(
 
     private fun preferJulietInterfileBOverADefinition(
         definitionSources: List<CIRFunctionSource>,
+        pathSelector: (CIRFunctionSource) -> String,
     ): CIRFunctionSource? {
         if (definitionSources.size != 2) return null
         val tagged = definitionSources.mapNotNull { src ->
-            val key = parseJulietSplitModuleKey(src.functionID.moduleID.id) ?: return@mapNotNull null
+            val key = parseJulietSplitModuleKey(pathSelector(src)) ?: return@mapNotNull null
             src to key
         }
         if (tagged.size != 2) return null
@@ -262,7 +288,8 @@ class CIRClasspathImpl(
 
     private fun parseJulietSplitModuleKey(modulePath: String): JulietSplitModuleKey? {
         val base = modulePath.replace('\\', '/').substringAfterLast('/')
-        val m = Regex("""^(.+)_(\d+)([ab])[.](c|cpp|cxx|cir)$""", RegexOption.IGNORE_CASE).matchEntire(base)
+        val m = Regex("""^(.+)_(\d+)([ab])[.](c|cpp|cxx|cir|protocir)$""", RegexOption.IGNORE_CASE)
+            .matchEntire(base)
             ?: return null
         return JulietSplitModuleKey(
             stem = "${m.groupValues[1]}_${m.groupValues[2]}",
@@ -272,4 +299,7 @@ class CIRClasspathImpl(
 
     private fun moduleFileStemWithoutExtension(modulePath: String): String =
         modulePath.replace('\\', '/').substringAfterLast('/').substringBeforeLast('.')
+
+    private fun CIRFunctionSource.registeredLocationPath(): String? =
+        locationId?.let { id -> registeredLocations.firstOrNull { it.id == id }?.path }
 }

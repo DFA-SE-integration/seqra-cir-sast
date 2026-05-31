@@ -317,6 +317,7 @@ private fun Entity.toFunctionSource(
         cp = cp,
         enclosingModuleId = get<String>(PersistenceEntity.Function.MODULE)!!,
         functionID = functionID,
+        locationId = get<Long>("ownerId"),
         cachedInfo = getRawBlob(PersistenceEntity.Function.INFO),
         cachedBytecode = bytecode,
     )

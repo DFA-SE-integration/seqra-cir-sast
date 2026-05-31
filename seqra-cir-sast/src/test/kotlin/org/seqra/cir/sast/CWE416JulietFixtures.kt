@@ -42,22 +42,38 @@ internal object CWE416JulietFixtures {
         return if (Files.exists(companionPath)) listOf(companion) else emptyList()
     }
 
+    /**
+     * Mirrors [findGoodEntrypoint]: Juliet emits unmangled `CWE416_…_bad` or mangled symbols that still embed
+     * `CWE416_Use_After_Free`. Require that substring so local helpers like `bad1` are not mistaken for the testcase entrypoint.
+     * Exclude `badSource` / `badSink` helpers.
+     */
     fun findBadEntrypoint(path: Path): String? {
         val content = Files.readString(path)
+        val fileName = path.fileName.toString()
 
         val candidates = functionDefinitionPattern.findAll(content)
             .map { match -> match.groupValues[1] }
             .filter { symbol ->
-                symbol.contains("bad") &&
+                symbol.contains("CWE416_Use_After_Free") &&
+                    symbol.contains("bad") &&
                     !symbol.contains("badSource") &&
                     !symbol.contains("badSink")
             }
             .toList()
 
-        return when (candidates.size) {
-            0 -> null
-            1 -> candidates.single()
-            else -> error("Expected a single top-level bad entrypoint in ${path.fileName}, found: $candidates")
+        val preferred = preferredBadSymbolFromJulietFileName(fileName)
+        if (preferred in candidates) {
+            return preferred
+        }
+
+        val withoutMangled = candidates.filter { !it.startsWith("_ZN") }
+        return when {
+            candidates.isEmpty() -> null
+            withoutMangled.size == 1 -> withoutMangled.single()
+            candidates.size == 1 -> candidates.single()
+            else -> error(
+                "Expected a single top-level bad entrypoint in ${path.fileName}, found: $candidates",
+            )
         }
     }
 
@@ -87,6 +103,15 @@ internal object CWE416JulietFixtures {
             return preferred
         }
 
+        val numberedGood = Regex("""^.*_(good\d+)\.cir$""").matchEntire(fileName)
+        if (numberedGood != null) {
+            val variant = numberedGood.groupValues[1]
+            val matching = candidates.filter { it.contains(variant, ignoreCase = true) }
+            if (matching.size == 1) {
+                return matching.single()
+            }
+        }
+
         val withoutMangled = candidates.filter { !it.startsWith("_ZN") }
         return when {
             candidates.isEmpty() -> null
@@ -109,9 +134,16 @@ internal object CWE416JulietFixtures {
         return "${interfile.groupValues[1]}_${interfile.groupValues[2]}_good"
     }
 
+    private fun preferredBadSymbolFromJulietFileName(fileName: String): String {
+        val stem = fileName.removeSuffix(".cir")
+        val interfile = Regex("""^(.*)_(62|63|64)a$""").matchEntire(stem) ?: return "${stem}_bad"
+        return "${interfile.groupValues[1]}_${interfile.groupValues[2]}_bad"
+    }
+
     fun fixtureArgumentStream(
         findEntrypoint: (Path) -> String?,
         missingEntrypointDescription: String,
+        hasComplementEntrypoint: ((Path) -> String?)? = null,
     ): Stream<Arguments> {
         val fixturesDir = repoRoot().resolve(FIXTURES_DIR)
         val debugFixtureFilter = System.getenv("SEQRA_CWE416_FIXTURE_FILTER")?.takeIf { it.isNotBlank() }
@@ -131,6 +163,8 @@ internal object CWE416JulietFixtures {
                         }
 
                         helperOnlySplitFixturePattern.matches(fileName) -> null
+
+                        hasComplementEntrypoint?.invoke(path) != null -> null
 
                         else -> error(
                             "Fixture lacks top-level $missingEntrypointDescription and is not a known helper-only split file: $fileName",
