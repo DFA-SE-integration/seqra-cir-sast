@@ -8,6 +8,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include <deque>
 
@@ -119,24 +120,16 @@ void emitKleeAbort(IRBuilder<> &B, FunctionCallee KAbort) {
   B.CreateCall(KAbort, {});
 }
 
-FunctionCallee getKleeAssume(Module &M) {
-  LLVMContext &Ctx = M.getContext();
-  Type *I32 = IntegerType::getInt32Ty(Ctx);
-  FunctionType *FT =
-      FunctionType::get(Type::getVoidTy(Ctx), {I32}, false);
-  return M.getOrInsertFunction("klee_assume", FT);
-}
-
-void emitKleeAssumeI1(IRBuilder<> &B, FunctionCallee KAssume, Value *CondI1) {
-  LLVMContext &Ctx = B.getContext();
-  Value *Ext = B.CreateZExt(CondI1, IntegerType::getInt32Ty(Ctx));
-  B.CreateCall(KAssume, {Ext});
-}
-
-void emitKleeAssumePtrEq(IRBuilder<> &B, FunctionCallee KAssume, Value *PtrA,
-                         Value *PtrB) {
-  Value *Eq = B.CreateICmpEQ(PtrA, PtrB);
-  emitKleeAssumeI1(B, KAssume, Eq);
+void emitKleeAbortIfPtrNe(IRBuilder<> &B, FunctionCallee KAbort, Value *PtrA,
+                          Value *PtrB) {
+  Value *Ne = B.CreateICmpNE(PtrA, PtrB);
+  // Split the current block: on `PtrA != PtrB` jump into a fresh `then` block
+  // that aborts; otherwise fall through to the original continuation.
+  Instruction *SplitBefore = &*B.GetInsertPoint();
+  Instruction *ThenTerm = SplitBlockAndInsertIfThen(Ne, SplitBefore,
+                                                    /*Unreachable=*/true);
+  IRBuilder<> TB(ThenTerm);
+  emitKleeAbort(TB, KAbort);
 }
 
 } // namespace seqra_trace
