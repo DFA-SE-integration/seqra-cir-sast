@@ -9,8 +9,14 @@ option java_multiple_files = true;
 // is supplied; read by KleeCirSeAnalyzer. Replaces the previous fragile stdout
 // regex on `"abort failure"`.
 message KleeResult {
-  // True iff KLEE hit the `klee_abort()` inserted at the trace's sink — i.e.
-  // a concrete realizable path from source to sink exists.
+  // True iff KLEE reported a native memory error (`*.ptr.err` / `*.free.err`)
+  // along the guided path AND no edge precondition was violated (no
+  // `*.abort.err`). The first condition is confirmation: a concrete realizable
+  // path reaches the sink and dereferences the freed pointer (the sink is no
+  // longer marked by an injected `klee_abort()` — KLEE's own use-after-free
+  // detection is the signal). The second is refutation: a violated precondition
+  // means the IFDS fact did not hold concretely, so the trace stems from the
+  // analysis' over-approximation and is rejected.
   bool trace_confirmed = 1;
 
   // Per-stage wall-clock timings (ms). Zero if the stage did not run.
@@ -25,7 +31,14 @@ message KleeResult {
   uint64 klee_completed_paths = 8;
   uint64 klee_explored_paths = 9;
 
-  // For debugging: absolute paths to `*.abort.err` files KLEE produced. Only
-  // populated when `CIR_KLEE_KEEP_OUTPUT=1` keeps the run dir around.
+  // Absolute paths to native memory-error files (`*.ptr.err` / `*.free.err`)
+  // KLEE produced — the use-after-free was reached. Necessary (but not on its
+  // own sufficient) for `trace_confirmed`.
+  repeated string klee_mem_err_files = 12;
+
+  // Absolute paths to `*.abort.err` files from the per-edge `klee_abort()`
+  // inserted by TraceAssertPass. Each marks a guided path on which an edge
+  // precondition was concretely violated — the IFDS fact did not hold, so the
+  // trace is over-approximated. Non-empty forces `trace_confirmed` to false.
   repeated string klee_abort_files = 10;
 }
