@@ -10,6 +10,7 @@
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/FileSystem.h"
@@ -207,6 +208,80 @@ static Args parseArgs(int argc, char **argv) {
   return A;
 }
 
+static void defineFunctionIfDeclaration(llvm::Module &M, llvm::StringRef Name,
+                                        llvm::FunctionType *Ty,
+                                        llvm::function_ref<void(
+                                            llvm::Function &)> DefineBody) {
+  llvm::Function *F = M.getFunction(Name);
+  if (!F)
+    F = llvm::Function::Create(Ty, llvm::GlobalValue::ExternalLinkage, Name, M);
+  if (!F->isDeclaration())
+    return;
+  if (F->getFunctionType() != Ty)
+    return;
+  DefineBody(*F);
+}
+
+static void defineCppAllocatorShims(llvm::Module &M) {
+  llvm::LLVMContext &Ctx = M.getContext();
+  llvm::Type *VoidTy = llvm::Type::getVoidTy(Ctx);
+  llvm::Type *PtrTy = llvm::PointerType::getUnqual(Ctx);
+  llvm::Type *SizeTy = M.getDataLayout().getIntPtrType(Ctx);
+
+  auto *MallocTy = llvm::FunctionType::get(PtrTy, {SizeTy}, false);
+  llvm::FunctionCallee Malloc = M.getOrInsertFunction("malloc", MallocTy);
+  auto *FreeTy = llvm::FunctionType::get(VoidTy, {PtrTy}, false);
+  llvm::FunctionCallee Free = M.getOrInsertFunction("free", FreeTy);
+
+  auto *NewTy = llvm::FunctionType::get(PtrTy, {SizeTy}, false);
+  for (llvm::StringRef Name : {"_Znwm", "_Znam"}) {
+    defineFunctionIfDeclaration(M, Name, NewTy, [&](llvm::Function &F) {
+      llvm::BasicBlock *BB = llvm::BasicBlock::Create(Ctx, "entry", &F);
+      llvm::IRBuilder<> B(BB);
+      B.CreateRet(B.CreateCall(Malloc, {F.getArg(0)}));
+    });
+  }
+
+  auto *DeleteTy = llvm::FunctionType::get(VoidTy, {PtrTy}, false);
+  for (llvm::StringRef Name : {"_ZdlPv", "_ZdaPv"}) {
+    defineFunctionIfDeclaration(M, Name, DeleteTy, [&](llvm::Function &F) {
+      llvm::BasicBlock *BB = llvm::BasicBlock::Create(Ctx, "entry", &F);
+      llvm::IRBuilder<> B(BB);
+      B.CreateCall(Free, {F.getArg(0)});
+      B.CreateRetVoid();
+    });
+  }
+
+  auto *SizedDeleteTy = llvm::FunctionType::get(VoidTy, {PtrTy, SizeTy}, false);
+  for (llvm::StringRef Name : {"_ZdlPvm", "_ZdaPvm"}) {
+    defineFunctionIfDeclaration(M, Name, SizedDeleteTy, [&](llvm::Function &F) {
+      llvm::BasicBlock *BB = llvm::BasicBlock::Create(Ctx, "entry", &F);
+      llvm::IRBuilder<> B(BB);
+      B.CreateCall(Free, {F.getArg(0)});
+      B.CreateRetVoid();
+    });
+  }
+}
+
+static void defineJulietControlGlobals(llvm::Module &M) {
+  llvm::LLVMContext &Ctx = M.getContext();
+  llvm::Type *I32Ty = llvm::Type::getInt32Ty(Ctx);
+  for (auto [Name, Value] : {
+           std::pair<llvm::StringRef, int32_t>("GLOBAL_CONST_TRUE", 1),
+           std::pair<llvm::StringRef, int32_t>("GLOBAL_CONST_FALSE", 0),
+           std::pair<llvm::StringRef, int32_t>("GLOBAL_CONST_FIVE", 5),
+           std::pair<llvm::StringRef, int32_t>("globalTrue", 1),
+           std::pair<llvm::StringRef, int32_t>("globalFalse", 0),
+       }) {
+    llvm::GlobalVariable *G = M.getNamedGlobal(Name);
+    if (!G || !G->isDeclaration() || G->getValueType() != I32Ty)
+      continue;
+    G->setInitializer(llvm::ConstantInt::get(I32Ty, Value));
+    G->setConstant(Name.starts_with("GLOBAL_CONST_"));
+    G->setLinkage(llvm::GlobalValue::ExternalLinkage);
+  }
+}
+
 } // namespace
 
 int main(int argc, char **argv) {
@@ -290,6 +365,8 @@ int main(int argc, char **argv) {
     return 1;
   }
   prepareLlvmModuleForLlvm16(*LlvmMod);
+  defineCppAllocatorShims(*LlvmMod);
+  defineJulietControlGlobals(*LlvmMod);
   Result.set_cir_to_llvm_ms(ms(CirToLlvmT0, Clock::now()));
 
   if (!LlvmMod->getFunction(EntryName)) {
@@ -415,6 +492,13 @@ int main(int argc, char **argv) {
     }
   }
   setenv("LD_LIBRARY_PATH", NewLdLibraryPath.c_str(), 1);
+  if (!std::getenv("KLEE_RUNTIME_LIBRARY_PATH")) {
+    llvm::SmallString<256> KleeRuntimeLibDir(KleeLibDir);
+    llvm::sys::path::append(KleeRuntimeLibDir, "runtime", "lib");
+    if (llvm::sys::fs::is_directory(KleeRuntimeLibDir))
+      setenv("KLEE_RUNTIME_LIBRARY_PATH",
+             KleeRuntimeLibDir.str().str().c_str(), 1);
+  }
 
   std::string ExecErr;
   auto KleeT0 = Clock::now();
