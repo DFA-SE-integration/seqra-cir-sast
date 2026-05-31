@@ -46,6 +46,7 @@ import org.seqra.ir.api.cir.cfg.CIRGraph
 import org.seqra.ir.api.cir.cfg.CIRInst
 import org.seqra.ir.api.cir.cfg.CIRInstLocation
 import org.seqra.ir.api.cir.cfg.CIRPtrStrideOpExpr
+import org.seqra.ir.api.cir.cfg.CIRReturnOpInst
 import org.seqra.ir.api.cir.cfg.CIRVisibilityAttr
 import org.seqra.ir.api.cir.cfg.CIRVisibilityKind
 import org.seqra.ir.api.cir.cfg.MLIRBasicBlock
@@ -517,5 +518,66 @@ class CIRMethodSequentFlowFunctionTest {
         val vulns = mutableListOf<TaintSinkTracker.TaintVulnerability>()
         storage.collectVulnerabilities(vulns)
         assertEquals(0, vulns.size)
+    }
+
+    private fun flowForInst(
+        fn: StubFunction,
+        current: CIRInst,
+        allInstructions: List<CIRInst>,
+    ): Pair<AutomataApManager, CIRMethodSequentFlowFunction> {
+        val apManager = AutomataApManager()
+        fn.allInstructions = allInstructions
+        val lm = CIRLanguageManager(fn.classpath)
+        val graph = StubApplicationGraph(fn.classpath)
+        val context = CIRMethodAnalysisContext(
+            methodEntryPoint = MethodEntryPoint(EmptyMethodContext, current),
+            factTypeChecker = CIRFactTypeChecker(fn.classpath),
+            localVariableReachability = CIRLocalVariableReachability(fn, graph, lm),
+            aliasAnalysis = null,
+            taint = emptyTaintContext(fn.classpath, apManager),
+        )
+        return apManager to CIRMethodSequentFlowFunction(apManager, context, current)
+    }
+
+    @Test
+    fun `retval bridge - lowered store-load-return carries fact to Return without fallback`() {
+        val fn = stubFunction()
+        // ClangIR `__retval` lowering (after CIRLoadStoreFeature):
+        //   ref(slot) = v      // store v into hidden slot   (slot = LocalVar(5), v = LocalVar(6))
+        //   ld = ref(slot)     // load it back               (ld   = LocalVar(7))
+        //   return ld
+        // The plain copy chain must carry the fact v -> slot -> ld -> ret on its own; the former
+        // nearest-store `__retval` fallback was removed as redundant (empirically: no detection
+        // regression across the CWE416 return_freed_ptr fixtures).
+        val slot = MLIROpValue(ptrTy, MLIROpID(5), 0L)
+        val v = MLIROpValue(indexTy, MLIROpID(6), 0L)
+        val ld = MLIROpValue(indexTy, MLIROpID(7), 0L)
+
+        val store = CIRAssignInst(
+            location = CIRInstLocation(fn, 10, MLIRUnknownLoc), id = MLIROpID(10),
+            lhv = MLIRValueRef(slot), rhv = v,
+        )
+        val load = CIRAssignInst(
+            location = CIRInstLocation(fn, 11, MLIRUnknownLoc), id = MLIROpID(11),
+            lhv = ld, rhv = MLIRValueRef(slot),
+        )
+        val ret = CIRReturnOpInst(
+            location = CIRInstLocation(fn, 12, MLIRUnknownLoc), id = MLIROpID(12),
+            input = listOf(ld),
+        )
+        val all = listOf(store, load, ret)
+
+        fun propagatedBases(inst: CIRInst, inBase: AccessPathBase): Set<AccessPathBase> {
+            val (apManager, flow) = flowForInst(fn, inst, all)
+            val seq = flow.propagateZeroToFact(apManager.createFinalAp(inBase, ExclusionSet.Empty))
+            return assertZeroToFacts(seq).mapTo(linkedSetOf()) { it.base }
+        }
+
+        // store: fact on v(=sigma) rebases onto the slot
+        assertContains(propagatedBases(store, AccessPathBase.LocalVar(6)), AccessPathBase.LocalVar(5))
+        // load: fact on the slot rebases onto the load result ld
+        assertContains(propagatedBases(load, AccessPathBase.LocalVar(5)), AccessPathBase.LocalVar(7))
+        // return: fact on ld reaches Return via the direct `access == base` rule (no fallback)
+        assertContains(propagatedBases(ret, AccessPathBase.LocalVar(7)), AccessPathBase.Return)
     }
 }
