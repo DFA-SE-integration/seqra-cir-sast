@@ -209,7 +209,7 @@ test-bad: docker_check build
 		--tests org.seqra.cir.sast.CWE416UseAfterFreeBadEntrypointsTest
 
 test-good: docker_check build
-	cd seqra-cir-sast && SEQRA_CWE416_FIXTURE_FILTER=malloc_free_char_09 ./gradlew :test \
+	cd seqra-cir-sast && ./gradlew :test \
 		--tests org.seqra.cir.sast.CWE416UseAfterFreeGoodEntrypointsTest
 
 clean:
