@@ -27,6 +27,7 @@ CIRTAC_KLEE		 		:= $(CIRTAC_DIR)/cir-klee/cir-klee
 CIRTAC_COMPILER 		:= $(CIRTAC_DIR)/cir-ser-proto/cir-ser-proto
 
 BUILD_TESTSUITE 		:= scripts/02_build_testsuite.sh
+JULIET_PREPARE 			:= $(ROOT)/juliet_prepare.sh
 
 KLEE_SOURCE				:= $(ROOT)/klee
 KLEE_DIR 				:= $(MOUNT_ROOT)/klee-linux-$(HOST_ARCH)
@@ -46,6 +47,7 @@ help:
 	@echo "  make clangir				- build clangir submodule"
 	@echo "  make protobuf				- build protobuf"
 	@echo "  make cir-tac				- build cir-tac"
+	@echo "  make fixtures				- (re)generate CWE416 .cir fixtures amalgamated with io.c (overwrites samples/)"
 	@echo ""
 	@echo "Seqra:"
 	@echo "  make clean		- clean seqra modules + .m2 repo packages (Gradle)"
@@ -82,10 +84,17 @@ docker-shell:
 		-w $(MOUNT_ROOT) "$(DOCKER_IMAGE)"
 
 # cir-tac
-.PHONY: clangir-link-build clangir protobuf cir-tac testsuite
+.PHONY: clangir-link-build clangir protobuf cir-tac testsuite fixtures
 
 testsuite: docker_check clangir-link-build
 	bash "$(BUILD_TESTSUITE)"
+
+# Regenerate the CWE416 .cir fixtures, amalgamating each testcase with io.c so
+# the support functions (printLine/printWLine/printIntLine, globalReturns*) get
+# bodies KLEE can step into. Needs the clangir toolchain at /tmp/llvm-build.
+# WARNING: overwrites juliet-c/samples/CWE416_Use_After_Free/*.cir.
+fixtures: docker_check clangir-link-build
+	bash "$(JULIET_PREPARE)"
 
 # Link done before $(ROOT)/clangir/llvm/build build with symlink
 clangir-link-build:
