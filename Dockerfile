@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake clang lld make ninja-build \
     openjdk-21-jdk \
     libedit-dev zlib1g-dev \
-    libboost-dev \
+    libboost-dev libgoogle-perftools4 minisat \
     && rm -rf /var/lib/apt/lists/*
 
 COPY scripts/install_llvm16.sh /tmp/install_llvm16.sh
