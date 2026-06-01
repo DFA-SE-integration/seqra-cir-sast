@@ -20,6 +20,10 @@ class CWE416UseAfterFreeGoodEntrypointsTest {
             "Blocked by ClangIR codegen bug on `new TwoIntsClass[100]` / " +
                 "`new twoIntsStruct[100]` in companion `_62b.cpp` — companion `.cir` cannot be generated.",
         )
+        assumeTrue(
+            fileName !in CWE416JulietFixtures.BLOCKED_BY_CLANGIR_NEW_ARRAY_SIZE,
+            "Blocked by ClangIR codegen bug on `new T[100]` allocation size lowering.",
+        )
 
         val root = CWE416JulietFixtures.repoRoot()
         val fixture = root.resolve(CWE416JulietFixtures.FIXTURES_DIR.resolve(fileName))

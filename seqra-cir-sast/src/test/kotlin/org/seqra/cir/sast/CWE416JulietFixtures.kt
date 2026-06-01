@@ -32,6 +32,27 @@ internal object CWE416JulietFixtures {
         "CWE416_Use_After_Free__new_delete_array_struct_62a.cir",
     )
 
+    // ClangIR currently lowers `new T[100]` as `_Znam(sizeof(T))` instead of
+    // `_Znam(100 * sizeof(T))`. KLEE then reports an out-of-bounds write during
+    // good-case initialization before reaching the trace sink.
+    val BLOCKED_BY_CLANGIR_NEW_ARRAY_SIZE = setOf(
+        "CWE416_Use_After_Free__new_delete_array_char_17.cir",
+        "CWE416_Use_After_Free__new_delete_array_char_63a.cir",
+        "CWE416_Use_After_Free__new_delete_array_char_64a.cir",
+        "CWE416_Use_After_Free__new_delete_array_int64_t_17.cir",
+        "CWE416_Use_After_Free__new_delete_array_int64_t_63a.cir",
+        "CWE416_Use_After_Free__new_delete_array_int64_t_64a.cir",
+        "CWE416_Use_After_Free__new_delete_array_int_17.cir",
+        "CWE416_Use_After_Free__new_delete_array_int_63a.cir",
+        "CWE416_Use_After_Free__new_delete_array_int_64a.cir",
+        "CWE416_Use_After_Free__new_delete_array_long_17.cir",
+        "CWE416_Use_After_Free__new_delete_array_long_63a.cir",
+        "CWE416_Use_After_Free__new_delete_array_long_64a.cir",
+        "CWE416_Use_After_Free__new_delete_array_wchar_t_17.cir",
+        "CWE416_Use_After_Free__new_delete_array_wchar_t_63a.cir",
+        "CWE416_Use_After_Free__new_delete_array_wchar_t_64a.cir",
+    )
+
     fun repoRoot(): Path = Path.of("").toAbsolutePath().normalize().resolve("..").normalize()
 
     fun interfileCompanions(path: Path): List<String> {
@@ -62,12 +83,9 @@ internal object CWE416JulietFixtures {
             .toList()
 
         val preferred = preferredBadSymbolFromJulietFileName(fileName)
-        if (preferred in candidates) {
-            return preferred
-        }
-
         val withoutMangled = candidates.filter { !it.startsWith("_ZN") }
         return when {
+            preferred in candidates -> preferred
             candidates.isEmpty() -> null
             withoutMangled.size == 1 -> withoutMangled.single()
             candidates.size == 1 -> candidates.single()
