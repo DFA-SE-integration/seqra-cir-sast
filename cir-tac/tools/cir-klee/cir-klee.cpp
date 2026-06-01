@@ -24,6 +24,7 @@
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/Dialect.h>
 #include <mlir/IR/MLIRContext.h>
+#include <mlir/IR/SymbolTable.h>
 #include <mlir/Parser/Parser.h>
 
 #include <chrono>
@@ -105,11 +106,15 @@ static mlir::Operation *findTopLevelSymbolByName(mlir::ModuleOp m,
 
 /// Move top-level ops from \p extra into \p primary. When both modules define
 /// the same `cir.func` symbol, keep a single definition (Juliet `_a` decl +
-/// `_b` body). For other duplicate top-level symbols, keep the primary copy
-/// (Juliet split files duplicate private support globals such as `.str`).
+/// `_b` body). For other duplicate top-level symbols, keep both copies by
+/// renaming the extra symbol and its internal references (Juliet split files
+/// duplicate private support globals such as `.str`, often with different
+/// array types).
 static bool mergeExtraModuleIntoPrimary(mlir::ModuleOp primary,
                                         mlir::ModuleOp extra) {
   mlir::Block &pBlock = *primary.getBody();
+  mlir::MLIRContext *ctx = primary.getContext();
+  unsigned renamedSymbols = 0;
   llvm::SmallVector<mlir::Operation *, 32> extraOps;
   for (mlir::Operation &op : extra.getBody()->without_terminator())
     extraOps.push_back(&op);
@@ -119,8 +124,22 @@ static bool mergeExtraModuleIntoPrimary(mlir::ModuleOp primary,
     if (!fn) {
       if (auto attr = op->getAttrOfType<mlir::StringAttr>("sym_name")) {
         if (findTopLevelSymbolByName(primary, attr.getValue())) {
-          op->erase();
-          continue;
+          std::string oldName = attr.getValue().str();
+          std::string newName;
+          do {
+            newName =
+                oldName + "__seqra_merge_" + std::to_string(renamedSymbols++);
+          } while (findTopLevelSymbolByName(primary, newName) ||
+                   findTopLevelSymbolByName(extra, newName));
+
+          auto newAttr = mlir::StringAttr::get(ctx, newName);
+          if (mlir::failed(
+                  mlir::SymbolTable::replaceAllSymbolUses(attr, newAttr, extra))) {
+            llvm::errs() << "error: failed to rename duplicate symbol "
+                         << oldName << " to " << newName << "\n";
+            return false;
+          }
+          op->setAttr(mlir::SymbolTable::getSymbolAttrName(), newAttr);
         }
       }
       op->moveBefore(&pBlock, pBlock.end());
@@ -343,7 +362,7 @@ static void defineRandShim(llvm::Module &M) {
 static llvm::FunctionCallee getOrCreateCStringReadShim(llvm::Module &M) {
   llvm::LLVMContext &Ctx = M.getContext();
   llvm::Type *VoidTy = llvm::Type::getVoidTy(Ctx);
-  llvm::Type *I8Ty = llvm::Type::getInt8Ty(Ctx);
+  llvm::Type *CharTy = llvm::Type::getInt8Ty(Ctx);
   llvm::Type *I64Ty = llvm::Type::getInt64Ty(Ctx);
   llvm::Type *PtrTy = llvm::PointerType::getUnqual(Ctx);
 
@@ -365,13 +384,55 @@ static llvm::FunctionCallee getOrCreateCStringReadShim(llvm::Module &M) {
   B.SetInsertPoint(Loop);
   auto *P = B.CreatePHI(PtrTy, 2, "p");
   P->addIncoming(F->getArg(0), Entry);
-  llvm::Value *Ch = B.CreateLoad(I8Ty, P);
-  llvm::Value *IsZero = B.CreateICmpEQ(Ch, llvm::ConstantInt::get(I8Ty, 0));
+  llvm::Value *Ch = B.CreateLoad(CharTy, P);
+  llvm::Value *IsZero = B.CreateICmpEQ(Ch, llvm::ConstantInt::get(CharTy, 0));
   B.CreateCondBr(IsZero, Done, Next);
 
   B.SetInsertPoint(Next);
   llvm::Value *PNext =
-      B.CreateGEP(I8Ty, P, llvm::ConstantInt::get(I64Ty, 1), "p.next");
+      B.CreateGEP(CharTy, P, llvm::ConstantInt::get(I64Ty, 1), "p.next");
+  B.CreateBr(Loop);
+  P->addIncoming(PNext, Next);
+
+  B.SetInsertPoint(Done);
+  B.CreateRetVoid();
+
+  return Callee;
+}
+
+static llvm::FunctionCallee getOrCreateWideCStringReadShim(llvm::Module &M) {
+  llvm::LLVMContext &Ctx = M.getContext();
+  llvm::Type *VoidTy = llvm::Type::getVoidTy(Ctx);
+  // On the Linux target used by these fixtures, wchar_t lowers to signed i32.
+  llvm::Type *CharTy = llvm::Type::getInt32Ty(Ctx);
+  llvm::Type *I64Ty = llvm::Type::getInt64Ty(Ctx);
+  llvm::Type *PtrTy = llvm::PointerType::getUnqual(Ctx);
+
+  auto *Ty = llvm::FunctionType::get(VoidTy, {PtrTy}, false);
+  llvm::FunctionCallee Callee =
+      M.getOrInsertFunction("__seqra_mock_read_wide_c_string", Ty);
+  auto *F = llvm::dyn_cast<llvm::Function>(Callee.getCallee());
+  if (!F || !F->isDeclaration())
+    return Callee;
+
+  llvm::BasicBlock *Entry = llvm::BasicBlock::Create(Ctx, "entry", F);
+  llvm::BasicBlock *Loop = llvm::BasicBlock::Create(Ctx, "loop", F);
+  llvm::BasicBlock *Next = llvm::BasicBlock::Create(Ctx, "next", F);
+  llvm::BasicBlock *Done = llvm::BasicBlock::Create(Ctx, "done", F);
+
+  llvm::IRBuilder<> B(Entry);
+  B.CreateBr(Loop);
+
+  B.SetInsertPoint(Loop);
+  auto *P = B.CreatePHI(PtrTy, 2, "p");
+  P->addIncoming(F->getArg(0), Entry);
+  llvm::Value *Ch = B.CreateLoad(CharTy, P);
+  llvm::Value *IsZero = B.CreateICmpEQ(Ch, llvm::ConstantInt::get(CharTy, 0));
+  B.CreateCondBr(IsZero, Done, Next);
+
+  B.SetInsertPoint(Next);
+  llvm::Value *PNext =
+      B.CreateGEP(CharTy, P, llvm::ConstantInt::get(I64Ty, 1), "p.next");
   B.CreateBr(Loop);
   P->addIncoming(PNext, Next);
 
@@ -383,7 +444,9 @@ static llvm::FunctionCallee getOrCreateCStringReadShim(llvm::Module &M) {
 
 static void defineExternalFunctionShims(llvm::Module &M) {
   llvm::FunctionCallee ReadCString = getOrCreateCStringReadShim(M);
-  llvm::SmallVector<llvm::CallBase *, 16> Calls;
+  llvm::FunctionCallee ReadWideCString = getOrCreateWideCStringReadShim(M);
+  llvm::SmallVector<llvm::CallBase *, 16> PrintfCalls;
+  llvm::SmallVector<llvm::CallBase *, 16> WprintfCalls;
 
   for (llvm::Function &F : M) {
     for (llvm::BasicBlock &BB : F) {
@@ -392,18 +455,25 @@ static void defineExternalFunctionShims(llvm::Module &M) {
         if (!Call)
           continue;
         llvm::Function *Callee = Call->getCalledFunction();
-        if (!Callee || Callee->getName() != "printf" || Call->arg_size() < 2)
+        if (!Callee || Call->arg_size() < 2)
           continue;
         if (!Call->getArgOperand(1)->getType()->isPointerTy())
           continue;
-        Calls.push_back(Call);
+        if (Callee->getName() == "printf")
+          PrintfCalls.push_back(Call);
+        else if (Callee->getName() == "wprintf")
+          WprintfCalls.push_back(Call);
       }
     }
   }
 
-  for (llvm::CallBase *Call : Calls) {
+  for (llvm::CallBase *Call : PrintfCalls) {
     llvm::IRBuilder<> B(Call);
     B.CreateCall(ReadCString, {Call->getArgOperand(1)});
+  }
+  for (llvm::CallBase *Call : WprintfCalls) {
+    llvm::IRBuilder<> B(Call);
+    B.CreateCall(ReadWideCString, {Call->getArgOperand(1)});
   }
 }
 
