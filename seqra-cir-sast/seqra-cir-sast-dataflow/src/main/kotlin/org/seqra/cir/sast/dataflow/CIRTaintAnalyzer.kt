@@ -281,6 +281,19 @@ class CIRTaintAnalyzer(
                 "_ZdaPv",
                 // operator delete[](void*, ul.) — sized array delete
                 "_ZdaPvm",
+                // GLib release functions. Real-world C projects (e.g. Wireshark)
+                // allocate/free through GLib rather than libc, so the freed pointer
+                // is passed as Argument(0) of one of these instead of `free`.
+                "g_free",
+                "g_strfreev",
+                "g_slice_free1",
+                "g_string_free",
+                "g_byte_array_free",
+                "g_ptr_array_free",
+                "g_array_free",
+                "g_list_free",
+                "g_slist_free",
+                "g_hash_table_destroy",
             )
             val mallocLikeNames = listOf(
                 "malloc",
@@ -293,6 +306,15 @@ class CIRTaintAnalyzer(
                 // nothrow / aligned variants
                 "_ZnwmRKSt9nothrow_t",
                 "_ZnamRKSt9nothrow_t",
+                // GLib allocators — a fresh GLib allocation must not carry stale
+                // use-after-free taint that happened to reuse the same SSA name.
+                "g_malloc",
+                "g_malloc0",
+                "g_realloc",
+                "g_try_malloc",
+                "g_strdup",
+                "g_strndup",
+                "g_memdup",
             )
 
             val sourceRules = freeLikeNames.map { name ->
