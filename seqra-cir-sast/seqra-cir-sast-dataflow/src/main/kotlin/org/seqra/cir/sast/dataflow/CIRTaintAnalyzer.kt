@@ -295,6 +295,22 @@ class CIRTaintAnalyzer(
                 "g_slist_free",
                 "g_hash_table_destroy",
             )
+            // GLib container iteration that runs a destroy callback over every
+            // element (the callback typically g_free()s the value and returns
+            // TRUE). These are external — we have no body and cannot step into
+            // the callback — so instead of analysing the higher-order call we
+            // model its *effect*: the container's contents are released, i.e.
+            // Argument(0) (the table) carries the use-after-free mark afterwards.
+            // A later g_hash_table_destroy / g_hash_table_foreach on the same
+            // (or may-aliasing) table is then flagged by the generic Argument(0)
+            // sink. This is what makes the interprocedural radius double-free
+            // observable: destroy_dict re-destroys a table whose elements it
+            // already removed, and register_radius_fields iterates (register_attrs)
+            // a dictionary that radius_load_dictionary destroyed on a parse error.
+            val containerDestroyNames = listOf(
+                "g_hash_table_foreach_remove",
+                "g_hash_table_foreach_steal",
+            )
             val mallocLikeNames = listOf(
                 "malloc",
                 "calloc",
@@ -317,7 +333,7 @@ class CIRTaintAnalyzer(
                 "g_memdup",
             )
 
-            val sourceRules = freeLikeNames.map { name ->
+            val sourceRules = (freeLikeNames + containerDestroyNames).map { name ->
                 SerializedRule.Source(
                     function = simple(name),
                     overrides = false,
