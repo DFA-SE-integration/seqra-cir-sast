@@ -26,7 +26,7 @@
 #
 # Optional args: project directory names to restrict the run (default: all).
 # Useful env: BIG_WORK (build scratch dir), CLANG, BIG_SKIP_PREP=1, BIG_SKIP_RUN=1,
-#             BIG_JOBS (make parallelism), SEQRA_TEST_XMX.
+#             BIG_JOBS (make parallelism), BIG_MAKE_TARGETS, SEQRA_TEST_XMX.
 
 set -uo pipefail   # deliberately NOT -e: one project/file failure must not abort the batch
 
@@ -44,6 +44,9 @@ TOOLS="$WORK/tools"
 
 DEP_BASE_URL="https://samate.nist.gov/SARD/downloads/dependencies"
 JOBS="${BIG_JOBS:-$(nproc 2>/dev/null || echo 4)}"
+# Build only the libraries needed for compile_commands.json. A full top-level
+# `make` enters doc generation and can hang in old Wireshark's `tshark -G fields`.
+MAKE_TARGETS="${BIG_MAKE_TARGETS:-epan/libwireshark.la wiretap/libwiretap.la wsutil/libwsutil.la}"
 # Match the SARD Dockerfile (keep debug info / unoptimized so traces stay readable).
 CONFIGURE_FLAGS=(--disable-wireshark --disable-glibtest --disable-dftest CC=gcc CFLAGS="-Og -g")
 
@@ -195,8 +198,8 @@ ensure_variant_tree() {
     ( cd "$tree" && ./configure "${CONFIGURE_FLAGS[@]}" ) >"$RUNLOGS/configure-$variant.log" 2>&1 \
         || warn "configure returned non-zero ($variant); continuing (config.h may still be usable)"
 
-    log "building $variant with bear (link step may fail — we only need compile_commands.json)"
-    ( cd "$tree" && bear -- make -j"$JOBS" ) >"$RUNLOGS/make-$variant.log" 2>&1 \
+    log "building $variant with bear targets: $MAKE_TARGETS"
+    ( cd "$tree" && bear -- make -j"$JOBS" $MAKE_TARGETS ) >"$RUNLOGS/make-$variant.log" 2>&1 \
         || warn "make returned non-zero ($variant); continuing if compile_commands.json captured epan/*"
 
     [ -s "$tree/compile_commands.json" ] || { warn "no compile_commands.json for $variant"; return 1; }
@@ -297,10 +300,10 @@ run_matrix() {
     run_cfg ifds
 
     # ── 2. IFDS + SE, no passes ─────────────────────────────────────
-    export SEQRA_SE_MODE=klee
-    export CIRTAC_KLEE_NO_TRACE_GUIDE=1
-    export CIRTAC_KLEE_NO_TRACE_ASSERT=1
-    run_cfg nopass
+    # export SEQRA_SE_MODE=klee
+    # export CIRTAC_KLEE_NO_TRACE_GUIDE=1
+    # export CIRTAC_KLEE_NO_TRACE_ASSERT=1
+    # run_cfg nopass
 
     # ── 3. IFDS + SE, only TraceGuidePass ───────────────────────────
     # export SEQRA_SE_MODE=klee
