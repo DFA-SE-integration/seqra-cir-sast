@@ -425,6 +425,7 @@ internal class AliasGraph private constructor(
     internal class UnionFind {
         private val parent = HashMap<AccessPathBase, AccessPathBase>()
 
+        @Synchronized
         fun find(x: AccessPathBase): AccessPathBase {
             val p = parent[x]
             if (p == null) {
@@ -437,6 +438,7 @@ internal class AliasGraph private constructor(
             return root
         }
 
+        @Synchronized
         fun union(a: AccessPathBase, b: AccessPathBase) {
             val ra = find(a)
             val rb = find(b)
@@ -444,10 +446,11 @@ internal class AliasGraph private constructor(
             parent[ra] = rb
         }
 
+        @Synchronized
         fun classMembers(root: AccessPathBase): Set<AccessPathBase> {
             val r = find(root)
             val out = LinkedHashSet<AccessPathBase>()
-            for (node in parent.keys) {
+            for (node in parent.keys.toList()) {
                 if (find(node) == r) out += node
             }
             return out
