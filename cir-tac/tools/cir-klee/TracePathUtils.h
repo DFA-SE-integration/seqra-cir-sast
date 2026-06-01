@@ -33,10 +33,6 @@ llvm::Instruction *traceGetInsnForTraceEntry(
     const llvm::DenseMap<uint64_t, llvm::Instruction *> &OpTab,
     const llvm::Function *F);
 
-bool traceTrySelectStartFullTrace(const trace::Trace &Pb,
-                                  const llvm::Function *F,
-                                  const trace::method::FullTrace **OutFt);
-
 bool traceTrySelectSinkFullTrace(const trace::Trace &Pb,
                                  const llvm::Function *F,
                                  const trace::method::FullTrace **OutFt);

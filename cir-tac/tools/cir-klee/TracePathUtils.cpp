@@ -154,48 +154,6 @@ Instruction *traceGetInsnForTraceEntry(
   return lookupInsnFromTraceEdgeFacts(OpTab, F, E);
 }
 
-bool traceTrySelectStartFullTrace(const trace::Trace &Pb, const Function *F,
-                                  const trace::method::FullTrace **OutFt) {
-  const auto &Sts = Pb.source_to_sink_trace();
-  const trace::method::FullTrace *Best = nullptr;
-  int BestScore = -1;
-  size_t BestIdx = SIZE_MAX;
-  std::vector<uint32_t> Path;
-
-  for (int Idx = 0; Idx < Sts.start_nodes_size(); ++Idx) {
-    const trace::SourceToSinkTraceNode &Node = Sts.start_nodes(Idx);
-    if (Node.value_case() != trace::SourceToSinkTraceNode::kFull)
-      continue;
-    const trace::FullTraceNode &Fn = Node.full();
-    if (Fn.method().name() != F->getName().str())
-      continue;
-    const trace::method::FullTrace &Ft = Fn.trace();
-
-    Path.clear();
-    if (!traceBuildPathFwd(Ft, Path))
-      continue;
-
-    bool HasSource = tracePathHasSourceStart(Ft, Path);
-    int Score = HasSource ? 2 : 1;
-    size_t UIdx = static_cast<size_t>(Idx);
-    if (Score > BestScore || (Score == BestScore && UIdx < BestIdx)) {
-      BestScore = Score;
-      BestIdx = UIdx;
-      Best = &Ft;
-    }
-  }
-
-  if (!Best) {
-    errs() << "tracepath: no FullTrace in source_to_sink_trace.start_nodes "
-              "matching function "
-           << F->getName() << "\n";
-    return false;
-  }
-
-  *OutFt = Best;
-  return true;
-}
-
 bool traceTrySelectSinkFullTrace(const trace::Trace &Pb, const Function *F,
                                  const trace::method::FullTrace **OutFt) {
   const auto &Sts = Pb.source_to_sink_trace();

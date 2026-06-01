@@ -6,7 +6,9 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -85,45 +87,105 @@ void instrumentPathAlternatives(
   }
 }
 
+struct GuideTrace {
+  Function *F;
+  const trace::method::FullTrace *Ft;
+  std::string Kind;
+};
+
+struct FullTraceKey {
+  Function *F;
+  uint32_t StartEntryId;
+  uint32_t FinalEntryId;
+
+  bool operator==(const FullTraceKey &O) const {
+    return F == O.F && StartEntryId == O.StartEntryId &&
+           FinalEntryId == O.FinalEntryId;
+  }
+};
+
+struct FullTraceKeyInfo {
+  static FullTraceKey getEmptyKey() {
+    return {nullptr, 0, 0};
+  }
+  static FullTraceKey getTombstoneKey() {
+    return {reinterpret_cast<Function *>(-1), 0, 0};
+  }
+  static unsigned getHashValue(const FullTraceKey &K) {
+    return hash_combine(K.F, K.StartEntryId, K.FinalEntryId);
+  }
+  static bool isEqual(const FullTraceKey &LHS, const FullTraceKey &RHS) {
+    return LHS == RHS;
+  }
+};
+
+void collectGuideableFullTraces(
+    Module &M,
+    const google::protobuf::RepeatedPtrField<trace::SourceToSinkTraceNode>
+        &Nodes,
+    StringRef Kind, std::vector<GuideTrace> &Out,
+    DenseSet<FullTraceKey, FullTraceKeyInfo> &Seen) {
+  for (const trace::SourceToSinkTraceNode &Node : Nodes) {
+    if (Node.value_case() != trace::SourceToSinkTraceNode::kFull) {
+      errs() << "traceguide: skip non-Full " << Kind << " trace node\n";
+      continue;
+    }
+
+    const trace::FullTraceNode &FullNode = Node.full();
+    StringRef MethodName(FullNode.method().name());
+    Function *F = M.getFunction(MethodName);
+    if (!F) {
+      errs() << "traceguide: skip " << Kind
+             << " FullTrace; function not in module: " << MethodName << "\n";
+      continue;
+    }
+
+    const trace::method::FullTrace &Ft = FullNode.trace();
+    FullTraceKey Key{F, Ft.start_entry_id(), Ft.final_entry_id()};
+    if (!Seen.insert(Key).second)
+      continue;
+
+    Out.push_back({F, &Ft, Kind.str()});
+  }
+}
+
 } // namespace
 
 bool runTraceGuidePass(Module &M, const trace::Trace &Pb) {
   const std::string &EntryName = Pb.entry_point_name();
-  Function *F = M.getFunction(EntryName);
-  if (!F) {
+  Function *EntryF = M.getFunction(EntryName);
+  if (!EntryF) {
     errs() << "traceguide: function not in module: " << EntryName << "\n";
     return false;
   }
 
-  const trace::method::FullTrace *StartFtPtr = nullptr;
-  if (!seqra_trace::traceTrySelectStartFullTrace(Pb, F, &StartFtPtr))
-    return false;
-  const trace::method::FullTrace &StartFt = *StartFtPtr;
+  const auto &Sts = Pb.source_to_sink_trace();
+  std::vector<GuideTrace> Traces;
+  DenseSet<FullTraceKey, FullTraceKeyInfo> Seen;
+  collectGuideableFullTraces(M, Sts.start_nodes(), "start", Traces, Seen);
+  collectGuideableFullTraces(M, Sts.sink_nodes(), "sink", Traces, Seen);
 
-  std::vector<uint32_t> StartPath;
-  if (!seqra_trace::traceBuildPathFwd(StartFt, StartPath)) {
-    errs()
-        << "traceguide: could not reconstruct start_nodes path start to final\n";
-    return false;
+  if (Traces.empty()) {
+    errs() << "traceguide: no guideable FullTrace nodes; skipping "
+              "TraceGuidePass\n";
+    return true;
   }
 
-  const trace::method::FullTrace *SinkFtPtr = nullptr;
-  if (!seqra_trace::traceTrySelectSinkFullTrace(Pb, F, &SinkFtPtr))
-    return false;
-  const trace::method::FullTrace &SinkFt = *SinkFtPtr;
+  DenseMap<Function *, DenseMap<uint64_t, Instruction *>> OpTabs;
+  for (const GuideTrace &Gt : Traces) {
+    std::vector<uint32_t> Path;
+    if (!seqra_trace::traceBuildPathFwd(*Gt.Ft, Path)) {
+      errs() << "traceguide: skip " << Gt.Kind
+             << " FullTrace; could not reconstruct path for "
+             << Gt.F->getName() << "\n";
+      continue;
+    }
 
-  std::vector<uint32_t> SinkPath;
-  if (!seqra_trace::traceBuildPathFwd(SinkFt, SinkPath)) {
-    errs()
-        << "traceguide: could not reconstruct sink_nodes path start to final\n";
-    return false;
+    auto &OpTab = OpTabs[Gt.F];
+    if (OpTab.empty())
+      OpTab = seqra_trace::makeOpIndex(*Gt.F);
+    instrumentPathAlternatives(M, Gt.F, *Gt.Ft, Path, OpTab);
   }
-
-  DenseMap<uint64_t, Instruction *> OpTab = seqra_trace::makeOpIndex(*F);
-
-  instrumentPathAlternatives(M, F, StartFt, StartPath, OpTab);
-  if (&SinkFt != &StartFt)
-    instrumentPathAlternatives(M, F, SinkFt, SinkPath, OpTab);
 
   return true;
 }

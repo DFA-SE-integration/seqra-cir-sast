@@ -144,20 +144,107 @@ bool traceEntryHasMatchingMethodInitial(const trace::method::TraceEntry &Te,
   return false;
 }
 
+struct AssertTrace {
+  Function *F;
+  const trace::method::FullTrace *Ft;
+};
+
+void considerAssertTraceCandidate(Function *F,
+                                  const trace::method::FullTrace &Ft,
+                                  Function *EntryF, bool PreferSourceCall,
+                                  const trace::method::FullTrace **BestFt,
+                                  Function **BestF, int &BestScore,
+                                  size_t &BestIdx, size_t Idx) {
+  std::vector<uint32_t> Path;
+  if (!seqra_trace::traceBuildPathFwd(Ft, Path))
+    return;
+
+  const bool HasSource = seqra_trace::tracePathHasSourceStart(Ft, Path);
+  int Score = 0;
+  if (HasSource)
+    Score += 100;
+  if (F == EntryF)
+    Score += 10;
+  if (PreferSourceCall)
+    Score += 5;
+
+  if (Score > BestScore || (Score == BestScore && Idx < BestIdx)) {
+    BestScore = Score;
+    BestIdx = Idx;
+    *BestFt = &Ft;
+    *BestF = F;
+  }
+}
+
+bool selectAssertableStartFullTrace(Module &M, const trace::Trace &Pb,
+                                    Function *EntryF, AssertTrace &Out) {
+  const auto &Sts = Pb.source_to_sink_trace();
+  const trace::method::FullTrace *BestFt = nullptr;
+  Function *BestF = nullptr;
+  int BestScore = -1;
+  size_t BestIdx = 0;
+  size_t Idx = 0;
+
+  for (const trace::SourceToSinkTraceNode &Node : Sts.start_nodes()) {
+    if (Node.value_case() != trace::SourceToSinkTraceNode::kFull) {
+      ++Idx;
+      continue;
+    }
+    const trace::FullTraceNode &FullNode = Node.full();
+    Function *F = M.getFunction(FullNode.method().name());
+    if (!F) {
+      ++Idx;
+      continue;
+    }
+    considerAssertTraceCandidate(F, FullNode.trace(), EntryF,
+                                 /*PreferSourceCall=*/false, &BestFt, &BestF,
+                                 BestScore, BestIdx, Idx++);
+  }
+
+  for (const auto &Succ : Sts.successors()) {
+    for (const trace::InterProceduralCall &Call : Succ.second.calls()) {
+      if (!Call.has_node()) {
+        ++Idx;
+        continue;
+      }
+      const trace::FullTraceNode &FullNode = Call.node();
+      Function *F = M.getFunction(FullNode.method().name());
+      if (!F) {
+        ++Idx;
+        continue;
+      }
+      considerAssertTraceCandidate(
+          F, FullNode.trace(), EntryF,
+          Call.kind() == trace::InterProceduralCall::CALL_KIND_CALL_TO_SOURCE,
+          &BestFt, &BestF, BestScore, BestIdx, Idx++);
+    }
+  }
+
+  if (!BestFt)
+    return false;
+
+  Out = {BestF, BestFt};
+  return true;
+}
+
 } // namespace
 
 bool runTraceAssertPass(Module &M, const trace::Trace &Pb) {
   const std::string &EntryName = Pb.entry_point_name();
-  Function *F = M.getFunction(EntryName);
-  if (!F) {
+  Function *EntryF = M.getFunction(EntryName);
+  if (!EntryF) {
     errs() << "traceassert: function not in module: " << EntryName << "\n";
     return false;
   }
 
-  const trace::method::FullTrace *StartFtPtr = nullptr;
-  if (!seqra_trace::traceTrySelectStartFullTrace(Pb, F, &StartFtPtr))
-    return false;
-  const trace::method::FullTrace &StartFt = *StartFtPtr;
+  AssertTrace Selected{};
+  if (!selectAssertableStartFullTrace(M, Pb, EntryF, Selected)) {
+    errs() << "traceassert: no assertable FullTrace for " << EntryName
+           << "; skipping TraceAssertPass\n";
+    return true;
+  }
+  Function *F = Selected.F;
+  const trace::method::FullTrace &StartFt = *Selected.Ft;
 
   std::vector<uint32_t> Path;
   if (!seqra_trace::traceBuildPathFwd(StartFt, Path)) {
