@@ -46,20 +46,21 @@ object CIRProjectAnalyzer {
             // on Juliet `_17_bad` loops — the sink fires forward, but backward IFDS edge matching
             // yields no summary trace, while the real UAF at `printLine` resolves fine.
             val ifdsHits = loaded.analyzer.analyzeWithIfds(listOf(entryFn)).toList()
-            return confirmFirstVerifiedTrace(ifdsHits) { vwt ->
+            return confirmVerifiedTraces(ifdsHits) { vwt ->
                 runCatching { seAnalyzer.verifyTrace(vwt, cirPaths) }.getOrDefault(false)
             }
         }
     }
 
     /**
-     * Walk IFDS hits in order; skip structurally invalid traces; verify candidates one-by-one
-     * until the first confirmed hit. One verified trace is enough to report a leak.
+     * Walk IFDS hits in order; skip structurally invalid (degenerate) traces; verify every
+     * remaining candidate and report all that are confirmed.
      */
-    internal fun confirmFirstVerifiedTrace(
+    internal fun confirmVerifiedTraces(
         ifdsHits: List<VulnerabilityWithTrace>,
         verify: (VulnerabilityWithTrace) -> Boolean,
     ): List<VulnerabilityWithTrace> {
+        val confirmed = mutableListOf<VulnerabilityWithTrace>()
         for (vwt in ifdsHits) {
             val t = vwt.trace ?: continue
             val hasTraceNodes = t.sourceToSinkTrace.startNodes.isNotEmpty() &&
@@ -68,9 +69,9 @@ object CIRProjectAnalyzer {
                 continue
             }
             if (verify(vwt)) {
-                return listOf(vwt)
+                confirmed += vwt
             }
         }
-        return emptyList()
+        return confirmed
     }
 }

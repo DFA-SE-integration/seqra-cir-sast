@@ -248,7 +248,17 @@ class CIRErsPersistenceImpl(private var ers: EntityRelationshipStorage, private 
     override fun findFunctionBytecode(classpath: CIRClasspath, functionID: CIRFunctionID): ByteArray? {
         return read { txn ->
             val function = txn.find(PersistenceEntity.ENTITY_FUNCTION, PersistenceEntity.Function.NAME, functionID.id)
-                .filter { it["ownerId"] in classpath.registeredLocationIds && it.get<FunctionKind>(PersistenceEntity.Function.DEF_OR_DECL) == FunctionKind.DEFINITION }
+                .filter {
+                    it["ownerId"] in classpath.registeredLocationIds &&
+                        // Match the FULL functionID (name + module), not just the name. Otherwise a
+                        // declaration of a symbol in one module would resolve its bytecode to a
+                        // definition of the same name in another module, making the declaration look
+                        // like a definition to findFunctionBySymbolName (spurious "ambiguous
+                        // resolution" / "Missing entrypoint" for a symbol defined in one TU and
+                        // extern-declared in another).
+                        it.get<String>(PersistenceEntity.Function.MODULE) == functionID.moduleID.id &&
+                        it.get<FunctionKind>(PersistenceEntity.Function.DEF_OR_DECL) == FunctionKind.DEFINITION
+                }
                 .firstOrNull()
             function?.getRawBlob(PersistenceEntity.Function.BYTECODE)
         }
