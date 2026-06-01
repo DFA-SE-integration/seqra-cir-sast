@@ -46,23 +46,31 @@ object CIRProjectAnalyzer {
             // on Juliet `_17_bad` loops — the sink fires forward, but backward IFDS edge matching
             // yields no summary trace, while the real UAF at `printLine` resolves fine.
             val ifdsHits = loaded.analyzer.analyzeWithIfds(listOf(entryFn)).toList()
-            var idx = 0
-            val confirmedHits = ifdsHits.filter { vwt ->
-                idx++
-                val t = vwt.trace
-                if (t == null) {
-                    return@filter false
-                }
-                val hasTraceNodes = t.sourceToSinkTrace.startNodes.isNotEmpty() &&
-                    t.sourceToSinkTrace.sinkNodes.isNotEmpty()
-                if (!hasTraceNodes) {
-                    return@filter false
-                }
-                val confirmed = runCatching { seAnalyzer.verifyTrace(vwt, cirPaths) }
-                    .getOrDefault(false)
-                confirmed
-            }.toList()
-            return confirmedHits
+            return confirmFirstVerifiedTrace(ifdsHits) { vwt ->
+                runCatching { seAnalyzer.verifyTrace(vwt, cirPaths) }.getOrDefault(false)
+            }
         }
+    }
+
+    /**
+     * Walk IFDS hits in order; skip structurally invalid traces; verify candidates one-by-one
+     * until the first confirmed hit. One verified trace is enough to report a leak.
+     */
+    internal fun confirmFirstVerifiedTrace(
+        ifdsHits: List<VulnerabilityWithTrace>,
+        verify: (VulnerabilityWithTrace) -> Boolean,
+    ): List<VulnerabilityWithTrace> {
+        for (vwt in ifdsHits) {
+            val t = vwt.trace ?: continue
+            val hasTraceNodes = t.sourceToSinkTrace.startNodes.isNotEmpty() &&
+                t.sourceToSinkTrace.sinkNodes.isNotEmpty()
+            if (!hasTraceNodes) {
+                continue
+            }
+            if (verify(vwt)) {
+                return listOf(vwt)
+            }
+        }
+        return emptyList()
     }
 }
