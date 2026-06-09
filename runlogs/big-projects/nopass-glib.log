@@ -1,0 +1,450 @@
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors
+> Task :buildSrc:generateExternalPluginSpecBuilders
+> Task :buildSrc:extractPrecompiledScriptPluginPlugins
+> Task :buildSrc:compilePluginsBlocks
+> Task :buildSrc:generatePrecompiledScriptPluginAccessors
+> Task :buildSrc:generateScriptPluginAdapters
+> Task :buildSrc:pluginDescriptors
+> Task :buildSrc:processResources
+> Task :buildSrc:compileKotlin
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:classes
+> Task :buildSrc:jar
+> Task :checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-dataflow:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-se:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-se:extractIncludeProto
+> Task :seqra-cir-sast-se:extractProto
+> Task :seqra-cir-sast-se:generateProto
+> Task :processResources NO-SOURCE
+> Task :processTestResources
+> Task :seqra-cir-sast-dataflow:processResources NO-SOURCE
+> Task :seqra-cir-sast-se:processResources
+> Task :seqra-cir-sast-dataflow:compileKotlin
+> Task :seqra-cir-sast-dataflow:compileJava NO-SOURCE
+> Task :seqra-cir-sast-dataflow:classes UP-TO-DATE
+> Task :seqra-cir-sast-dataflow:jar
+> Task :seqra-cir-sast-se:compileKotlin
+> Task :seqra-cir-sast-se:compileJava
+> Task :seqra-cir-sast-se:classes
+> Task :seqra-cir-sast-se:jar
+> Task :compileKotlin
+> Task :compileJava NO-SOURCE
+> Task :classes UP-TO-DATE
+> Task :jar
+> Task :compileTestKotlin
+> Task :compileTestJava NO-SOURCE
+> Task :testClasses
+
+> Task :test
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > 501116-v1.0.0:radius_load_dictionary STANDARD_OUT
+    03:45:24.659 [Test worker] INFO  jetbrains.exodus.io.FileDataWriter -- Uninterruptible file channel will be used
+    03:45:25.539 [Test worker] INFO  j.exodus.env.EnvironmentImpl -- Exodus environment created: /tmp/xodusKeyValueStorage12690807103469373067
+    03:45:33.529 [Test worker] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'radius_load_dictionary'
+    03:45:35.690 [Test worker] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Starting analysis of 1 methods in 1 units
+    03:45:37.056 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_printf'
+    03:45:37.059 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_printf': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_printf), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_printf)]
+    03:45:37.306 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_string_new'
+    03:45:37.308 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'g_string_new', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_string_new)
+    03:45:37.309 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'fopen'
+    03:45:37.310 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'fopen', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=fopen)
+    03:45:37.399 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_hash_table_new'
+    03:45:37.401 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_hash_table_new': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_hash_table_new), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_hash_table_new)]
+    03:45:37.402 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radiuslex'
+    03:45:37.612 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_hash_table_foreach'
+    03:45:37.614 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_hash_table_foreach': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_hash_table_foreach), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_hash_table_foreach)]
+    03:45:37.617 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_hash_table_foreach_remove'
+    03:45:37.619 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_hash_table_foreach_remove': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_hash_table_foreach_remove), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_hash_table_foreach_remove)]
+    03:45:37.834 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_string_free'
+    03:45:37.835 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_string_free': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_string_free), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_string_free)]
+    03:45:37.877 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_string_free_and_steal'
+    03:45:37.878 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'g_string_free_and_steal', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_string_free_and_steal)
+    03:45:37.879 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'destroy_dict'
+    03:45:37.918 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_free'
+    03:45:37.918 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_free': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_free), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_free)]
+    03:45:38.157 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'fclose'
+    03:45:38.158 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'fclose', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=fclose)
+    03:45:38.159 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name '__errno_location'
+    03:45:38.162 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol '__errno_location', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=__errno_location)
+    03:45:38.163 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'strerror'
+    03:45:38.164 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'strerror', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=strerror)
+    03:45:38.165 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_string_append_printf'
+    03:45:38.167 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_string_append_printf': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_string_append_printf), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_string_append_printf)]
+    03:45:38.188 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'yy_fatal_error'
+    03:45:38.211 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'yy_get_next_buffer'
+    03:45:38.278 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'yy_get_previous_state'
+    03:45:38.295 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radiuswrap'
+    03:45:38.298 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radiusrestart'
+    03:45:38.307 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'yy_try_NUL_trans'
+    03:45:38.317 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radius_delete_buffer'
+    03:45:38.330 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radius_switch_to_buffer'
+    03:45:39.075 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radius_create_buffer'
+    03:45:39.079 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strerror'
+    03:45:39.080 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'g_strerror', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strerror)
+    03:45:39.086 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'strtol'
+    03:45:39.086 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'strtol', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=strtol)
+    03:45:39.088 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'add_value'
+    03:45:39.346 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:45:39.364 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:45:39.364 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:45:39.366 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:45:39.366 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'add_attribute'
+    03:45:39.393 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:45:39.394 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:45:39.396 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'strtoul'
+    03:45:39.397 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'strtoul', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=strtoul)
+    03:45:39.398 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:45:39.399 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:45:39.400 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:45:39.400 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:45:39.401 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'add_vendor'
+    03:45:39.408 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:45:39.409 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:45:39.410 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:45:39.411 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:45:39.413 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:45:39.413 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:45:46.060 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-progress @coroutine#3] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Progress: 3/116
+    03:45:46.080 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-progress @coroutine#3] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Memory usage: 12760420480/12884901888 (99.03%)
+    03:45:56.084 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-progress @coroutine#3] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Progress: 3/131
+    03:45:56.085 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-progress @coroutine#3] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Memory usage: 12488323968/12884901888 (96.92%)
+    03:45:59.039 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radius_load_buffer_state'
+    03:45:59.045 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radiusensure_buffer_stack'
+    03:45:59.247 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radiusfree'
+    03:45:59.535 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radiusrealloc'
+    03:45:59.540 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radiusalloc'
+    03:45:59.546 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_hash_table_lookup'
+    03:45:59.547 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_hash_table_lookup': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_hash_table_lookup), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_hash_table_lookup)]
+    03:45:59.548 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:45:59.551 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:45:59.551 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_array_append_vals'
+    03:45:59.553 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_array_append_vals': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_array_append_vals), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_array_append_vals)]
+    03:45:59.556 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_array_new'
+    03:45:59.557 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_array_new': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_array_new), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_array_new)]
+    03:45:59.559 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:45:59.560 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:45:59.560 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_hash_table_insert'
+    03:45:59.561 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_hash_table_insert': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_hash_table_insert), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_hash_table_insert)]
+    03:45:59.562 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'malloc'
+    03:45:59.563 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'malloc', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=malloc)
+    03:45:59.568 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:45:59.571 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:45:59.739 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_malloc'
+    03:45:59.741 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_malloc': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_malloc), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_malloc)]
+    03:45:59.743 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'add_tlv'
+    03:46:00.463 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'fprintf'
+    03:46:00.463 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'fprintf', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=fprintf)
+    03:46:00.464 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'exit'
+    03:46:00.465 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'exit': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=exit), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=exit)]
+    03:46:00.471 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:46:00.472 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:46:00.503 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'fread'
+    03:46:00.504 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'fread', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=fread)
+    03:46:00.505 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'clearerr'
+    03:46:00.506 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'clearerr', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=clearerr)
+    03:46:00.506 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'ferror'
+    03:46:00.507 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'ferror', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=ferror)
+    03:46:00.507 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'getc'
+    03:46:00.508 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'getc', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=getc)
+    03:46:00.511 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'free'
+    03:46:00.511 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'free', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=free)
+    03:46:00.519 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radius_init_buffer'
+    03:46:00.523 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'Radius_flush_buffer'
+    03:46:00.527 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_hash_table_destroy'
+    03:46:00.527 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_hash_table_destroy': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_hash_table_destroy), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_hash_table_destroy)]
+    03:46:00.541 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'realloc'
+    03:46:00.541 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'realloc', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=realloc)
+    03:46:00.545 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:46:00.545 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:46:00.857 [Test worker @coroutine#4] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Progress: 656/0
+    03:46:00.858 [Test worker @coroutine#4] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Memory usage: 12320457304/12884901888 (95.62%)
+    03:46:00.866 [Test worker @coroutine#4] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Analysis done in 25.178990720s
+    03:46:00.867 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Total vulnerabilities: 114
+    03:46:00.868 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Start trace generation
+    03:46:01.465 [Test worker] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Resolved 114/114 traces
+    03:46:01.466 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Finish trace generation
+    03:46:26.080 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1156.979333 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:46:48.801 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1060.242709 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:47:11.980 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1112.956376 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:47:34.603 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1072.080626 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:47:57.569 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1070.840667 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:48:19.868 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1120.797042 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:48:42.122 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1059.683125 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:49:04.960 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1098.992917 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:49:27.941 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1088.408792 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:49:50.128 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1094.331917 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:50:12.722 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1152.145001 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:50:36.255 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1174.558501 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:50:59.509 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1146.794084 instr=0 guide_ms=0.0 assert_ms=0.0
+    03:51:21.945 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=false mem_errs=0 precond_violations=0 klee_ms=1085.770709 instr=0 guide_ms=0.0 assert_ms=0.0
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > 501116-v1.0.0:radius_load_dictionary FAILED
+    org.opentest4j.AssertionFailedError at BigProjectsEntrypointsTest.kt:39
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > 501116-v1.0.0:destroy_dict STANDARD_OUT
+    03:51:23.846 [Test worker] INFO  j.exodus.env.EnvironmentImpl -- Exodus environment created: /tmp/xodusKeyValueStorage14824078411157404480
+    03:51:25.555 [Test worker] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'destroy_dict'
+    03:51:25.558 [Test worker] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Starting analysis of 1 methods in 1 units
+    03:51:25.573 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#122] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_hash_table_foreach_remove'
+    03:51:25.574 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#122] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_hash_table_foreach_remove': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_hash_table_foreach_remove), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_hash_table_foreach_remove)]
+    03:51:25.577 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#122] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_hash_table_destroy'
+    03:51:25.578 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#122] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_hash_table_destroy': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_hash_table_destroy), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_hash_table_destroy)]
+    03:51:25.580 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#122] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_free'
+    03:51:25.580 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#122] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_free': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_free), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_free)]
+    03:51:25.603 [Test worker @coroutine#124] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Progress: 3/0
+    03:51:25.603 [Test worker @coroutine#124] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Memory usage: 12526584800/12884901888 (97.22%)
+    03:51:25.604 [Test worker @coroutine#124] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Analysis done in 46.132958ms
+    03:51:25.604 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Total vulnerabilities: 13
+    03:51:25.604 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Start trace generation
+    03:51:25.609 [Test worker] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Resolved 13/13 traces
+    03:51:25.610 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Finish trace generation
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > 501116-v1.0.0:destroy_dict FAILED
+    org.opentest4j.AssertionFailedError at BigProjectsEntrypointsTest.kt:39
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > 501116-v1.0.0:destroy_tlvs STANDARD_OUT
+    03:51:27.173 [Test worker] INFO  j.exodus.env.EnvironmentImpl -- Exodus environment created: /tmp/xodusKeyValueStorage7964153159457521592
+    03:51:28.369 [Test worker] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'destroy_tlvs'
+    03:51:28.373 [Test worker] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Starting analysis of 1 methods in 1 units
+    03:51:28.400 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#141] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_free'
+    03:51:28.401 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#141] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_free': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_free), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_free)]
+    03:51:28.472 [Test worker @coroutine#143] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Progress: 3/0
+    03:51:28.473 [Test worker @coroutine#143] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Memory usage: 11614013968/12884901888 (90.14%)
+    03:51:28.474 [Test worker @coroutine#143] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Analysis done in 100.379375ms
+    03:51:28.475 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Total vulnerabilities: 18
+    03:51:28.475 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Start trace generation
+    03:51:28.484 [Test worker] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Resolved 18/18 traces
+    03:51:28.484 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Finish trace generation
+    03:51:51.381 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=true mem_errs=1 precond_violations=0 klee_ms=1222.732834 instr=16 guide_ms=0.0 assert_ms=0.0
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > 501116-v1.0.0:destroy_tlvs PASSED
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > 501116-v1.0.0:register_attrs STANDARD_OUT
+    03:51:53.020 [Test worker] INFO  j.exodus.env.EnvironmentImpl -- Exodus environment created: /tmp/xodusKeyValueStorage9069163037574487855
+    03:51:54.784 [Test worker] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'register_attrs'
+    03:51:54.816 [Test worker] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Starting analysis of 1 methods in 1 units
+    03:51:54.867 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strconcat'
+    03:51:54.868 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'g_strconcat', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strconcat)
+    03:51:54.869 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_array_append_vals'
+    03:51:54.870 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_array_append_vals': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_array_append_vals), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_array_append_vals)]
+    03:51:54.871 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_hash_table_foreach'
+    03:51:54.871 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_hash_table_foreach': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_hash_table_foreach), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_hash_table_foreach)]
+    03:51:54.872 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:51:54.873 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:51:54.873 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:51:54.874 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:51:54.874 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:51:54.874 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:51:54.875 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'g_strdup_inline'
+    03:51:54.875 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#165] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Ambiguous function resolution for symbol 'g_strdup_inline': [CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/dissectors/packet-radius.c), id=g_strdup_inline), CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan/radius_dict.c), id=g_strdup_inline)]
+    03:51:54.880 [Test worker @coroutine#167] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Progress: 3/0
+    03:51:54.880 [Test worker @coroutine#167] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Memory usage: 12336938528/12884901888 (95.75%)
+    03:51:54.881 [Test worker @coroutine#167] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Analysis done in 64.695667ms
+    03:51:54.881 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Total vulnerabilities: 0
+    03:51:54.881 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Start trace generation
+    03:51:54.881 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Finish trace generation
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > 501116-v1.0.0:register_attrs FAILED
+    org.opentest4j.AssertionFailedError at BigProjectsEntrypointsTest.kt:39
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > 501116-v1.0.0:register_radius_fields STANDARD_OUT
+    03:51:56.482 [Test worker] INFO  j.exodus.env.EnvironmentImpl -- Exodus environment created: /tmp/xodusKeyValueStorage5057550874877671096
+    03:51:57.020 [Test worker] ERROR j.exodus.env.EnvironmentImpl -- Failed to flush transaction
+    jetbrains.exodus.OutOfDiskSpaceException: No space left on device to complete current transaction
+    	at jetbrains.exodus.io.FileDataWriter.write(FileDataWriter.kt:62)
+    	at jetbrains.exodus.log.BufferedDataWriter.writePage(BufferedDataWriter.java:264)
+    	at jetbrains.exodus.log.BufferedDataWriter.commit(BufferedDataWriter.java:153)
+    	at jetbrains.exodus.log.Log.writeContinuously(Log.kt:857)
+    	at jetbrains.exodus.log.Log.write(Log.kt:523)
+    	at jetbrains.exodus.tree.patricia.MutableNode.save(MutableNode.kt:246)
+    	at jetbrains.exodus.tree.patricia.PatriciaTreeMutable.save(PatriciaTreeMutable.kt:247)
+    	at jetbrains.exodus.tree.patricia.PatriciaTreeWithDuplicatesMutable.save(PatriciaTreeWithDuplicatesMutable.java:134)
+    	at jetbrains.exodus.env.MetaTreeImpl.saveTree(MetaTreeImpl.java:190)
+    	at jetbrains.exodus.env.ReadWriteTransaction.doCommit(ReadWriteTransaction.java:249)
+    	at jetbrains.exodus.env.EnvironmentImpl.flushTransaction(EnvironmentImpl.java:727)
+    	at jetbrains.exodus.env.EnvironmentImpl.commitTransaction(EnvironmentImpl.java:684)
+    	at jetbrains.exodus.env.ReadWriteTransaction.commit(ReadWriteTransaction.java:96)
+    	at org.seqra.ir.impl.storage.kv.xodus.XodusTransaction.commit(XodusTransaction.kt:65)
+    	at org.seqra.ir.impl.storage.ers.kv.KVErsTransaction.commit(KVErsTransaction.kt:148)
+    	at org.seqra.ir.impl.storage.ers.decorators.AbstractTransactionDecorator.commit(AbstractDecorators.kt:40)
+    	at org.seqra.ir.impl.storage.ers.decorators.AbstractTransactionDecorator.commit(AbstractDecorators.kt:40)
+    	at org.seqra.ir.impl.storage.ers.decorators.AbstractTransactionDecorator.commit(AbstractDecorators.kt:40)
+    	at org.seqra.ir.api.storage.ers.Transaction.close(Transaction.kt:95)
+    	at kotlin.io.CloseableKt.closeFinally(Closeable.kt:46)
+    	at org.seqra.ir.api.storage.ers.EntityRelationshipStorage.transactional(EntityRelationshipStorage.kt:18)
+    	at org.seqra.ir.api.storage.ers.EntityRelationshipStorage.transactional$default(EntityRelationshipStorage.kt:15)
+    	at org.seqra.ir.impl.storage.ers.CIRErsPersistenceImpl.write(CIRErsPersistenceImpl.kt:38)
+    	at org.seqra.ir.impl.storage.ers.CIRErsPersistenceImpl.persist(CIRErsPersistenceImpl.kt:50)
+    	at org.seqra.ir.impl.CIRDatabaseImpl.process(CIRDatabaseImpl.kt:128)
+    	at org.seqra.ir.impl.CIRDatabaseImpl.loadLocations(CIRDatabaseImpl.kt:107)
+    	at org.seqra.ir.impl.CIRDatabaseImpl.loadFiles(CIRDatabaseImpl.kt:90)
+    	at org.seqra.cir.sast.dataflow.CIRTaintAnalyzer$Loader.loadCirFiles(CIRTaintAnalyzer.kt:231)
+    	at org.seqra.cir.sast.CIRProjectAnalyzer.analyze(CIRProjectAnalyzer.kt:40)
+    	at org.seqra.cir.sast.BigProjectsEntrypointsTest.bigProject(BigProjectsEntrypointsTest.kt:36)
+    	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+    	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+    	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:728)
+    	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+    	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+    	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156)
+    	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147)
+    	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestTemplateMethod(TimeoutExtension.java:94)
+    	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103)
+    	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93)
+    	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+    	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+    	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+    	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+    	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92)
+    	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86)
+    	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:218)
+    	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+    	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:214)
+    	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:139)
+    	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151)
+    	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+    	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+    	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+    	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask$DefaultDynamicTestExecutor.execute(NodeTestTask.java:226)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask$DefaultDynamicTestExecutor.execute(NodeTestTask.java:204)
+    	at org.junit.jupiter.engine.descriptor.TestTemplateTestDescriptor.execute(TestTemplateTestDescriptor.java:142)
+    	at org.junit.jupiter.engine.descriptor.TestTemplateTestDescriptor.lambda$execute$2(TestTemplateTestDescriptor.java:110)
+    	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:184)
+    	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+    	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
+    	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+    	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:184)
+    	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+    	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+    	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+    	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:184)
+    	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+    	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1708)
+    	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:762)
+    	at java.base/java.util.stream.ReferencePipeline$7$1.accept(ReferencePipeline.java:276)
+    	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+    	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+    	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+    	at java.base/java.util.Spliterators$ArraySpliterator.forEachRemaining(Spliterators.java:1024)
+    	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+    	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+    	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:151)
+    	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:174)
+    	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+    	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)
+    	at java.base/java.util.stream.ReferencePipeline$7$1.accept(ReferencePipeline.java:276)
+    	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+    	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+    	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+    	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1708)
+    	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+    	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+    	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:151)
+    	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:174)
+    	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+    	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)
+    	at java.base/java.util.stream.ReferencePipeline$7$1.accept(ReferencePipeline.java:276)
+    	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1708)
+    	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+    	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+    	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:151)
+    	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:174)
+    	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+    	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)
+    	at org.junit.jupiter.engine.descriptor.TestTemplateTestDescriptor.execute(TestTemplateTestDescriptor.java:110)
+    	at org.junit.jupiter.engine.descriptor.TestTemplateTestDescriptor.execute(TestTemplateTestDescriptor.java:44)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151)
+    	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+    	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+    	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+    	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+    	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+    	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+    	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+    	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+    	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+    	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+    	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+    	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+    	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+    	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+    	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+    	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+    	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+    	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198)
+    	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169)
+    	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93)
+    	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58)
+    	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141)
+    	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57)
+    	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103)
+    	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85)
+    	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47)
+    	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:124)
+    	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:99)
+    	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:94)
+    	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:63)
+    	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+    	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+    	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)
+    	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)
+    	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
+    	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92)
+    	at jdk.proxy1/jdk.proxy1.$Proxy4.stop(Unknown Source)
+    	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:200)
+    	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:132)
+    	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103)
+    	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63)
+    	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
+    	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:121)
+    	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:71)
+    	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+    	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+    Caused by: java.io.IOException: No space left on device
+    	at java.base/java.io.RandomAccessFile.writeBytes0(Native Method)
+    	at java.base/java.io.RandomAccessFile.writeBytes(RandomAccessFile.java:572)
+    	at java.base/java.io.RandomAccessFile.write(RandomAccessFile.java:602)
+    	at jetbrains.exodus.io.FileDataWriter.write(FileDataWriter.kt:59)
+    	... 167 common frames omitted
+    03:51:57.113 [Test worker] INFO  jetbrains.exodus.io.FileDataWriter -- Truncated file /tmp/xodusKeyValueStorage5057550874877671096/00000000000.xd to length = 1312
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > 501116-v1.0.0:register_radius_fields FAILED
+    jetbrains.exodus.OutOfDiskSpaceException at BigProjectsEntrypointsTest.kt:36
+        Caused by: java.io.IOException at BigProjectsEntrypointsTest.kt:36
+
+5 tests completed, 4 failed
+
+> Task :test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':test'.
+> There were failing tests. See the report at: file:///workspace/seqra-cir-sast/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 7m 26s
+24 actionable tasks: 24 executed

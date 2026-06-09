@@ -1,0 +1,2 @@
+# label	expected	entry	cir
+glib:entry_glib_uaf	bad	entry_glib_uaf	/workspace/big-projects/cir/poc-glib/glib_uaf.cir

@@ -1,0 +1,3 @@
+timestamp_ms	fixture	entry	mode	no_trace_guide	confirmed	klee_instructions	klee_completed_paths	klee_explored_paths	klee_ms	trace_guide_ms	trace_assert_ms	cir_to_llvm_ms	llvm_as_ms
+1780349181074	trivial_uaf.cir	entry_uaf	klee	true	true	13	0	1	559.662292	0.0	0.0	292.6955	165.014917
+1780349182235	trivial_uaf.cir	entry_uaf	klee	true	true	13	0	1	467.513667	0.0	0.0	106.247917	45.4805

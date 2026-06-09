@@ -1,0 +1,67 @@
+OpenJDK 64-Bit Server VM warning: Insufficient space for shared memory file:
+   47450
+Try using the -Djava.io.tmpdir= option to select an alternate temp location.
+
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors
+> Task :buildSrc:generateExternalPluginSpecBuilders
+> Task :buildSrc:extractPrecompiledScriptPluginPlugins
+> Task :buildSrc:compilePluginsBlocks
+> Task :buildSrc:generatePrecompiledScriptPluginAccessors
+> Task :buildSrc:generateScriptPluginAdapters
+> Task :buildSrc:pluginDescriptors
+> Task :buildSrc:processResources
+> Task :buildSrc:compileKotlin
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:classes
+> Task :buildSrc:jar
+> Task :checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-dataflow:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-se:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-se:extractIncludeProto
+> Task :seqra-cir-sast-se:extractProto
+> Task :seqra-cir-sast-se:generateProto
+> Task :processResources NO-SOURCE
+> Task :processTestResources
+> Task :seqra-cir-sast-dataflow:processResources NO-SOURCE
+> Task :seqra-cir-sast-se:processResources
+> Task :seqra-cir-sast-dataflow:compileKotlin
+> Task :seqra-cir-sast-dataflow:compileJava NO-SOURCE
+> Task :seqra-cir-sast-dataflow:classes UP-TO-DATE
+> Task :seqra-cir-sast-dataflow:jar
+> Task :seqra-cir-sast-se:compileKotlin
+> Task :seqra-cir-sast-se:compileJava
+> Task :seqra-cir-sast-se:classes
+> Task :seqra-cir-sast-se:jar
+> Task :compileKotlin
+> Task :compileJava NO-SOURCE
+> Task :classes UP-TO-DATE
+> Task :jar
+> Task :compileTestKotlin
+> Task :compileTestJava NO-SOURCE
+> Task :testClasses
+
+> Task :test
+OpenJDK 64-Bit Server VM warning: Insufficient space for shared memory file:
+   47634
+Try using the -Djava.io.tmpdir= option to select an alternate temp location.
+
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > glib:entry_glib_uaf FAILED
+    java.io.IOException at BigProjectsEntrypointsTest.kt:36
+
+1 test completed, 1 failed
+
+> Task :test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':test'.
+> There were failing tests. See the report at: file:///workspace/seqra-cir-sast/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 54s
+24 actionable tasks: 24 executed

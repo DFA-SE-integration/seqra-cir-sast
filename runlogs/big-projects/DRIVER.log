@@ -1,0 +1,73 @@
+[1;33m[big][warn][0m missing tools: libtool — attempting apt-get install
+Hit:1 http://ports.ubuntu.com/ubuntu-ports noble InRelease
+Get:2 http://ports.ubuntu.com/ubuntu-ports noble-updates InRelease [126 kB]
+Hit:3 http://ports.ubuntu.com/ubuntu-ports noble-backports InRelease
+Get:4 http://ports.ubuntu.com/ubuntu-ports noble-security InRelease [126 kB]
+Get:5 http://ports.ubuntu.com/ubuntu-ports noble-updates/main arm64 Packages [2655 kB]
+Get:6 http://ports.ubuntu.com/ubuntu-ports noble-updates/universe arm64 Packages [2160 kB]
+Get:7 http://ports.ubuntu.com/ubuntu-ports noble-security/universe arm64 Packages [1550 kB]
+Get:8 http://ports.ubuntu.com/ubuntu-ports noble-security/main arm64 Packages [2246 kB]
+Fetched 8863 kB in 11s (800 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+bear is already the newest version (3.1.3-1build4).
+universal-ctags is already the newest version (5.9.20210829.0-1).
+python3 is already the newest version (3.12.3-0ubuntu2.1).
+build-essential is already the newest version (12.10ubuntu1).
+flex is already the newest version (2.6.4-8.2build1).
+bison is already the newest version (2:3.8.2+dfsg-1build2).
+byacc is already the newest version (1:2.0.20221106-1).
+autoconf is already the newest version (2.71-3).
+automake is already the newest version (1:1.16.5-1.3ubuntu1).
+libtool is already the newest version (2.4.7-7build1).
+pkg-config is already the newest version (1.8.1-2build1).
+wget is already the newest version (1.21.4-1ubuntu4.1).
+unzip is already the newest version (6.0-28ubuntu4.1).
+zlib1g-dev is already the newest version (1:1.3.dfsg-3.1ubuntu2.1).
+libpcap-dev is already the newest version (1.10.4-4.1ubuntu3).
+libglib2.0-dev is already the newest version (2.80.0-6ubuntu3.8).
+libgtk2.0-dev is already the newest version (2.24.33-4ubuntu1.1).
+gettext is already the newest version (0.21-14ubuntu2).
+0 upgraded, 0 newly installed, 0 to remove and 17 not upgraded.
+[1;34m[big][0m BIG_SKIP_PREP=1 — reusing existing /workspace/big-projects/cir/entrypoints.tsv
+[1;34m[big][0m plan has 5 entrypoint(s); driving the SE-mode matrix
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors
+> Task :buildSrc:generateExternalPluginSpecBuilders
+> Task :buildSrc:extractPrecompiledScriptPluginPlugins
+> Task :buildSrc:compilePluginsBlocks
+> Task :buildSrc:generatePrecompiledScriptPluginAccessors
+> Task :buildSrc:generateScriptPluginAdapters
+> Task :buildSrc:pluginDescriptors
+> Task :buildSrc:processResources
+> Task :buildSrc:compileKotlin
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:classes
+> Task :buildSrc:jar
+> Task :checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-dataflow:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-se:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-se:extractIncludeProto
+> Task :seqra-cir-sast-se:extractProto
+> Task :seqra-cir-sast-se:generateProto
+> Task :processResources NO-SOURCE
+> Task :processTestResources NO-SOURCE
+> Task :seqra-cir-sast-dataflow:processResources NO-SOURCE
+> Task :seqra-cir-sast-se:processResources
+> Task :seqra-cir-sast-dataflow:compileKotlin
+> Task :seqra-cir-sast-dataflow:compileJava NO-SOURCE
+> Task :seqra-cir-sast-dataflow:classes UP-TO-DATE
+> Task :seqra-cir-sast-dataflow:jar
+> Task :seqra-cir-sast-se:compileKotlin
+> Task :seqra-cir-sast-se:compileJava
+> Task :seqra-cir-sast-se:classes
+> Task :seqra-cir-sast-se:jar
+> Task :compileKotlin
+> Task :compileJava NO-SOURCE
+> Task :classes UP-TO-DATE
+> Task :jar
+> Task :compileTestKotlin
+> Task :compileTestJava NO-SOURCE
+> Task :testClasses UP-TO-DATE

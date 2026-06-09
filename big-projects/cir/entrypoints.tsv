@@ -1,0 +1,6 @@
+# label	expected	entry_symbol	cir_files(csv)
+501116-v1.0.0:radius_load_dictionary	bad	radius_load_dictionary	/workspace/big-projects/cir/501116-v1.0.0/packet-radius.cir,/workspace/big-projects/cir/501116-v1.0.0/radius_dict.cir
+501116-v1.0.0:destroy_dict	bad	destroy_dict	/workspace/big-projects/cir/501116-v1.0.0/packet-radius.cir,/workspace/big-projects/cir/501116-v1.0.0/radius_dict.cir
+501116-v1.0.0:destroy_tlvs	bad	destroy_tlvs	/workspace/big-projects/cir/501116-v1.0.0/packet-radius.cir,/workspace/big-projects/cir/501116-v1.0.0/radius_dict.cir
+501116-v1.0.0:register_attrs	bad	register_attrs	/workspace/big-projects/cir/501116-v1.0.0/packet-radius.cir,/workspace/big-projects/cir/501116-v1.0.0/radius_dict.cir
+501116-v1.0.0:register_radius_fields	bad	register_radius_fields	/workspace/big-projects/cir/501116-v1.0.0/packet-radius.cir,/workspace/big-projects/cir/501116-v1.0.0/radius_dict.cir

@@ -1,0 +1,2 @@
+# label	expected	entry	cir
+501116:destroy_tlvs	bad	destroy_tlvs	/workspace/big-projects/cir/501116-v1.0.0/packet-radius.cir,/workspace/big-projects/cir/501116-v1.0.0/radius_dict.cir

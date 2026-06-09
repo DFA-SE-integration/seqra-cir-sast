@@ -1,0 +1,11 @@
+radius_dict.cir: rewrote 6 union get_member ops (8 union types)
+packet-radius.cir: rewrote 0 union get_member ops (7 union types)
+######## MODE=ifds ########
+ifds done: 501116-v1.0.0:destroy_dict FAILED 501116-v1.0.0:destroy_tlvs PASSED 501116-v1.0.0:radius_load_dictionary PASSED 501116-v1.0.0:register_attrs FAILED 501116-v1.0.0:register_radius_fields PASSED 
+######## MODE=nopass ########
+nopass done: 501116-v1.0.0:destroy_dict FAILED 501116-v1.0.0:destroy_tlvs FAILED 501116-v1.0.0:radius_load_dictionary FAILED 501116-v1.0.0:register_attrs FAILED 501116-v1.0.0:register_radius_fields FAILED 
+######## MODE=guide ########
+guide done: 501116-v1.0.0:destroy_dict FAILED 501116-v1.0.0:destroy_tlvs FAILED 501116-v1.0.0:radius_load_dictionary FAILED 501116-v1.0.0:register_attrs FAILED 501116-v1.0.0:register_radius_fields FAILED 
+######## MODE=full ########
+full done: 501116-v1.0.0:destroy_dict FAILED 501116-v1.0.0:destroy_tlvs FAILED 501116-v1.0.0:radius_load_dictionary FAILED 501116-v1.0.0:register_attrs FAILED 501116-v1.0.0:register_radius_fields FAILED 
+ALL MODES DONE

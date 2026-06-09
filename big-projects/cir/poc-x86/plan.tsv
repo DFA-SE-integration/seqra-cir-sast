@@ -1,0 +1,2 @@
+# label	expected	entry	cir
+poc:entry_uaf	bad	entry_uaf	/workspace/big-projects/cir/poc-x86/trivial_uaf.cir

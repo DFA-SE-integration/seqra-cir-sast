@@ -1,0 +1,110 @@
+make: Entering directory '/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan'
+/bin/bash ../libtool --tag=CC   --mode=compile gcc -DHAVE_CONFIG_H -I. -I.. -I./.. -I./../tools/lemon      -I/usr/local/include -I/usr/include '-DPLUGIN_DIR="/usr/local/lib/wireshark/plugins/1.2.0"'  -DINET6 -D_U_="__attribute__((unused))" -Og -g -Wall -W -Wdeclaration-after-statement -Wendif-labels -Wpointer-arith -Wno-pointer-sign -Warray-bounds -Wcast-align -Wformat-security -I/usr/local/include -I/usr/include/glib-2.0 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -pthread  -I/usr/include -MT radius_dict.lo -MD -MP -MF .deps/radius_dict.Tpo -c -o radius_dict.lo radius_dict.c
+/bin/bash ../libtool --tag=CC   --mode=compile gcc -DHAVE_CONFIG_H -I. -I.. -I./.. -I./../tools/lemon      -I/usr/local/include -I/usr/include '-DPLUGIN_DIR="/usr/local/lib/wireshark/plugins/1.2.0"'  -DINET6 -D_U_="__attribute__((unused))" -Og -g -Wall -W -Wdeclaration-after-statement -Wendif-labels -Wpointer-arith -Wno-pointer-sign -Warray-bounds -Wcast-align -Wformat-security -I/usr/local/include -I/usr/include/glib-2.0 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -pthread  -I/usr/include -MT dissectors/packet-radius.lo -MD -MP -MF .deps/dissectors/packet-radius.Tpo -c -o dissectors/packet-radius.lo dissectors/packet-radius.c
+ gcc -DHAVE_CONFIG_H -I. -I.. -I./.. -I./../tools/lemon -I/usr/local/include -I/usr/include -DPLUGIN_DIR=\"/usr/local/lib/wireshark/plugins/1.2.0\" -DINET6 "-D_U_=__attribute__((unused))" -Og -g -Wall -W -Wdeclaration-after-statement -Wendif-labels -Wpointer-arith -Wno-pointer-sign -Warray-bounds -Wcast-align -Wformat-security -I/usr/local/include -I/usr/include/glib-2.0 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -pthread -I/usr/include -MT radius_dict.lo -MD -MP -MF .deps/radius_dict.Tpo -c radius_dict.c  -fPIC -DPIC -o .libs/radius_dict.o
+ gcc -DHAVE_CONFIG_H -I. -I.. -I./.. -I./../tools/lemon -I/usr/local/include -I/usr/include -DPLUGIN_DIR=\"/usr/local/lib/wireshark/plugins/1.2.0\" -DINET6 "-D_U_=__attribute__((unused))" -Og -g -Wall -W -Wdeclaration-after-statement -Wendif-labels -Wpointer-arith -Wno-pointer-sign -Warray-bounds -Wcast-align -Wformat-security -I/usr/local/include -I/usr/include/glib-2.0 -I/usr/lib/aarch64-linux-gnu/glib-2.0/include -pthread -I/usr/include -MT dissectors/packet-radius.lo -MD -MP -MF .deps/dissectors/packet-radius.Tpo -c dissectors/packet-radius.c  -fPIC -DPIC -o dissectors/.libs/packet-radius.o
+dissectors/packet-radius.c: In function 'dissect_radius':
+radius_dict.c: In function 'yy_get_next_buffer':
+dissectors/packet-radius.c:1476:41: warning: 'g_mem_chunk_alloc' is deprecated [-Wdeprecated-declarations]
+ 1476 |                                         new_radius_call_key = g_mem_chunk_alloc(radius_call_info_key_chunk);
+      |                                         ^~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/glib-2.0/glib.h:110,
+                 from ../wiretap/wtap.h:30,
+                 from ../epan/packet.h:28,
+                 from dissectors/packet-radius.c:57:
+/usr/include/glib-2.0/glib/deprecated/gallocator.h:50:17: note: declared here
+   50 | gpointer        g_mem_chunk_alloc       (GMemChunk    *mem_chunk);
+      |                 ^~~~~~~~~~~~~~~~~
+radius_dict.c:2051:44: warning: comparison of integer expressions of different signedness: 'int' and 'yy_size_t' {aka 'long unsigned int'} [-Wsign-compare]
+ 2051 | 
+      |                                            ^
+dissectors/packet-radius.c:1478:41: warning: 'g_mem_chunk_alloc' is deprecated [-Wdeprecated-declarations]
+ 1478 |                                         radius_call = g_mem_chunk_alloc(radius_call_info_value_chunk);
+      |                                         ^~~~~~~~~~~
+/usr/include/glib-2.0/glib/deprecated/gallocator.h:50:17: note: declared here
+   50 | gpointer        g_mem_chunk_alloc       (GMemChunk    *mem_chunk);
+      |                 ^~~~~~~~~~~~~~~~~
+radius_dict.l: In function 'add_attribute':
+radius_dict.l:348:36: warning: variable 'oldname' set but not used [-Wunused-but-set-variable]
+  348 |                         return;
+      |                                    ^      
+dissectors/packet-radius.c: In function 'radius_init_protocol':
+radius_dict.l: In function 'add_tlv':
+radius_dict.l:413:27: warning: Deprecated pre-processor symbol: replace with "g_string_append_printf"
+  413 | 
+      |                           ^                                                                         
+dissectors/packet-radius.c:1828:17: warning: 'g_mem_chunk_destroy' is deprecated [-Wdeprecated-declarations]
+ 1828 |                 g_mem_chunk_destroy(radius_call_info_key_chunk);
+      |                 ^~~~~~~~~~~~~~~~~~~
+/usr/include/glib-2.0/glib/deprecated/gallocator.h:48:17: note: declared here
+   48 | void            g_mem_chunk_destroy     (GMemChunk    *mem_chunk);
+      |                 ^~~~~~~~~~~~~~~~~~~
+radius_dict.l:419:27: warning: Deprecated pre-processor symbol: replace with "g_string_append_printf"
+  419 |                 s->dissector = NULL;
+      |                           ^~~~~~~~~~                                                                
+dissectors/packet-radius.c:1833:17: warning: 'g_mem_chunk_destroy' is deprecated [-Wdeprecated-declarations]
+ 1833 |                 g_mem_chunk_destroy(radius_call_info_value_chunk);
+      |                 ^~~~~~~~~~~~~~~~~~~
+/usr/include/glib-2.0/glib/deprecated/gallocator.h:48:17: note: declared here
+   48 | void            g_mem_chunk_destroy     (GMemChunk    *mem_chunk);
+      |                 ^~~~~~~~~~~~~~~~~~~
+dissectors/packet-radius.c:1838:9: warning: 'g_mem_chunk_new' is deprecated [-Wdeprecated-declarations]
+ 1838 |         radius_call_info_key_chunk = g_mem_chunk_new("call_info_key_chunk",
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/glib-2.0/glib/deprecated/gallocator.h:43:17: note: declared here
+   43 | GMemChunk *     g_mem_chunk_new         (const gchar  *name,
+      |                 ^~~~~~~~~~~~~~~
+In file included from /usr/include/glib-2.0/glib/giochannel.h:36,
+                 from /usr/include/glib-2.0/glib.h:56,
+                 from radius_dict.l:54:
+radius_dict.l: In function 'radius_load_dictionary':
+/usr/include/glib-2.0/glib/gstring.h:74:5: warning: ignoring return value of 'g_string_free_and_steal' declared with attribute 'warn_unused_result' [-Wunused-result]
+   70 |   (__builtin_constant_p (free_segment) ?        \
+      |   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   71 |     ((free_segment) ?                           \
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   72 |       (g_string_free) ((str), (free_segment)) : \
+      |       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   73 |       g_string_free_and_steal (str))            \
+      |       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   74 |     :                                           \
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   75 |     (g_string_free) ((str), (free_segment)))
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+radius_dict.l:604:10: note: in expansion of macro 'g_string_free'
+  604 |         g_hash_table_foreach(dict->attrs_by_id,setup_attrs,NULL);
+      |          ^~~~~~~~~~~~~
+dissectors/packet-radius.c:1842:9: warning: 'g_mem_chunk_new' is deprecated [-Wdeprecated-declarations]
+ 1842 |         radius_call_info_value_chunk = g_mem_chunk_new("call_info_value_chunk",
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/glib-2.0/glib/deprecated/gallocator.h:43:17: note: declared here
+   43 | GMemChunk *     g_mem_chunk_new         (const gchar  *name,
+      |                 ^~~~~~~~~~~~~~~
+/usr/include/glib-2.0/glib/gstring.h:74:5: warning: ignoring return value of 'g_string_free_and_steal' declared with attribute 'warn_unused_result' [-Wunused-result]
+   70 |   (__builtin_constant_p (free_segment) ?        \
+      |   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   71 |     ((free_segment) ?                           \
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   72 |       (g_string_free) ((str), (free_segment)) : \
+      |       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   73 |       g_string_free_and_steal (str))            \
+      |       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   74 |     :                                           \
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   75 |     (g_string_free) ((str), (free_segment)))
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+radius_dict.l:627:3: note: in expansion of macro 'g_string_free'
+  627 | int yywrap(void) {
+      |   ^~~~~~~~~~~~~
+radius_dict.c: At top level:
+radius_dict.c:2133:37: warning: 'input' defined but not used [-Wunused-function]
+ 2133 |                         *(yy_c_buf_p) = '\0';
+      |                                     ^~~~~
+dissectors/packet-radius.c: At top level:
+dissectors/packet-radius.c:2033:1: fatal error: opening dependency file .deps/dissectors/packet-radius.Tpo: No such file or directory
+ 2033 | }
+      | ^
+compilation terminated.
+make: *** [Makefile:1057: dissectors/packet-radius.lo] Error 1
+mv -f .deps/radius_dict.Tpo .deps/radius_dict.Plo
+make: Leaving directory '/tmp/big-projects-work/buggy/wireshark-1.2-buggy/epan'

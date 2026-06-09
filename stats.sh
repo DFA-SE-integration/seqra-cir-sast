@@ -22,10 +22,10 @@ run_cfg () {           # $1=имя конфигурации  $2=bad|good
 cd /workspace
 
 # ── 1. IFDS (без SE) ───────────────────────────────
-# export SEQRA_SE_MODE=none
-# unset CIRTAC_KLEE_NO_TRACE_GUIDE CIRTAC_KLEE_NO_TRACE_ASSERT
-# run_cfg ifds bad
-# run_cfg ifds good
+export SEQRA_SE_MODE=none
+unset CIRTAC_KLEE_NO_TRACE_GUIDE CIRTAC_KLEE_NO_TRACE_ASSERT
+run_cfg ifds bad
+run_cfg ifds good
 
 # ── 2. IFDS + SE, без проходов ─────────────────────
 export SEQRA_SE_MODE=klee
@@ -35,18 +35,25 @@ run_cfg nopass bad
 run_cfg nopass good
 
 # ── 3. IFDS + SE, только TraceGuidePass ────────────
-# export SEQRA_SE_MODE=klee
-# unset  CIRTAC_KLEE_NO_TRACE_GUIDE          # guide ВКЛ
-# export CIRTAC_KLEE_NO_TRACE_ASSERT=1       # assert ВЫКЛ
-# run_cfg guide bad
-# run_cfg guide good
+export SEQRA_SE_MODE=klee
+unset  CIRTAC_KLEE_NO_TRACE_GUIDE          # guide ВКЛ
+export CIRTAC_KLEE_NO_TRACE_ASSERT=1       # assert ВЫКЛ
+run_cfg guide bad
+run_cfg guide good
 
 # ── 4. IFDS + SE, только TraceAssertPass ───────────
-# export SEQRA_SE_MODE=klee
-# export CIRTAC_KLEE_NO_TRACE_GUIDE=1        # guide ВЫКЛ
-# unset  CIRTAC_KLEE_NO_TRACE_ASSERT         # assert ВКЛ
-# run_cfg assert bad
-# run_cfg assert good
+export SEQRA_SE_MODE=klee
+export CIRTAC_KLEE_NO_TRACE_GUIDE=1        # guide ВЫКЛ
+unset  CIRTAC_KLEE_NO_TRACE_ASSERT         # assert ВКЛ
+run_cfg assert bad
+run_cfg assert good
+
+# ── 4. IFDS + SE, both ───────────
+export SEQRA_SE_MODE=klee
+unset  CIRTAC_KLEE_NO_TRACE_GUIDE          # guide ВКЛ
+unset  CIRTAC_KLEE_NO_TRACE_ASSERT         # assert ВКЛ
+run_cfg both bad
+run_cfg both good
 
 # сводка счётчиков по всем JUnit-отчётам (tests / failures / skipped / time):
 cd /workspace && grep -h "<testsuite " reports/*-junit/*.xml

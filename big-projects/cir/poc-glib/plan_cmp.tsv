@@ -1,0 +1,3 @@
+# label	expected	entry	cir
+glibuaf:entry_glib_uaf	bad	entry_glib_uaf	/workspace/big-projects/cir/poc-glib/glib_uaf.cir
+bodyinline:entry_container_uaf	bad	entry_container_uaf	/workspace/big-projects/cir/poc-container/cuaf_bodyinline.cir

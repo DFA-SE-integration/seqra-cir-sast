@@ -1,0 +1,11 @@
+######## MODE=ifds (05:39:17) ########
+ifds: 501116-v1.0.0:destroy_dict FAILED 501116-v1.0.0:destroy_tlvs PASSED 501116-v1.0.0:radius_load_dictionary PASSED 501116-v1.0.0:register_attrs FAILED 501116-v1.0.0:register_radius_fields PASSED 
+######## MODE=nopass (05:41:29) ########
+nopass: 501116-v1.0.0:destroy_dict FAILED 501116-v1.0.0:destroy_tlvs PASSED 501116-v1.0.0:radius_load_dictionary FAILED 501116-v1.0.0:register_attrs FAILED 501116-v1.0.0:register_radius_fields FAILED 
+######## MODE=guide (05:55:05) ########
+guide: 501116-v1.0.0:destroy_dict FAILED 501116-v1.0.0:destroy_tlvs PASSED 501116-v1.0.0:radius_load_dictionary FAILED 501116-v1.0.0:register_attrs FAILED 501116-v1.0.0:register_radius_fields FAILED 
+######## MODE=assert (06:07:58) ########
+assert: 501116-v1.0.0:destroy_dict FAILED 501116-v1.0.0:destroy_tlvs PASSED 501116-v1.0.0:radius_load_dictionary FAILED 501116-v1.0.0:register_attrs FAILED 501116-v1.0.0:register_radius_fields FAILED 
+######## MODE=full (06:21:03) ########
+full: 501116-v1.0.0:destroy_dict FAILED 501116-v1.0.0:destroy_tlvs PASSED 501116-v1.0.0:radius_load_dictionary FAILED 501116-v1.0.0:register_attrs FAILED 501116-v1.0.0:register_radius_fields FAILED 
+MATRIX DONE (06:34:14)

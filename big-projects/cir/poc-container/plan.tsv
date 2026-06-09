@@ -1,0 +1,2 @@
+# label	expected	entry	cir
+container:entry_container_uaf	bad	entry_container_uaf	/workspace/big-projects/cir/poc-container/container_uaf.cir

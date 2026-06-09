@@ -1,0 +1,61 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :buildSrc:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :buildSrc:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :buildSrc:compilePluginsBlocks UP-TO-DATE
+> Task :buildSrc:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :buildSrc:generateScriptPluginAdapters UP-TO-DATE
+> Task :buildSrc:compileKotlin UP-TO-DATE
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:pluginDescriptors UP-TO-DATE
+> Task :buildSrc:processResources UP-TO-DATE
+> Task :buildSrc:classes UP-TO-DATE
+> Task :buildSrc:jar UP-TO-DATE
+> Task :seqra-ir-api-cir:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-ir-api-common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-ir-api-common:compileKotlin UP-TO-DATE
+> Task :seqra-ir-api-common:compileJava NO-SOURCE
+> Task :seqra-ir-api-storage:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-ir-api-storage:compileKotlin UP-TO-DATE
+> Task :seqra-ir-api-storage:compileJava NO-SOURCE
+> Task :seqra-ir-api-cir:compileKotlin UP-TO-DATE
+> Task :seqra-ir-api-cir:compileJava NO-SOURCE
+> Task :seqra-ir-core-cir:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-ir-api-cir:processResources NO-SOURCE
+> Task :seqra-ir-api-common:processResources NO-SOURCE
+> Task :seqra-ir-api-storage:processResources NO-SOURCE
+> Task :seqra-ir-storage:processResources UP-TO-DATE
+> Task :seqra-ir-core-cir:extractIncludeProto UP-TO-DATE
+> Task :seqra-ir-core-cir:extractProto UP-TO-DATE
+> Task :seqra-ir-core-cir:generateProto UP-TO-DATE
+> Task :seqra-ir-storage:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-ir-storage:compileKotlin UP-TO-DATE
+> Task :seqra-ir-storage:compileJava NO-SOURCE
+> Task :seqra-ir-core-cir:compileKotlin UP-TO-DATE
+> Task :seqra-ir-core-cir:compileJava UP-TO-DATE
+> Task :seqra-ir-core-cir:processResources UP-TO-DATE
+> Task :seqra-ir-core-cir:classes UP-TO-DATE
+> Task :seqra-ir-core-cir:jar UP-TO-DATE
+> Task :seqra-ir-core-cir:generateMetadataFileForIr-core-cirPublication
+> Task :seqra-ir-core-cir:generatePomFileForIr-core-cirPublication
+> Task :seqra-ir-core-cir:kotlinSourcesJar UP-TO-DATE
+> Task :seqra-ir-core-cir:publishIr-core-cirPublicationToMavenLocal
+> Task :seqra-ir-core-cir:generateMetadataFileForMavenPublication
+> Task :seqra-ir-core-cir:generatePomFileForMavenPublication
+
+> Task :seqra-ir-core-cir:publishMavenPublicationToMavenLocal
+Multiple publications with coordinates 'org.seqra:seqra-ir-core-cir:2025.10.01.86be2d2' are published to repository 'mavenLocal'. The publications 'ir-core-cir' in project ':seqra-ir-core-cir' and 'maven' in project ':seqra-ir-core-cir' will overwrite each other!
+
+> Task :seqra-ir-core-cir:publishToMavenLocal
+[Incubating] Problems report is available at: file:///workspace/seqra-ir/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.11/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 53s
+28 actionable tasks: 6 executed, 22 up-to-date

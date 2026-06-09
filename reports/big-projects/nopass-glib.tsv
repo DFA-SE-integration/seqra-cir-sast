@@ -1,0 +1,16 @@
+timestamp_ms	fixture	entry	mode	no_trace_guide	confirmed	klee_instructions	klee_completed_paths	klee_explored_paths	klee_ms	trace_guide_ms	trace_assert_ms	cir_to_llvm_ms	llvm_as_ms
+1780371986082	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1156.979333	0.0	0.0	13984.363423	159.815958
+1780372008803	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1060.242709	0.0	0.0	13837.032215	126.254667
+1780372031981	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1112.956376	0.0	0.0	14300.433006	121.509208
+1780372054606	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1072.080626	0.0	0.0	13904.576755	84.451583
+1780372077570	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1070.840667	0.0	0.0	14186.874214	98.51975
+1780372099869	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1120.797042	0.0	0.0	13586.833007	123.395167
+1780372122123	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1059.683125	0.0	0.0	13677.83584	104.962667
+1780372144962	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1098.992917	0.0	0.0	13943.835881	103.814583
+1780372167943	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1088.408792	0.0	0.0	13961.429381	91.492792
+1780372190129	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1094.331917	0.0	0.0	13626.23834	94.892
+1780372212722	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1152.145001	0.0	0.0	13863.48659	128.791792
+1780372236258	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1174.558501	0.0	0.0	14247.14509	106.058291
+1780372259510	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1146.794084	0.0	0.0	14195.276881	125.630208
+1780372281946	packet-radius.cir	radius_load_dictionary	klee	true	false	0	0	0	1085.770709	0.0	0.0	13610.802756	94.741917
+1780372311385	packet-radius.cir	destroy_tlvs	klee	true	true	16	0	1	1222.732834	0.0	0.0	13941.994964	136.77525

@@ -1,0 +1,66 @@
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors
+> Task :buildSrc:generateExternalPluginSpecBuilders
+> Task :buildSrc:extractPrecompiledScriptPluginPlugins
+> Task :buildSrc:compilePluginsBlocks
+> Task :buildSrc:generatePrecompiledScriptPluginAccessors
+> Task :buildSrc:generateScriptPluginAdapters
+> Task :buildSrc:pluginDescriptors
+> Task :buildSrc:processResources
+> Task :buildSrc:compileKotlin
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:classes
+> Task :buildSrc:jar
+> Task :checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-dataflow:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-se:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :seqra-cir-sast-se:extractIncludeProto
+> Task :seqra-cir-sast-se:extractProto
+> Task :seqra-cir-sast-se:generateProto
+> Task :processResources NO-SOURCE
+> Task :processTestResources
+> Task :seqra-cir-sast-dataflow:processResources NO-SOURCE
+> Task :seqra-cir-sast-se:processResources
+> Task :seqra-cir-sast-dataflow:compileKotlin
+> Task :seqra-cir-sast-dataflow:compileJava NO-SOURCE
+> Task :seqra-cir-sast-dataflow:classes UP-TO-DATE
+> Task :seqra-cir-sast-dataflow:jar
+> Task :seqra-cir-sast-se:compileKotlin
+> Task :seqra-cir-sast-se:compileJava
+> Task :seqra-cir-sast-se:classes
+> Task :seqra-cir-sast-se:jar
+> Task :compileKotlin
+> Task :compileJava NO-SOURCE
+> Task :classes UP-TO-DATE
+> Task :jar
+> Task :compileTestKotlin
+> Task :compileTestJava NO-SOURCE
+> Task :testClasses
+
+> Task :test
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > poc:entry_uaf STANDARD_OUT
+    21:26:06.320 [Test worker] INFO  jetbrains.exodus.io.FileDataWriter -- Uninterruptible file channel will be used
+    21:26:07.231 [Test worker] INFO  j.exodus.env.EnvironmentImpl -- Exodus environment created: /tmp/xodusKeyValueStorage9543193181329675308
+    21:26:12.590 [Test worker] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'entry_uaf'
+    21:26:14.581 [Test worker] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Starting analysis of 1 methods in 1 units
+    21:26:15.770 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'malloc'
+    21:26:15.773 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'malloc', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/trivial_uaf.c), id=malloc)
+    21:26:16.061 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- Find function by symbol name 'free'
+    21:26:16.063 [org.seqra.dataflow.ap.ifds.TaintAnalysisUnitRunnerManager-worker-1 @coroutine#2] WARN  o.s.i.i.CIRClasspathImplKt$logger$1 -- No definition for symbol 'free', using declaration CIRFunctionID(moduleID=MLIRModuleID(id=/tmp/trivial_uaf.c), id=free)
+    21:26:16.612 [Test worker @coroutine#4] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Progress: 3/0
+    21:26:16.623 [Test worker @coroutine#4] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Memory usage: 12836441360/12884901888 (99.62%)
+    21:26:16.628 [Test worker @coroutine#4] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Analysis done in 2.055672918s
+    21:26:16.629 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Total vulnerabilities: 3
+    21:26:16.629 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Start trace generation
+    21:26:17.100 [Test worker] INFO  o.s.d.a.i.TaintAnalysisUnitRunnerManager -- Resolved 3/3 traces
+    21:26:17.100 [Test worker] INFO  o.s.c.s.d.CIRTaintAnalyzer$Loader$logger$1 -- Finish trace generation
+    21:26:21.074 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=true mem_errs=1 precond_violations=0 klee_ms=559.662292 instr=13 guide_ms=0.0 assert_ms=0.0
+    21:26:21.083 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee artifacts kept: result=/tmp/cir-klee-result-9945256114195089408.pb log=/tmp/cir-klee-log-4294990212361659605.txt
+    21:26:22.235 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee exit=0 confirmed=true mem_errs=1 precond_violations=0 klee_ms=467.513667 instr=13 guide_ms=0.0 assert_ms=0.0
+    21:26:22.242 [Test worker] INFO  o.s.c.s.s.k.KleeCirSeAnalyzer$logger$1 -- cir-klee artifacts kept: result=/tmp/cir-klee-result-1060709368338986964.pb log=/tmp/cir-klee-log-3356001562742140421.txt
+
+BigProjectsEntrypointsTest > bigProject(String, boolean, String, List) > poc:entry_uaf PASSED
+
+BUILD SUCCESSFUL in 1m 10s
+24 actionable tasks: 24 executed
